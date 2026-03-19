@@ -3,57 +3,150 @@
 import "package:bloc_test/bloc_test.dart";
 import "package:flutter_test/flutter_test.dart";
 import "package:mocktail/mocktail.dart";
+import "package:fpdart/fpdart.dart";
 import "package:valoqui/features/onboarding/bloc/onboarding_bloc.dart";
+import "package:valoqui/core/domain/models/app_failure.dart";
 import "../../mocks/mock_services.dart";
 
 void main() {
-  late MockSecureStorage secureStorage;
-  late MockFirestoreService firestoreService;
+  late MockCheckOnboardingStatus mockCheckStatus;
+  late MockSaveGroqKey mockSaveGroqKey;
+  late MockSaveGeminiKey mockSaveGeminiKey;
+  late MockMarkOnboardingComplete mockMarkComplete;
+  late MockUpdateUserLevel mockUpdateLevel;
+
+  const tUid = "user123";
 
   setUp(() {
-    secureStorage = MockSecureStorage();
-    firestoreService = MockFirestoreService();
+    mockCheckStatus = MockCheckOnboardingStatus();
+    mockSaveGroqKey = MockSaveGroqKey();
+    mockSaveGeminiKey = MockSaveGeminiKey();
+    mockMarkComplete = MockMarkOnboardingComplete();
+    mockUpdateLevel = MockUpdateUserLevel();
   });
 
   OnboardingBloc buildBloc() => OnboardingBloc(
-    secureStorage: secureStorage,
-    firestoreService: firestoreService,
+    checkOnboardingStatus: mockCheckStatus,
+    saveGroqKey: mockSaveGroqKey,
+    saveGeminiKey: mockSaveGeminiKey,
+    markOnboardingComplete: mockMarkComplete,
+    updateUserLevel: mockUpdateLevel,
   );
 
   group("OnboardingBloc", () {
-    blocTest<OnboardingBloc, OnboardingState>(
-      "emits complete when onboarding is already done",
-      build: () {
-        when(
-          () => secureStorage.isOnboardingComplete(),
-        ).thenAnswer((_) async => true);
-        return buildBloc();
-      },
-      act: (bloc) => bloc.add(const CheckOnboardingStatus()),
-      expect: () => [
-        const OnboardingState.loading(),
-        const OnboardingState.complete(),
-      ],
-    );
+    group("CheckOnboardingStatusEvent", () {
+      blocTest<OnboardingBloc, OnboardingState>(
+        "emits [loading, complete] when onboarding is done",
+        build: () {
+          when(() => mockCheckStatus.execute()).thenAnswer((_) async => right(true));
+          return buildBloc();
+        },
+        act: (bloc) => bloc.add(const CheckOnboardingStatusEvent()),
+        expect: () => [
+          const OnboardingState.loading(),
+          const OnboardingState.complete(),
+        ],
+      );
 
-    blocTest<OnboardingBloc, OnboardingState>(
-      "emits error when Groq key format is invalid",
-      build: () => buildBloc(),
-      act: (bloc) => bloc.add(const SaveGroqKey("invalid_key")),
-      expect: () => [isA<OnboardingError>()],
-    );
+      blocTest<OnboardingBloc, OnboardingState>(
+        "emits [loading, initial] when onboarding is NOT done",
+        build: () {
+          when(() => mockCheckStatus.execute()).thenAnswer((_) async => right(false));
+          return buildBloc();
+        },
+        act: (bloc) => bloc.add(const CheckOnboardingStatusEvent()),
+        expect: () => [
+          const OnboardingState.loading(),
+          const OnboardingState.initial(),
+        ],
+      );
+    });
 
-    blocTest<OnboardingBloc, OnboardingState>(
-      "emits groqKeyComplete when valid key is saved",
-      build: () {
-        when(() => secureStorage.saveGroqKey(any())).thenAnswer((_) async {});
-        return buildBloc();
-      },
-      act: (bloc) => bloc.add(const SaveGroqKey("gsk_validkeyhere")),
-      expect: () => [
-        const OnboardingState.loading(),
-        const OnboardingState.groqKeyComplete(),
-      ],
-    );
+    group("SubmitGroqKey", () {
+      blocTest<OnboardingBloc, OnboardingState>(
+        "emits [loading, groqKeyComplete] on success",
+        build: () {
+          when(() => mockSaveGroqKey.execute(any(), any()))
+              .thenAnswer((_) async => right(null));
+          return buildBloc();
+        },
+        act: (bloc) => bloc.add(const SubmitGroqKey(uid: tUid, key: "gsk_test")),
+        expect: () => [
+          const OnboardingState.loading(),
+          const OnboardingState.groqKeyComplete(),
+        ],
+      );
+
+      blocTest<OnboardingBloc, OnboardingState>(
+        "emits [loading, error] on failure",
+        build: () {
+          when(() => mockSaveGroqKey.execute(any(), any())).thenAnswer(
+            (_) async => left(const AppFailure.storageFailure(message: "Failed")),
+          );
+          return buildBloc();
+        },
+        act: (bloc) => bloc.add(const SubmitGroqKey(uid: tUid, key: "gsk_test")),
+        expect: () => [
+          const OnboardingState.loading(),
+          const OnboardingState.error(message: "Failed"),
+        ],
+      );
+    });
+
+    group("SubmitGeminiKey", () {
+      blocTest<OnboardingBloc, OnboardingState>(
+        "emits [loading, geminiStepComplete] on success",
+        build: () {
+          when(() => mockSaveGeminiKey.execute(any(), any()))
+              .thenAnswer((_) async => right(null));
+          return buildBloc();
+        },
+        act: (bloc) => bloc.add(const SubmitGeminiKey(uid: tUid, key: "gem_test")),
+        expect: () => [
+          const OnboardingState.loading(),
+          const OnboardingState.geminiStepComplete(),
+        ],
+      );
+
+      blocTest<OnboardingBloc, OnboardingState>(
+        "emits [geminiStepComplete] on SkipGeminiKey",
+        build: () => buildBloc(),
+        act: (bloc) => bloc.add(const SkipGeminiKey()),
+        expect: () => [const OnboardingState.geminiStepComplete()],
+      );
+    });
+
+    group("SubmitLevel", () {
+      blocTest<OnboardingBloc, OnboardingState>(
+        "emits [loading, complete] on success (level + mark complete)",
+        build: () {
+          when(() => mockUpdateLevel.execute(any(), any()))
+              .thenAnswer((_) async => right(null));
+          when(() => mockMarkComplete.execute())
+              .thenAnswer((_) async => right(null));
+          return buildBloc();
+        },
+        act: (bloc) => bloc.add(const SubmitLevel(uid: tUid, level: "A2")),
+        expect: () => [
+          const OnboardingState.loading(),
+          const OnboardingState.complete(),
+        ],
+      );
+
+      blocTest<OnboardingBloc, OnboardingState>(
+        "emits [loading, error] if level update fails",
+        build: () {
+          when(() => mockUpdateLevel.execute(any(), any())).thenAnswer(
+            (_) async => left(const AppFailure.databaseFailure(message: "DB Error")),
+          );
+          return buildBloc();
+        },
+        act: (bloc) => bloc.add(const SubmitLevel(uid: tUid, level: "A2")),
+        expect: () => [
+          const OnboardingState.loading(),
+          const OnboardingState.error(message: "DB Error"),
+        ],
+      );
+    });
   });
 }
