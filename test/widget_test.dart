@@ -1,26 +1,47 @@
 // test/widget_test.dart
 
+import "package:bloc_test/bloc_test.dart";
 import "package:flutter_test/flutter_test.dart";
+import "package:mocktail/mocktail.dart";
 import "package:valoqui/app.dart";
 import "package:valoqui/core/di/service_locator.dart";
-import "package:mocktail/mocktail.dart";
-import "mocks/mock_services.dart";
+import "package:valoqui/features/auth/bloc/auth_bloc.dart";
+import "package:valoqui/features/onboarding/bloc/onboarding_bloc.dart";
+import "package:valoqui/features/home/bloc/home_bloc.dart";
+
+class MockAuthBloc extends MockBloc<AuthEvent, AuthState> implements AuthBloc {}
+
+class MockOnboardingBloc extends MockBloc<OnboardingEvent, OnboardingState>
+    implements OnboardingBloc {}
+
+class MockHomeBloc extends MockBloc<HomeEvent, HomeState> implements HomeBloc {}
 
 void main() {
-  setUpAll(() async {
-    // Basic DI setup for widget testing
-    if (!sl.isRegistered<MockAuthService>()) {
-      await setupServiceLocator();
-    }
+  late MockAuthBloc mockAuthBloc;
+  late MockOnboardingBloc mockOnboardingBloc;
+  late MockHomeBloc mockHomeBloc;
+
+  setUpAll(() {
+    sl.allowReassignment = true;
+    mockAuthBloc = MockAuthBloc();
+    mockOnboardingBloc = MockOnboardingBloc();
+    mockHomeBloc = MockHomeBloc();
+
+    // Register mocks in sl
+    sl.registerFactory<AuthBloc>(() => mockAuthBloc);
+    sl.registerFactory<OnboardingBloc>(() => mockOnboardingBloc);
+    sl.registerFactory<HomeBloc>(() => mockHomeBloc);
   });
 
-  testWidgets("App smoke test - verifies entry point builds", (tester) async {
-    // Build our app and trigger a frame.
-    // Note: This might still fail if Firebase isn't mocked properly in this specific test,
-    // but it's better than the old counter test.
+  testWidgets("App root renders correctly with initial states", (tester) async {
+    when(() => mockAuthBloc.state).thenReturn(const AuthState.initial());
+    when(
+      () => mockOnboardingBloc.state,
+    ).thenReturn(const OnboardingState.initial());
+    when(() => mockHomeBloc.state).thenReturn(const HomeState.initial());
+
     await tester.pumpWidget(const ValoquiApp());
 
-    // Basic verification that the app at least starts
     expect(find.byType(ValoquiApp), findsOneWidget);
   });
 }
