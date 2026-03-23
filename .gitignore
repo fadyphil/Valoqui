@@ -45,5 +45,7 @@ app.*.map.json
 /android/app/release
 
 # Private Project details
-# ignore/
+firebase_options.dart 
+google-services.json
+ignore/
 GEMINI.md

@@ -47,8 +47,9 @@ GoRouter createRouter({
 
       if (!isOnboardingComplete && !isOnSetupRoute) {
         if (onboardingState is GroqKeyComplete) return RouteNames.geminiSetup;
-        if (onboardingState is GeminiStepComplete)
+        if (onboardingState is GeminiStepComplete) {
           return RouteNames.levelSelection;
+        }
         return RouteNames.groqSetup;
       }
 
