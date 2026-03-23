@@ -13,10 +13,7 @@ class SecureStorageDatasource {
 
   SecureStorageDatasource({FlutterSecureStorage? storage})
     : _storage =
-          storage ??
-          const FlutterSecureStorage(
-            aOptions: AndroidOptions(encryptedSharedPreferences: true),
-          );
+          storage ?? const FlutterSecureStorage(aOptions: AndroidOptions());
 
   // ── Key name constants ────────────────────────────────
   static const groqKeyName = "valoqui_groq_api_key";
