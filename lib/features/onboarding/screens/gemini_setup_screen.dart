@@ -93,7 +93,7 @@ class _GeminiSetupScreenState extends State<GeminiSetupScreen> {
                           vertical: AppSpacing.xs,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.success.withOpacity(0.15),
+                          color: AppColors.success.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(AppRadius.chip),
                         ),
                         child: Text(
@@ -249,7 +249,7 @@ class _BenefitRow extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.12),
+            color: iconColor.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(AppRadius.chip),
           ),
           child: Icon(icon, color: iconColor, size: 20),

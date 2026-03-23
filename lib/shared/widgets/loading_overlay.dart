@@ -9,11 +9,9 @@ class LoadingOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.bgPrimary.withOpacity(0.7),
+      color: AppColors.bgPrimary.withValues(alpha: 0.7),
       child: const Center(
-        child: CircularProgressIndicator(
-          color: AppColors.accentPrimary,
-        ),
+        child: CircularProgressIndicator(color: AppColors.accentPrimary),
       ),
     );
   }

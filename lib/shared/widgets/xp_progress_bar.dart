@@ -33,7 +33,9 @@ class XPProgressBar extends StatelessWidget {
                   boxShadow: progress > 0
                       ? [
                           BoxShadow(
-                            color: AppColors.accentPrimary.withOpacity(0.4),
+                            color: AppColors.accentPrimary.withValues(
+                              alpha: 0.4,
+                            ),
                             blurRadius: 6,
                             offset: const Offset(0, 1),
                           ),

@@ -178,7 +178,7 @@ class _MicButtonSection extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: AppColors.accentPrimary.withOpacity(0.25),
+                    color: AppColors.accentPrimary.withValues(alpha: 0.25),
                     width: 1,
                   ),
                 ),
