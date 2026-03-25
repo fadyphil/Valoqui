@@ -1,14 +1,23 @@
 // lib/core/router/app_router.dart
 //
-// Changes from previous version:
-// 1. AuthAuthenticated carries AppUser not Firebase User — no change
-//    needed in the redirect logic since we only check the type.
-// 2. Bug fix applied: removed && isOnSignIn from onboarding redirect guard.
-// 3. Bug fix applied: removed .asBroadcastStream() from refresh stream.
+// Sprint 2 additions:
+//   - /speaking route: creates a fresh SpeakingBloc scoped to the route.
+//   - /report  route: creates a fresh ReportBloc scoped to the route,
+//     immediately fires GenerateReport using data passed via state.extra.
+//
+// Both BLoCs are route-scoped via BlocProvider in pageBuilder.
+// They are NOT added to the app-level MultiBlocProvider — that would keep
+// them alive across the whole session lifetime, which is wrong for
+// SpeakingBloc (should be fresh per session) and ReportBloc (per report).
+//
+// The refreshListenable is intentionally unchanged — speaking/report routes
+// are push navigation, not redirect targets.
 
 import "dart:async";
 import "package:flutter/material.dart";
+import "package:flutter_bloc/flutter_bloc.dart";
 import "package:go_router/go_router.dart";
+import "package:valoqui/core/di/service_locator.dart";
 import "package:valoqui/core/router/route_names.dart";
 import "package:valoqui/features/auth/bloc/auth_bloc.dart";
 import "package:valoqui/features/auth/screens/sign_in_screen.dart";
@@ -17,6 +26,10 @@ import "package:valoqui/features/onboarding/bloc/onboarding_bloc.dart";
 import "package:valoqui/features/onboarding/screens/gemini_setup_screen.dart";
 import "package:valoqui/features/onboarding/screens/groq_setup_screen.dart";
 import "package:valoqui/features/onboarding/screens/level_selection_screen.dart";
+import "package:valoqui/features/report/bloc/report_bloc.dart";
+import "package:valoqui/features/report/screens/report_screen.dart";
+import "package:valoqui/features/speaking/bloc/speaking_bloc.dart";
+import "package:valoqui/features/speaking/screens/speaking_screen.dart";
 
 GoRouter createRouter({
   required AuthBloc authBloc,
@@ -41,7 +54,6 @@ GoRouter createRouter({
       if (!isAuthenticated) return null;
 
       // ── Authenticated but onboarding incomplete ─────────
-      // Bug fix: removed && isOnSignIn — guard fires from any route
       final isOnboardingComplete = onboardingState is OnboardingComplete;
       final isOnSetupRoute = currentLocation.startsWith("/setup");
 
@@ -95,6 +107,47 @@ GoRouter createRouter({
         path: RouteNames.home,
         pageBuilder: (context, state) => _buildPage(state, const HomeScreen()),
       ),
+
+      // ── Sprint 2: Speaking ────────────────────────────
+      // SpeakingBloc is created fresh for each session and disposed
+      // automatically when the user navigates away from this route.
+      GoRoute(
+        path: RouteNames.speaking,
+        pageBuilder: (context, state) => _buildPage(
+          state,
+          BlocProvider(
+            create: (_) => sl<SpeakingBloc>(),
+            child: const SpeakingScreen(),
+          ),
+          slideIn: true,
+        ),
+      ),
+
+      // ── Sprint 2: Report ──────────────────────────────
+      // SpeakingEnded state is passed via state.extra from SpeakingScreen.
+      // ReportBloc fires GenerateReport immediately on creation.
+      GoRoute(
+        path: RouteNames.report,
+        pageBuilder: (context, state) {
+          final ended = state.extra! as SpeakingEnded;
+          return _buildPage(
+            state,
+            BlocProvider(
+              create: (_) => sl<ReportBloc>()
+                ..add(
+                  GenerateReportEvent(
+                    transcript: ended.transcript,
+                    totalDuration: ended.totalDuration,
+                    activeSpeakingTime: ended.activeSpeakingTime,
+                    userId: ended.userId,
+                    userCefrLevel: ended.userCefrLevel,
+                  ),
+                ),
+              child: const ReportScreen(),
+            ),
+          );
+        },
+      ),
     ],
   );
 }
@@ -126,7 +179,6 @@ CustomTransitionPage<void> _buildPage(
   );
 }
 
-// Bug fix: removed .asBroadcastStream() — BLoC streams are already broadcast
 class _GoRouterBlocRefreshStream extends ChangeNotifier {
   late final List<StreamSubscription<dynamic>> _subscriptions;
 

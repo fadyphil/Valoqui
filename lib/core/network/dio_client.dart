@@ -1,9 +1,9 @@
 // lib/core/network/dio_client.dart
 //
-// Change from previous version:
-// Constructor now takes KeyStorageRepository instead of
-// SecureStorageService, since SecureStorageService no longer exists.
-// The ApiKeyInterceptor is updated accordingly.
+// Sprint 2 change: receiveTimeout 30s → 60s.
+// Groq LLM streaming keeps the HTTP connection open for the full
+// response duration. 30s was enough for non-streaming calls but
+// causes a DioException.receiveTimeout mid-stream on longer replies.
 
 import "package:dio/dio.dart";
 import "package:valoqui/core/domain/repositories/key_storage_repository.dart";
@@ -37,7 +37,7 @@ class DioClient {
       BaseOptions(
         baseUrl: baseUrl,
         connectTimeout: const Duration(seconds: 10),
-        receiveTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 60), // ← was 30, bumped for LLM streaming
         headers: {"Content-Type": "application/json"},
       ),
     );
