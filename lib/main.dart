@@ -6,6 +6,7 @@ import "package:flutter/services.dart";
 import "firebase_options.dart";
 import "core/di/service_locator.dart";
 import "app.dart";
+import "package:sherpa_onnx/sherpa_onnx.dart" as sherpa;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,17 +24,23 @@ void main() async {
     // if we are just testing UI components.
   }
 
+  // ← ADD THIS — must happen before setupServiceLocator()
+  // sherpa_onnx loads its native .so library here.
+  // Any call to OfflineTts or VoiceActivityDetector before this
+  // throws "Please initialize sherpa-onnx first".
+  sherpa.initBindings();
+
   // Register all dependencies
   await setupServiceLocator();
 
   // Inside main(), before runApp:
-  // SystemChrome.setSystemUIOverlayStyle(
-  //   const SystemUiOverlayStyle(
-  //     statusBarColor: Colors.transparent, // makes status bar transparent
-  //     statusBarIconBrightness: Brightness.light, // white icons on dark bg
-  //   ),
-  // );
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent, // makes status bar transparent
+      statusBarIconBrightness: Brightness.light, // white icons on dark bg
+    ),
+  );
+  // SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
   runApp(const ValoquiApp());
 }

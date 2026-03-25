@@ -2,6 +2,8 @@
 
 import "package:flutter/material.dart";
 import "package:flutter_bloc/flutter_bloc.dart";
+import "package:go_router/go_router.dart";
+import "package:valoqui/core/router/route_names.dart";
 import "package:valoqui/features/auth/bloc/auth_bloc.dart";
 import "package:valoqui/features/home/bloc/home_bloc.dart";
 import "../../../../core/domain/models/app_user.dart";
@@ -186,6 +188,7 @@ class _MicButtonSection extends StatelessWidget {
               GestureDetector(
                 onTap: () {
                   // Sprint 2: context.push(RouteNames.speaking)
+                  context.go(RouteNames.speaking);
                 },
                 child: Container(
                   width: 180,
