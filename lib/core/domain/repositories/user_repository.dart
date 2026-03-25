@@ -27,4 +27,11 @@ abstract interface class UserRepository {
     bool? groqConfigured,
     bool? geminiConfigured,
   });
+
+  /// Increments currentXP, totalSessionCount, and sets lastSessionDate.
+  /// Called by SaveSessionXp use case after every completed session.
+  Future<Either<AppFailure, void>> addXp({
+    required String uid,
+    required int xp,
+  });
 }

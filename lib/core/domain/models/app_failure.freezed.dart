@@ -55,7 +55,7 @@ extension AppFailurePatterns on AppFailure {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( _SignInCancelled value)?  signInCancelled,TResult Function( _AuthFailure value)?  authFailure,TResult Function( _UserNotFound value)?  userNotFound,TResult Function( _DatabaseFailure value)?  databaseFailure,TResult Function( _StorageFailure value)?  storageFailure,TResult Function( _InvalidApiKey value)?  invalidApiKey,TResult Function( _NetworkFailure value)?  networkFailure,TResult Function( _RateLimitFailure value)?  rateLimitFailure,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( _SignInCancelled value)?  signInCancelled,TResult Function( _AuthFailure value)?  authFailure,TResult Function( _UserNotFound value)?  userNotFound,TResult Function( _DatabaseFailure value)?  databaseFailure,TResult Function( _StorageFailure value)?  storageFailure,TResult Function( _InvalidApiKey value)?  invalidApiKey,TResult Function( _NetworkFailure value)?  networkFailure,TResult Function( _RateLimitFailure value)?  rateLimitFailure,TResult Function( _SttPermissionDenied value)?  sttPermissionDenied,TResult Function( _SttNotAvailable value)?  sttNotAvailable,TResult Function( _SttFailure value)?  sttFailure,TResult Function( _TtsNotInitialized value)?  ttsNotInitialized,TResult Function( _TtsFailure value)?  ttsFailure,TResult Function( _LlmFailure value)?  llmFailure,TResult Function( _LlmBothProvidersFailed value)?  llmBothProvidersFailed,TResult Function( _ReportGenerationFailed value)?  reportGenerationFailed,TResult Function( _ReportParsingFailed value)?  reportParsingFailed,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case _SignInCancelled() when signInCancelled != null:
@@ -66,7 +66,16 @@ return databaseFailure(_that);case _StorageFailure() when storageFailure != null
 return storageFailure(_that);case _InvalidApiKey() when invalidApiKey != null:
 return invalidApiKey(_that);case _NetworkFailure() when networkFailure != null:
 return networkFailure(_that);case _RateLimitFailure() when rateLimitFailure != null:
-return rateLimitFailure(_that);case _:
+return rateLimitFailure(_that);case _SttPermissionDenied() when sttPermissionDenied != null:
+return sttPermissionDenied(_that);case _SttNotAvailable() when sttNotAvailable != null:
+return sttNotAvailable(_that);case _SttFailure() when sttFailure != null:
+return sttFailure(_that);case _TtsNotInitialized() when ttsNotInitialized != null:
+return ttsNotInitialized(_that);case _TtsFailure() when ttsFailure != null:
+return ttsFailure(_that);case _LlmFailure() when llmFailure != null:
+return llmFailure(_that);case _LlmBothProvidersFailed() when llmBothProvidersFailed != null:
+return llmBothProvidersFailed(_that);case _ReportGenerationFailed() when reportGenerationFailed != null:
+return reportGenerationFailed(_that);case _ReportParsingFailed() when reportParsingFailed != null:
+return reportParsingFailed(_that);case _:
   return orElse();
 
 }
@@ -84,7 +93,7 @@ return rateLimitFailure(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( _SignInCancelled value)  signInCancelled,required TResult Function( _AuthFailure value)  authFailure,required TResult Function( _UserNotFound value)  userNotFound,required TResult Function( _DatabaseFailure value)  databaseFailure,required TResult Function( _StorageFailure value)  storageFailure,required TResult Function( _InvalidApiKey value)  invalidApiKey,required TResult Function( _NetworkFailure value)  networkFailure,required TResult Function( _RateLimitFailure value)  rateLimitFailure,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( _SignInCancelled value)  signInCancelled,required TResult Function( _AuthFailure value)  authFailure,required TResult Function( _UserNotFound value)  userNotFound,required TResult Function( _DatabaseFailure value)  databaseFailure,required TResult Function( _StorageFailure value)  storageFailure,required TResult Function( _InvalidApiKey value)  invalidApiKey,required TResult Function( _NetworkFailure value)  networkFailure,required TResult Function( _RateLimitFailure value)  rateLimitFailure,required TResult Function( _SttPermissionDenied value)  sttPermissionDenied,required TResult Function( _SttNotAvailable value)  sttNotAvailable,required TResult Function( _SttFailure value)  sttFailure,required TResult Function( _TtsNotInitialized value)  ttsNotInitialized,required TResult Function( _TtsFailure value)  ttsFailure,required TResult Function( _LlmFailure value)  llmFailure,required TResult Function( _LlmBothProvidersFailed value)  llmBothProvidersFailed,required TResult Function( _ReportGenerationFailed value)  reportGenerationFailed,required TResult Function( _ReportParsingFailed value)  reportParsingFailed,}){
 final _that = this;
 switch (_that) {
 case _SignInCancelled():
@@ -95,7 +104,16 @@ return databaseFailure(_that);case _StorageFailure():
 return storageFailure(_that);case _InvalidApiKey():
 return invalidApiKey(_that);case _NetworkFailure():
 return networkFailure(_that);case _RateLimitFailure():
-return rateLimitFailure(_that);}
+return rateLimitFailure(_that);case _SttPermissionDenied():
+return sttPermissionDenied(_that);case _SttNotAvailable():
+return sttNotAvailable(_that);case _SttFailure():
+return sttFailure(_that);case _TtsNotInitialized():
+return ttsNotInitialized(_that);case _TtsFailure():
+return ttsFailure(_that);case _LlmFailure():
+return llmFailure(_that);case _LlmBothProvidersFailed():
+return llmBothProvidersFailed(_that);case _ReportGenerationFailed():
+return reportGenerationFailed(_that);case _ReportParsingFailed():
+return reportParsingFailed(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -109,7 +127,7 @@ return rateLimitFailure(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( _SignInCancelled value)?  signInCancelled,TResult? Function( _AuthFailure value)?  authFailure,TResult? Function( _UserNotFound value)?  userNotFound,TResult? Function( _DatabaseFailure value)?  databaseFailure,TResult? Function( _StorageFailure value)?  storageFailure,TResult? Function( _InvalidApiKey value)?  invalidApiKey,TResult? Function( _NetworkFailure value)?  networkFailure,TResult? Function( _RateLimitFailure value)?  rateLimitFailure,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( _SignInCancelled value)?  signInCancelled,TResult? Function( _AuthFailure value)?  authFailure,TResult? Function( _UserNotFound value)?  userNotFound,TResult? Function( _DatabaseFailure value)?  databaseFailure,TResult? Function( _StorageFailure value)?  storageFailure,TResult? Function( _InvalidApiKey value)?  invalidApiKey,TResult? Function( _NetworkFailure value)?  networkFailure,TResult? Function( _RateLimitFailure value)?  rateLimitFailure,TResult? Function( _SttPermissionDenied value)?  sttPermissionDenied,TResult? Function( _SttNotAvailable value)?  sttNotAvailable,TResult? Function( _SttFailure value)?  sttFailure,TResult? Function( _TtsNotInitialized value)?  ttsNotInitialized,TResult? Function( _TtsFailure value)?  ttsFailure,TResult? Function( _LlmFailure value)?  llmFailure,TResult? Function( _LlmBothProvidersFailed value)?  llmBothProvidersFailed,TResult? Function( _ReportGenerationFailed value)?  reportGenerationFailed,TResult? Function( _ReportParsingFailed value)?  reportParsingFailed,}){
 final _that = this;
 switch (_that) {
 case _SignInCancelled() when signInCancelled != null:
@@ -120,7 +138,16 @@ return databaseFailure(_that);case _StorageFailure() when storageFailure != null
 return storageFailure(_that);case _InvalidApiKey() when invalidApiKey != null:
 return invalidApiKey(_that);case _NetworkFailure() when networkFailure != null:
 return networkFailure(_that);case _RateLimitFailure() when rateLimitFailure != null:
-return rateLimitFailure(_that);case _:
+return rateLimitFailure(_that);case _SttPermissionDenied() when sttPermissionDenied != null:
+return sttPermissionDenied(_that);case _SttNotAvailable() when sttNotAvailable != null:
+return sttNotAvailable(_that);case _SttFailure() when sttFailure != null:
+return sttFailure(_that);case _TtsNotInitialized() when ttsNotInitialized != null:
+return ttsNotInitialized(_that);case _TtsFailure() when ttsFailure != null:
+return ttsFailure(_that);case _LlmFailure() when llmFailure != null:
+return llmFailure(_that);case _LlmBothProvidersFailed() when llmBothProvidersFailed != null:
+return llmBothProvidersFailed(_that);case _ReportGenerationFailed() when reportGenerationFailed != null:
+return reportGenerationFailed(_that);case _ReportParsingFailed() when reportParsingFailed != null:
+return reportParsingFailed(_that);case _:
   return null;
 
 }
@@ -137,7 +164,7 @@ return rateLimitFailure(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  signInCancelled,TResult Function( String message)?  authFailure,TResult Function()?  userNotFound,TResult Function( String message)?  databaseFailure,TResult Function( String message)?  storageFailure,TResult Function()?  invalidApiKey,TResult Function( String message)?  networkFailure,TResult Function()?  rateLimitFailure,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  signInCancelled,TResult Function( String message)?  authFailure,TResult Function()?  userNotFound,TResult Function( String message)?  databaseFailure,TResult Function( String message)?  storageFailure,TResult Function()?  invalidApiKey,TResult Function( String message)?  networkFailure,TResult Function()?  rateLimitFailure,TResult Function()?  sttPermissionDenied,TResult Function()?  sttNotAvailable,TResult Function( String message)?  sttFailure,TResult Function()?  ttsNotInitialized,TResult Function( String message)?  ttsFailure,TResult Function( String message)?  llmFailure,TResult Function()?  llmBothProvidersFailed,TResult Function( String message)?  reportGenerationFailed,TResult Function()?  reportParsingFailed,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SignInCancelled() when signInCancelled != null:
 return signInCancelled();case _AuthFailure() when authFailure != null:
@@ -147,7 +174,16 @@ return databaseFailure(_that.message);case _StorageFailure() when storageFailure
 return storageFailure(_that.message);case _InvalidApiKey() when invalidApiKey != null:
 return invalidApiKey();case _NetworkFailure() when networkFailure != null:
 return networkFailure(_that.message);case _RateLimitFailure() when rateLimitFailure != null:
-return rateLimitFailure();case _:
+return rateLimitFailure();case _SttPermissionDenied() when sttPermissionDenied != null:
+return sttPermissionDenied();case _SttNotAvailable() when sttNotAvailable != null:
+return sttNotAvailable();case _SttFailure() when sttFailure != null:
+return sttFailure(_that.message);case _TtsNotInitialized() when ttsNotInitialized != null:
+return ttsNotInitialized();case _TtsFailure() when ttsFailure != null:
+return ttsFailure(_that.message);case _LlmFailure() when llmFailure != null:
+return llmFailure(_that.message);case _LlmBothProvidersFailed() when llmBothProvidersFailed != null:
+return llmBothProvidersFailed();case _ReportGenerationFailed() when reportGenerationFailed != null:
+return reportGenerationFailed(_that.message);case _ReportParsingFailed() when reportParsingFailed != null:
+return reportParsingFailed();case _:
   return orElse();
 
 }
@@ -165,7 +201,7 @@ return rateLimitFailure();case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  signInCancelled,required TResult Function( String message)  authFailure,required TResult Function()  userNotFound,required TResult Function( String message)  databaseFailure,required TResult Function( String message)  storageFailure,required TResult Function()  invalidApiKey,required TResult Function( String message)  networkFailure,required TResult Function()  rateLimitFailure,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  signInCancelled,required TResult Function( String message)  authFailure,required TResult Function()  userNotFound,required TResult Function( String message)  databaseFailure,required TResult Function( String message)  storageFailure,required TResult Function()  invalidApiKey,required TResult Function( String message)  networkFailure,required TResult Function()  rateLimitFailure,required TResult Function()  sttPermissionDenied,required TResult Function()  sttNotAvailable,required TResult Function( String message)  sttFailure,required TResult Function()  ttsNotInitialized,required TResult Function( String message)  ttsFailure,required TResult Function( String message)  llmFailure,required TResult Function()  llmBothProvidersFailed,required TResult Function( String message)  reportGenerationFailed,required TResult Function()  reportParsingFailed,}) {final _that = this;
 switch (_that) {
 case _SignInCancelled():
 return signInCancelled();case _AuthFailure():
@@ -175,7 +211,16 @@ return databaseFailure(_that.message);case _StorageFailure():
 return storageFailure(_that.message);case _InvalidApiKey():
 return invalidApiKey();case _NetworkFailure():
 return networkFailure(_that.message);case _RateLimitFailure():
-return rateLimitFailure();}
+return rateLimitFailure();case _SttPermissionDenied():
+return sttPermissionDenied();case _SttNotAvailable():
+return sttNotAvailable();case _SttFailure():
+return sttFailure(_that.message);case _TtsNotInitialized():
+return ttsNotInitialized();case _TtsFailure():
+return ttsFailure(_that.message);case _LlmFailure():
+return llmFailure(_that.message);case _LlmBothProvidersFailed():
+return llmBothProvidersFailed();case _ReportGenerationFailed():
+return reportGenerationFailed(_that.message);case _ReportParsingFailed():
+return reportParsingFailed();}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -189,7 +234,7 @@ return rateLimitFailure();}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  signInCancelled,TResult? Function( String message)?  authFailure,TResult? Function()?  userNotFound,TResult? Function( String message)?  databaseFailure,TResult? Function( String message)?  storageFailure,TResult? Function()?  invalidApiKey,TResult? Function( String message)?  networkFailure,TResult? Function()?  rateLimitFailure,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  signInCancelled,TResult? Function( String message)?  authFailure,TResult? Function()?  userNotFound,TResult? Function( String message)?  databaseFailure,TResult? Function( String message)?  storageFailure,TResult? Function()?  invalidApiKey,TResult? Function( String message)?  networkFailure,TResult? Function()?  rateLimitFailure,TResult? Function()?  sttPermissionDenied,TResult? Function()?  sttNotAvailable,TResult? Function( String message)?  sttFailure,TResult? Function()?  ttsNotInitialized,TResult? Function( String message)?  ttsFailure,TResult? Function( String message)?  llmFailure,TResult? Function()?  llmBothProvidersFailed,TResult? Function( String message)?  reportGenerationFailed,TResult? Function()?  reportParsingFailed,}) {final _that = this;
 switch (_that) {
 case _SignInCancelled() when signInCancelled != null:
 return signInCancelled();case _AuthFailure() when authFailure != null:
@@ -199,7 +244,16 @@ return databaseFailure(_that.message);case _StorageFailure() when storageFailure
 return storageFailure(_that.message);case _InvalidApiKey() when invalidApiKey != null:
 return invalidApiKey();case _NetworkFailure() when networkFailure != null:
 return networkFailure(_that.message);case _RateLimitFailure() when rateLimitFailure != null:
-return rateLimitFailure();case _:
+return rateLimitFailure();case _SttPermissionDenied() when sttPermissionDenied != null:
+return sttPermissionDenied();case _SttNotAvailable() when sttNotAvailable != null:
+return sttNotAvailable();case _SttFailure() when sttFailure != null:
+return sttFailure(_that.message);case _TtsNotInitialized() when ttsNotInitialized != null:
+return ttsNotInitialized();case _TtsFailure() when ttsFailure != null:
+return ttsFailure(_that.message);case _LlmFailure() when llmFailure != null:
+return llmFailure(_that.message);case _LlmBothProvidersFailed() when llmBothProvidersFailed != null:
+return llmBothProvidersFailed();case _ReportGenerationFailed() when reportGenerationFailed != null:
+return reportGenerationFailed(_that.message);case _ReportParsingFailed() when reportParsingFailed != null:
+return reportParsingFailed();case _:
   return null;
 
 }
@@ -591,6 +645,430 @@ int get hashCode => runtimeType.hashCode;
 @override
 String toString() {
   return 'AppFailure.rateLimitFailure()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class _SttPermissionDenied extends AppFailure {
+  const _SttPermissionDenied(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SttPermissionDenied);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'AppFailure.sttPermissionDenied()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class _SttNotAvailable extends AppFailure {
+  const _SttNotAvailable(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SttNotAvailable);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'AppFailure.sttNotAvailable()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class _SttFailure extends AppFailure {
+  const _SttFailure({required this.message}): super._();
+  
+
+ final  String message;
+
+/// Create a copy of AppFailure
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$SttFailureCopyWith<_SttFailure> get copyWith => __$SttFailureCopyWithImpl<_SttFailure>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SttFailure&&(identical(other.message, message) || other.message == message));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,message);
+
+@override
+String toString() {
+  return 'AppFailure.sttFailure(message: $message)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$SttFailureCopyWith<$Res> implements $AppFailureCopyWith<$Res> {
+  factory _$SttFailureCopyWith(_SttFailure value, $Res Function(_SttFailure) _then) = __$SttFailureCopyWithImpl;
+@useResult
+$Res call({
+ String message
+});
+
+
+
+
+}
+/// @nodoc
+class __$SttFailureCopyWithImpl<$Res>
+    implements _$SttFailureCopyWith<$Res> {
+  __$SttFailureCopyWithImpl(this._self, this._then);
+
+  final _SttFailure _self;
+  final $Res Function(_SttFailure) _then;
+
+/// Create a copy of AppFailure
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? message = null,}) {
+  return _then(_SttFailure(
+message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class _TtsNotInitialized extends AppFailure {
+  const _TtsNotInitialized(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TtsNotInitialized);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'AppFailure.ttsNotInitialized()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class _TtsFailure extends AppFailure {
+  const _TtsFailure({required this.message}): super._();
+  
+
+ final  String message;
+
+/// Create a copy of AppFailure
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$TtsFailureCopyWith<_TtsFailure> get copyWith => __$TtsFailureCopyWithImpl<_TtsFailure>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TtsFailure&&(identical(other.message, message) || other.message == message));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,message);
+
+@override
+String toString() {
+  return 'AppFailure.ttsFailure(message: $message)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$TtsFailureCopyWith<$Res> implements $AppFailureCopyWith<$Res> {
+  factory _$TtsFailureCopyWith(_TtsFailure value, $Res Function(_TtsFailure) _then) = __$TtsFailureCopyWithImpl;
+@useResult
+$Res call({
+ String message
+});
+
+
+
+
+}
+/// @nodoc
+class __$TtsFailureCopyWithImpl<$Res>
+    implements _$TtsFailureCopyWith<$Res> {
+  __$TtsFailureCopyWithImpl(this._self, this._then);
+
+  final _TtsFailure _self;
+  final $Res Function(_TtsFailure) _then;
+
+/// Create a copy of AppFailure
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? message = null,}) {
+  return _then(_TtsFailure(
+message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class _LlmFailure extends AppFailure {
+  const _LlmFailure({required this.message}): super._();
+  
+
+ final  String message;
+
+/// Create a copy of AppFailure
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$LlmFailureCopyWith<_LlmFailure> get copyWith => __$LlmFailureCopyWithImpl<_LlmFailure>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LlmFailure&&(identical(other.message, message) || other.message == message));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,message);
+
+@override
+String toString() {
+  return 'AppFailure.llmFailure(message: $message)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$LlmFailureCopyWith<$Res> implements $AppFailureCopyWith<$Res> {
+  factory _$LlmFailureCopyWith(_LlmFailure value, $Res Function(_LlmFailure) _then) = __$LlmFailureCopyWithImpl;
+@useResult
+$Res call({
+ String message
+});
+
+
+
+
+}
+/// @nodoc
+class __$LlmFailureCopyWithImpl<$Res>
+    implements _$LlmFailureCopyWith<$Res> {
+  __$LlmFailureCopyWithImpl(this._self, this._then);
+
+  final _LlmFailure _self;
+  final $Res Function(_LlmFailure) _then;
+
+/// Create a copy of AppFailure
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? message = null,}) {
+  return _then(_LlmFailure(
+message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class _LlmBothProvidersFailed extends AppFailure {
+  const _LlmBothProvidersFailed(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LlmBothProvidersFailed);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'AppFailure.llmBothProvidersFailed()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class _ReportGenerationFailed extends AppFailure {
+  const _ReportGenerationFailed({required this.message}): super._();
+  
+
+ final  String message;
+
+/// Create a copy of AppFailure
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$ReportGenerationFailedCopyWith<_ReportGenerationFailed> get copyWith => __$ReportGenerationFailedCopyWithImpl<_ReportGenerationFailed>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ReportGenerationFailed&&(identical(other.message, message) || other.message == message));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,message);
+
+@override
+String toString() {
+  return 'AppFailure.reportGenerationFailed(message: $message)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$ReportGenerationFailedCopyWith<$Res> implements $AppFailureCopyWith<$Res> {
+  factory _$ReportGenerationFailedCopyWith(_ReportGenerationFailed value, $Res Function(_ReportGenerationFailed) _then) = __$ReportGenerationFailedCopyWithImpl;
+@useResult
+$Res call({
+ String message
+});
+
+
+
+
+}
+/// @nodoc
+class __$ReportGenerationFailedCopyWithImpl<$Res>
+    implements _$ReportGenerationFailedCopyWith<$Res> {
+  __$ReportGenerationFailedCopyWithImpl(this._self, this._then);
+
+  final _ReportGenerationFailed _self;
+  final $Res Function(_ReportGenerationFailed) _then;
+
+/// Create a copy of AppFailure
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? message = null,}) {
+  return _then(_ReportGenerationFailed(
+message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class _ReportParsingFailed extends AppFailure {
+  const _ReportParsingFailed(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ReportParsingFailed);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'AppFailure.reportParsingFailed()';
 }
 
 
