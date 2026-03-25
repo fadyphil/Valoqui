@@ -1,4 +1,9 @@
 // lib/core/data/repositories/firebase_user_repository.dart
+//
+// Implements UserRepository by delegating every operation to
+// FirestoreDatasource. To swap to a different database (Supabase,
+// SQLite, etc.), implement UserRepository and update service_locator.dart.
+// Nothing else in the app changes.
 
 import "package:fpdart/fpdart.dart";
 import "package:valoqui/core/data/datasources/firestore_datasource.dart";
@@ -10,7 +15,7 @@ class FirebaseUserRepository implements UserRepository {
   final FirestoreDatasource _datasource;
 
   const FirebaseUserRepository({required FirestoreDatasource datasource})
-    : _datasource = datasource;
+      : _datasource = datasource;
 
   @override
   Future<Either<AppFailure, void>> createUserIfNotExists({
@@ -40,4 +45,10 @@ class FirebaseUserRepository implements UserRepository {
     groqConfigured: groqConfigured,
     geminiConfigured: geminiConfigured,
   );
+
+  @override
+  Future<Either<AppFailure, void>> addXp({
+    required String uid,
+    required int xp,
+  }) => _datasource.addXp(uid: uid, xp: xp);
 }

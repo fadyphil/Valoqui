@@ -92,9 +92,34 @@ class FirestoreDatasource {
     }
   }
 
-  // ── DocumentSnapshot → AppUser ─────────────────────────
-  // REPLACE the _toAppUser method at the bottom of firestore_datasource.dart
+  // ── Add XP after a completed session ──────────────────
+  // Uses FieldValue.increment so concurrent writes are safe.
+  // Also bumps totalSessionCount and stamps lastSessionDate.
+  Future<Either<AppFailure, void>> addXp({
+    required String uid,
+    required int xp,
+  }) async {
+    try {
+      await _db.collection("users").doc(uid).update({
+        "currentXP": FieldValue.increment(xp),
+        "totalSessionCount": FieldValue.increment(1),
+        "lastSessionDate": FieldValue.serverTimestamp(),
+      });
+      return right(null);
+    } on FirebaseException catch (e) {
+      return left(
+        AppFailure.databaseFailure(
+          message: "Failed to save XP [${e.code}]: ${e.message}",
+        ),
+      );
+    } catch (e) {
+      return left(
+        AppFailure.databaseFailure(message: "Failed to save XP: $e"),
+      );
+    }
+  }
 
+  // ── DocumentSnapshot → AppUser ─────────────────────────
   AppUser _toAppUser(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return AppUser.fromJson({
