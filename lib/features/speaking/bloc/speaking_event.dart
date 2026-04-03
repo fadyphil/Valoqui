@@ -66,12 +66,12 @@ class _TranscriptReceived extends SpeakingEvent {
 /// STT emitted a FINAL transcript — this is the signal to fire the LLM.
 /// Replaces VAD-based silence detection for always-on mode, removing
 /// the mic conflict between sherpa VAD recorder and SpeechRecognizer.
-class _FinalTranscriptReceived extends SpeakingEvent {
-  final String text;
-  const _FinalTranscriptReceived(this.text);
-  @override
-  List<Object?> get props => [text];
-}
+// class _FinalTranscriptReceived extends SpeakingEvent {
+//   final String text;
+//   const _FinalTranscriptReceived(this.text);
+//   @override
+//   List<Object?> get props => [text];
+// }
 
 /// LLM streamed a new token.
 class _LlmTokenReceived extends SpeakingEvent {
@@ -99,4 +99,9 @@ class _LlmError extends SpeakingEvent {
 /// change (phase → listening) from inside a proper BLoC handler.
 class _TtsFinished extends SpeakingEvent {
   const _TtsFinished();
+}
+
+/// TTS began playing — gate the VAD so TTS audio can't reach Silero.
+class _TtsStarted extends SpeakingEvent {
+  const _TtsStarted();
 }

@@ -1,20 +1,10 @@
 // lib/features/speaking/bloc/speaking_bloc.dart
-//
-// Key fixes vs v1:
-//   - Always-on mode no longer starts sherpa VAD monitoring.
-//     VAD and Android SpeechRecognizer were both holding the mic,
-//     causing degraded audio → empty partials → nothing sent.
-//   - Utterance processing in always-on mode is now driven by
-//     _FinalTranscriptReceived (STT finalResult=true), not VAD silence.
-//   - _TtsFinished event replaces the direct _resumeListening() call,
-//     allowing a proper phase→listening state emit from inside a handler.
-//   - Active speaking time is tracked via partial transcript callbacks
-//     instead of VAD events.
 
 import "dart:async";
 import "package:equatable/equatable.dart";
 import "package:flutter_bloc/flutter_bloc.dart";
 import "package:freezed_annotation/freezed_annotation.dart";
+import "package:permission_handler/permission_handler.dart";
 import "package:valoqui/core/constants/lucia_prompt.dart";
 import "package:valoqui/core/domain/models/app_failure.dart";
 import "package:valoqui/core/domain/models/conversation_message.dart";
@@ -37,7 +27,6 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
   final List<ConversationMessage> _fullTranscript = [];
 
   StreamSubscription<String>? _transcriptSub;
-  StreamSubscription<String>? _finalTranscriptSub;
   StreamSubscription<bool>? _vadSub;
   StreamSubscription<bool>? _ttsSub;
   Timer? _sessionTimer;
@@ -49,11 +38,8 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
   String _userId = "";
   String _userCefrLevel = "A1";
 
-  // PTT: buffer latest partial so we process exactly one utterance per release
-  String _lastPttText = "";
-
-  // Guard: only resume listening if TTS actually started playing
   bool _ttsWasPlaying = false;
+  int _ttsSpokenLength = 0;
 
   SpeakingBloc({
     required SttRepository stt,
@@ -73,14 +59,12 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
     on<_TimerTick>(_onTimerTick);
     on<_VoiceActivityChanged>(_onVoiceActivityChanged);
     on<_TranscriptReceived>(_onTranscriptReceived);
-    on<_FinalTranscriptReceived>(_onFinalTranscriptReceived);
     on<_LlmTokenReceived>(_onLlmTokenReceived);
     on<_LlmResponseComplete>(_onLlmResponseComplete);
     on<_LlmError>(_onLlmError);
     on<_TtsFinished>(_onTtsFinished);
+    on<_TtsStarted>(_onTtsStarted);
   }
-
-  // ── Session started ────────────────────────────────────
 
   Future<void> _onSessionStarted(
     SessionStarted event,
@@ -90,6 +74,16 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
     _userCefrLevel = event.userCefrLevel;
 
     emit(const SpeakingState.initializing());
+
+    final micStatus = await Permission.microphone.request();
+    if (!micStatus.isGranted) {
+      emit(
+        const SpeakingState.error(
+          message: "Microphone permission is required to speak.",
+        ),
+      );
+      return;
+    }
 
     final ttsResult = await _tts.initialize();
     if (ttsResult.isLeft()) {
@@ -107,41 +101,35 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
       return;
     }
 
-    // VAD init is still attempted for push-to-talk fallback detection,
-    // but we do NOT start monitoring in always-on mode (mic conflict).
+    // VAD init failing is non-fatal — it just forces PTT mode.
     final vadResult = await _vad.initialize();
     final micMode = vadResult.isRight() ? MicMode.alwaysOn : MicMode.pushToTalk;
 
-    // Timer: dispatch event instead of calling emit() from callback
     _sessionTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       _elapsed += const Duration(seconds: 1);
       add(_TimerTick(_elapsed));
     });
 
-    // Partial transcript → live UI display
     _transcriptSub = _stt.transcriptStream.listen(
       (text) => add(_TranscriptReceived(text)),
     );
 
-    // Final transcript → process utterance (replaces VAD silence trigger)
-    _finalTranscriptSub = _stt.finalTranscriptStream.listen(
-      (text) => add(_FinalTranscriptReceived(text)),
+    _vadSub = _vad.voiceActivityStream.listen(
+      (isSpeaking) => add(_VoiceActivityChanged(isSpeaking)),
     );
 
-    // TTS state: dispatch _TtsFinished when audio stops
     _ttsSub = _tts.speakingStateStream.listen((isSpeaking) {
       if (isSpeaking) {
         _ttsWasPlaying = true;
+        add(const _TtsStarted());
       } else if (_ttsWasPlaying) {
         _ttsWasPlaying = false;
         add(const _TtsFinished());
       }
     });
 
-    // Always-on: start STT only — no VAD recorder (mic conflict avoided)
-    // Push-to-talk: nothing to start here, button press starts STT
     if (micMode == MicMode.alwaysOn) {
-      await _stt.startListening();
+      await _vad.startMonitoring();
     }
 
     emit(
@@ -158,7 +146,15 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
     _deliverPrecannedGreeting();
   }
 
-  // ── Timer tick ─────────────────────────────────────────
+  Future<void> _onTtsStarted(
+    _TtsStarted event,
+    Emitter<SpeakingState> emit,
+  ) async {
+    final current = state;
+    if (current is SpeakingActive && current.micMode == MicMode.alwaysOn) {
+      await _vad.stopMonitoring();
+    }
+  }
 
   void _onTimerTick(_TimerTick event, Emitter<SpeakingState> emit) {
     final current = state;
@@ -167,22 +163,26 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
     }
   }
 
-  // ── VAD (kept for future use / visual — no longer triggers processing) ──
-
   void _onVoiceActivityChanged(
     _VoiceActivityChanged event,
     Emitter<SpeakingState> emit,
   ) {
-    // VAD is not started in always-on mode so this only fires if
-    // VAD monitoring was explicitly started elsewhere (e.g. future sprint).
+    // VAD events are only meaningful in always-on mode.
+    // In PTT mode the VAD model never loaded, so this never fires anyway,
+    // but the guard makes the intent explicit.
+    final current = state;
+    if (current is SpeakingActive && current.micMode == MicMode.pushToTalk) {
+      return;
+    }
+
     if (event.isActive) {
       _speechStartTime ??= DateTime.now();
+      _stt.startListening();
     } else {
       _accumulateSpeakingTime();
+      _stt.stopListening();
     }
   }
-
-  // ── Partial transcript (always-on: live display + time tracking) ───────
 
   void _onTranscriptReceived(
     _TranscriptReceived event,
@@ -190,31 +190,10 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
   ) {
     final current = state;
     if (current is! SpeakingActive) return;
-
-    if (current.micMode == MicMode.pushToTalk) {
-      // PTT: buffer latest partial — _onMicReleased processes exactly once
-      _lastPttText = event.text;
-    } else {
-      // Always-on: start tracking time on first partial of this utterance
-      _speechStartTime ??= DateTime.now();
-      // Update the live user bubble
-      emit(current.copyWith(partialUserTranscript: event.text));
+    if (current.phase == ConversationPhase.speaking ||
+        current.phase == ConversationPhase.processing) {
+      return;
     }
-  }
-
-  // ── Final transcript (always-on: triggers LLM call) ────────────────────
-
-  void _onFinalTranscriptReceived(
-    _FinalTranscriptReceived event,
-    Emitter<SpeakingState> emit,
-  ) {
-    final current = state;
-    if (current is! SpeakingActive) return;
-    if (current.micMode != MicMode.alwaysOn) return;
-    if (current.phase == ConversationPhase.speaking) return;
-
-    // Accumulate speaking time now that utterance is complete
-    _accumulateSpeakingTime();
 
     final text = event.text.trim();
     if (text.isEmpty) return;
@@ -222,18 +201,16 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
     _processUserUtterance(text, emit);
   }
 
-  // ── Process a complete user utterance ──────────────────
-
   void _processUserUtterance(String text, Emitter<SpeakingState> emit) {
     final current = state;
     if (current is! SpeakingActive) return;
-    if (text.isEmpty) return;
 
     final message = userMessage(text);
     _fullTranscript.add(message);
-
     _history.add(message);
     if (_history.length > 8) _history.removeAt(0);
+
+    _ttsSpokenLength = 0;
 
     emit(
       current.copyWith(
@@ -245,8 +222,6 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
 
     _streamLlmResponse();
   }
-
-  // ── LLM streaming ──────────────────────────────────────
 
   void _streamLlmResponse() {
     _llm
@@ -262,8 +237,6 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
           onDone: () => add(const _LlmResponseComplete()),
         );
   }
-
-  // ── LLM token received ─────────────────────────────────
 
   void _onLlmTokenReceived(
     _LlmTokenReceived event,
@@ -286,13 +259,17 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
       ),
     );
 
-    // Sentence-boundary TTS: speak first sentence before full response arrives
-    if (_isSentenceEnd(event.token) && newBuffer.trim().isNotEmpty) {
-      _tts.speak(newBuffer.trim());
+    String unspoken = newBuffer.substring(_ttsSpokenLength);
+    int boundary;
+    while ((boundary = _findFirstSentenceBoundary(unspoken)) != -1) {
+      final sentence = unspoken.substring(0, boundary + 1).trim();
+      _ttsSpokenLength += boundary + 1;
+      unspoken = unspoken.substring(boundary + 1);
+      if (sentence.isNotEmpty) {
+        _tts.speak(sentence);
+      }
     }
   }
-
-  // ── LLM response complete ──────────────────────────────
 
   void _onLlmResponseComplete(
     _LlmResponseComplete event,
@@ -309,25 +286,40 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
       _history.add(message);
       if (_history.length > 8) _history.removeAt(0);
 
-      // Speak any trailing text that didn't hit a sentence boundary
-      if (!_isSentenceEnd(fullResponse)) {
-        _tts.speak(fullResponse);
+      final spokenUpTo = _ttsSpokenLength.clamp(0, fullResponse.length);
+      final remaining = fullResponse.substring(spokenUpTo).trim();
+      if (remaining.isNotEmpty) {
+        _tts.speak(remaining);
       }
     }
 
-    emit(
-      current.copyWith(
-        currentLuciaBuffer: "",
-        phase: ConversationPhase.speaking,
-      ),
-    );
-  }
+    _ttsSpokenLength = 0;
 
-  // ── LLM error ──────────────────────────────────────────
+    if (fullResponse.isEmpty) {
+      emit(
+        current.copyWith(
+          currentLuciaBuffer: "",
+          phase: ConversationPhase.listening,
+        ),
+      );
+    } else {
+      emit(
+        current.copyWith(
+          currentLuciaBuffer: "",
+          phase: ConversationPhase.speaking,
+        ),
+      );
+      if (!_tts.isSpeaking && !_ttsWasPlaying) {
+        add(const _TtsFinished());
+      }
+    }
+  }
 
   void _onLlmError(_LlmError event, Emitter<SpeakingState> emit) {
     final current = state;
     if (current is! SpeakingActive) return;
+
+    _ttsSpokenLength = 0;
 
     final isFatal = event.failure.maybeWhen(
       llmBothProvidersFailed: () => true,
@@ -343,31 +335,32 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
           phase: ConversationPhase.listening,
         ),
       );
-      _restartListening();
     }
   }
 
-  // ── TTS finished → transition back to listening ─────────
-
-  void _onTtsFinished(_TtsFinished event, Emitter<SpeakingState> emit) {
+  Future<void> _onTtsFinished(
+    _TtsFinished event,
+    Emitter<SpeakingState> emit,
+  ) async {
     final current = state;
     if (current is! SpeakingActive) return;
-
-    emit(current.copyWith(phase: ConversationPhase.listening));
+    if (current.phase != ConversationPhase.speaking) return;
 
     if (current.micMode == MicMode.alwaysOn) {
-      _restartListening();
+      // Restart monitoring to flush any echo that accumulated during TTS.
+      // stopMonitoring disposes the old _audioSub; startMonitoring creates a
+      // fresh one — the Silero VAD internal ring buffer starts clean.
+      await _vad.startMonitoring();
     }
-  }
 
-  // ── Session ended ──────────────────────────────────────
+    emit(current.copyWith(phase: ConversationPhase.listening));
+  }
 
   Future<void> _onSessionEnded(
     SessionEnded event,
     Emitter<SpeakingState> emit,
   ) async {
     _sessionTimer?.cancel();
-    await _stt.stopListening();
     await _tts.stop();
     await _vad.stopMonitoring();
 
@@ -382,11 +375,12 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
     );
   }
 
-  // ── Push-to-talk ───────────────────────────────────────
-
   void _onMicPressed(MicPressed event, Emitter<SpeakingState> emit) {
-    _lastPttText = "";
     _speechStartTime = DateTime.now();
+    // Open the microphone (VAD datasource handles this; works even without
+    // the VAD model loaded, which is the PTT fallback scenario).
+    _vad.startMonitoring();
+    // Tell the STT to start buffering bytes immediately.
     _stt.startListening();
   }
 
@@ -395,18 +389,18 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
     Emitter<SpeakingState> emit,
   ) async {
     _accumulateSpeakingTime();
-    await _stt.stopListening();
-
-    final text = _lastPttText.trim();
-    _lastPttText = "";
-    if (text.isNotEmpty) {
-      _processUserUtterance(text, emit);
-    }
+    // Flush the buffer and kick off decoding before closing the mic.
+    _stt.stopListening();
+    // Close the mic (PTT) — in always-on mode this would also close it, but
+    // always-on never triggers MicReleased from the UI since the button only
+    // fires press/release in PTT mode (see mic_button.dart).
+    await _vad.stopMonitoring();
   }
 
-  // ── Mic mode toggle ────────────────────────────────────
-
-  void _onMicModeToggled(MicModeToggled event, Emitter<SpeakingState> emit) {
+  Future<void> _onMicModeToggled(
+    MicModeToggled event,
+    Emitter<SpeakingState> emit,
+  ) async {
     final current = state;
     if (current is! SpeakingActive) return;
 
@@ -417,21 +411,11 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
     emit(current.copyWith(micMode: newMode));
 
     if (newMode == MicMode.alwaysOn) {
-      _stt.startListening();
+      await _vad
+          .startMonitoring(); // ← was unawaited, a race if called right before recording starts
     } else {
-      _vad.stopMonitoring();
-      _stt.stopListening();
+      await _vad.stopMonitoring();
     }
-  }
-
-  // ── Helpers ────────────────────────────────────────────
-
-  /// Restart STT after 400ms delay so the OS has time to return
-  /// audio focus to the microphone after TTS playback.
-  void _restartListening() {
-    Future<void>.delayed(const Duration(milliseconds: 400), () {
-      if (!isClosed) _stt.startListening();
-    });
   }
 
   void _accumulateSpeakingTime() {
@@ -444,23 +428,25 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
   void _deliverPrecannedGreeting() {
     const greeting =
         "¡Hola! Me alegra que estés aquí. ¿De qué te gustaría hablar hoy?";
-    final msg = assistantMessage(greeting);
-    _fullTranscript.add(msg);
-
     final current = state;
     if (current is SpeakingActive) {
       add(_LlmTokenReceived(greeting));
       add(const _LlmResponseComplete());
     } else {
+      final msg = assistantMessage(greeting);
+      _fullTranscript.add(msg);
+      _history.add(msg);
       Future<void>.microtask(() => _tts.speak(greeting));
     }
   }
 
-  bool _isSentenceEnd(String token) =>
-      token.endsWith(".") ||
-      token.endsWith("?") ||
-      token.endsWith("!") ||
-      token.endsWith("…");
+  int _findFirstSentenceBoundary(String text) {
+    for (int i = 0; i < text.length; i++) {
+      final c = text[i];
+      if (c == '.' || c == '?' || c == '!' || c == '…') return i;
+    }
+    return -1;
+  }
 
   List<ConversationMessage> _upsertLuciaMessage(
     List<ConversationMessage> transcript,
@@ -479,7 +465,6 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
   Future<void> close() async {
     _sessionTimer?.cancel();
     await _transcriptSub?.cancel();
-    await _finalTranscriptSub?.cancel();
     await _vadSub?.cancel();
     await _ttsSub?.cancel();
     await _stt.dispose();
