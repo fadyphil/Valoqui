@@ -36,7 +36,12 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
     GenerateReportEvent event,
     Emitter<ReportState> emit,
   ) async {
-    emit(const ReportState.generating());
+    emit(
+      ReportState.generating(
+        activeSpeakingTime: event.activeSpeakingTime,
+        totalDuration: event.totalDuration,
+      ),
+    );
 
     // Format transcript as plain text for the grading prompt
     final transcriptText = event.transcript

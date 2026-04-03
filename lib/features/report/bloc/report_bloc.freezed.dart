@@ -128,11 +128,11 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function()?  generating,TResult Function( SessionReport report,  Duration totalDuration,  Duration activeSpeakingTime)?  loaded,TResult Function( int totalXp,  String reason)?  fallback,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function( Duration totalDuration,  Duration activeSpeakingTime)?  generating,TResult Function( SessionReport report,  Duration totalDuration,  Duration activeSpeakingTime)?  loaded,TResult Function( int totalXp,  String reason)?  fallback,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case ReportInitial() when initial != null:
 return initial();case ReportGenerating() when generating != null:
-return generating();case ReportLoaded() when loaded != null:
+return generating(_that.totalDuration,_that.activeSpeakingTime);case ReportLoaded() when loaded != null:
 return loaded(_that.report,_that.totalDuration,_that.activeSpeakingTime);case ReportFallback() when fallback != null:
 return fallback(_that.totalXp,_that.reason);case ReportError() when error != null:
 return error(_that.message);case _:
@@ -153,11 +153,11 @@ return error(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function()  generating,required TResult Function( SessionReport report,  Duration totalDuration,  Duration activeSpeakingTime)  loaded,required TResult Function( int totalXp,  String reason)  fallback,required TResult Function( String message)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function( Duration totalDuration,  Duration activeSpeakingTime)  generating,required TResult Function( SessionReport report,  Duration totalDuration,  Duration activeSpeakingTime)  loaded,required TResult Function( int totalXp,  String reason)  fallback,required TResult Function( String message)  error,}) {final _that = this;
 switch (_that) {
 case ReportInitial():
 return initial();case ReportGenerating():
-return generating();case ReportLoaded():
+return generating(_that.totalDuration,_that.activeSpeakingTime);case ReportLoaded():
 return loaded(_that.report,_that.totalDuration,_that.activeSpeakingTime);case ReportFallback():
 return fallback(_that.totalXp,_that.reason);case ReportError():
 return error(_that.message);}
@@ -174,11 +174,11 @@ return error(_that.message);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function()?  generating,TResult? Function( SessionReport report,  Duration totalDuration,  Duration activeSpeakingTime)?  loaded,TResult? Function( int totalXp,  String reason)?  fallback,TResult? Function( String message)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function( Duration totalDuration,  Duration activeSpeakingTime)?  generating,TResult? Function( SessionReport report,  Duration totalDuration,  Duration activeSpeakingTime)?  loaded,TResult? Function( int totalXp,  String reason)?  fallback,TResult? Function( String message)?  error,}) {final _that = this;
 switch (_that) {
 case ReportInitial() when initial != null:
 return initial();case ReportGenerating() when generating != null:
-return generating();case ReportLoaded() when loaded != null:
+return generating(_that.totalDuration,_that.activeSpeakingTime);case ReportLoaded() when loaded != null:
 return loaded(_that.report,_that.totalDuration,_that.activeSpeakingTime);case ReportFallback() when fallback != null:
 return fallback(_that.totalXp,_that.reason);case ReportError() when error != null:
 return error(_that.message);case _:
@@ -225,33 +225,69 @@ String toString() {
 
 
 class ReportGenerating implements ReportState {
-  const ReportGenerating();
+  const ReportGenerating({required this.totalDuration, required this.activeSpeakingTime});
   
 
+ final  Duration totalDuration;
+ final  Duration activeSpeakingTime;
 
-
+/// Create a copy of ReportState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ReportGeneratingCopyWith<ReportGenerating> get copyWith => _$ReportGeneratingCopyWithImpl<ReportGenerating>(this, _$identity);
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ReportGenerating);
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ReportGenerating&&(identical(other.totalDuration, totalDuration) || other.totalDuration == totalDuration)&&(identical(other.activeSpeakingTime, activeSpeakingTime) || other.activeSpeakingTime == activeSpeakingTime));
 }
 
 
 @override
-int get hashCode => runtimeType.hashCode;
+int get hashCode => Object.hash(runtimeType,totalDuration,activeSpeakingTime);
 
 @override
 String toString() {
-  return 'ReportState.generating()';
+  return 'ReportState.generating(totalDuration: $totalDuration, activeSpeakingTime: $activeSpeakingTime)';
 }
 
 
 }
 
+/// @nodoc
+abstract mixin class $ReportGeneratingCopyWith<$Res> implements $ReportStateCopyWith<$Res> {
+  factory $ReportGeneratingCopyWith(ReportGenerating value, $Res Function(ReportGenerating) _then) = _$ReportGeneratingCopyWithImpl;
+@useResult
+$Res call({
+ Duration totalDuration, Duration activeSpeakingTime
+});
 
 
+
+
+}
+/// @nodoc
+class _$ReportGeneratingCopyWithImpl<$Res>
+    implements $ReportGeneratingCopyWith<$Res> {
+  _$ReportGeneratingCopyWithImpl(this._self, this._then);
+
+  final ReportGenerating _self;
+  final $Res Function(ReportGenerating) _then;
+
+/// Create a copy of ReportState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? totalDuration = null,Object? activeSpeakingTime = null,}) {
+  return _then(ReportGenerating(
+totalDuration: null == totalDuration ? _self.totalDuration : totalDuration // ignore: cast_nullable_to_non_nullable
+as Duration,activeSpeakingTime: null == activeSpeakingTime ? _self.activeSpeakingTime : activeSpeakingTime // ignore: cast_nullable_to_non_nullable
+as Duration,
+  ));
+}
+
+
+}
 
 /// @nodoc
 

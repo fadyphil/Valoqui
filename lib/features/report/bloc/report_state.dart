@@ -7,7 +7,11 @@ sealed class ReportState with _$ReportState {
   const factory ReportState.initial() = ReportInitial;
 
   /// Report generation API call in progress.
-  const factory ReportState.generating() = ReportGenerating;
+  /// Carries session metadata so the loading screen can show real numbers.
+  const factory ReportState.generating({
+    required Duration totalDuration,
+    required Duration activeSpeakingTime,
+  }) = ReportGenerating;
 
   /// Report parsed and XP saved successfully.
   const factory ReportState.loaded({
@@ -16,8 +20,7 @@ sealed class ReportState with _$ReportState {
     required Duration activeSpeakingTime,
   }) = ReportLoaded;
 
-  /// All 3 generation attempts failed — XP was saved using the
-  /// client-side fallback calculation. Show a simpler completion screen.
+  /// All 3 generation attempts failed — XP was saved via client-side fallback.
   const factory ReportState.fallback({
     required int totalXp,
     required String reason,
