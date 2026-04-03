@@ -1,19 +1,22 @@
 // lib/features/speaking/screens/speaking_screen.dart
 
-import "package:flutter/material.dart";
-import "package:flutter_animate/flutter_animate.dart";
-import "package:flutter_bloc/flutter_bloc.dart";
-import "package:go_router/go_router.dart";
-import "package:valoqui/core/domain/models/conversation_message.dart";
-import "package:valoqui/core/router/route_names.dart";
-import "package:valoqui/core/theme/app_colors.dart";
-import "package:valoqui/core/theme/app_spacing.dart";
-import "package:valoqui/core/theme/app_typography.dart";
-import "package:valoqui/features/auth/bloc/auth_bloc.dart";
-import "package:valoqui/features/home/bloc/home_bloc.dart";
-import "package:valoqui/features/speaking/bloc/speaking_bloc.dart";
-import "package:valoqui/features/speaking/widgets/mic_button.dart";
-import "package:valoqui/features/speaking/widgets/transcript_bubble.dart";
+import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:valoqui/core/di/service_locator.dart';
+import 'package:valoqui/core/domain/models/conversation_message.dart';
+import 'package:valoqui/core/domain/repositories/stt_repository.dart';
+import 'package:valoqui/core/router/route_names.dart';
+import 'package:valoqui/core/theme/app_colors.dart';
+import 'package:valoqui/core/theme/app_spacing.dart';
+import 'package:valoqui/core/theme/app_typography.dart';
+import 'package:valoqui/features/auth/bloc/auth_bloc.dart';
+import 'package:valoqui/features/home/bloc/home_bloc.dart';
+import 'package:valoqui/features/speaking/bloc/speaking_bloc.dart';
+import 'package:valoqui/features/speaking/widgets/mic_button.dart';
+import 'package:valoqui/features/speaking/widgets/speaking_waveform.dart';
+import 'package:valoqui/features/speaking/widgets/transcript_bubble.dart';
 
 class SpeakingScreen extends StatefulWidget {
   const SpeakingScreen({super.key});
@@ -34,11 +37,13 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
 
     if (authState is AuthAuthenticated) {
       final cefrLevel =
-          homeState is HomeLoaded ? homeState.profile.currentCefrLevel : "A1";
+          homeState is HomeLoaded ? homeState.profile.currentCefrLevel : 'A1';
 
       context.read<SpeakingBloc>().add(
             SessionStarted(
-                userId: authState.user.uid, userCefrLevel: cefrLevel),
+              userId: authState.user.uid,
+              userCefrLevel: cefrLevel,
+            ),
           );
     }
   }
@@ -61,10 +66,12 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
     });
   }
 
+  /// HH:MM:SS — matches the design (e.g. "00:07:14")
   String _formatDuration(Duration d) {
-    final minutes = d.inMinutes.toString().padLeft(2, "0");
-    final seconds = (d.inSeconds % 60).toString().padLeft(2, "0");
-    return "$minutes:$seconds";
+    final h = d.inHours.toString().padLeft(2, '0');
+    final m = (d.inMinutes % 60).toString().padLeft(2, '0');
+    final s = (d.inSeconds % 60).toString().padLeft(2, '0');
+    return '$h:$m:$s';
   }
 
   @override
@@ -101,6 +108,8 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
     );
   }
 
+  // ── Loading state ──────────────────────────────────────────────────────────
+
   Widget _buildLoading() {
     return const Center(
       child: Column(
@@ -109,9 +118,9 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
           CircularProgressIndicator(color: AppColors.accentPrimary),
           SizedBox(height: AppSpacing.lg),
           Text(
-            "Getting Lucia ready...",
+            'Getting Lucia ready...',
             style: TextStyle(
-              fontFamily: "DMSans",
+              fontFamily: 'DMSans',
               fontSize: 14,
               color: AppColors.textSecondary,
             ),
@@ -120,6 +129,8 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
       ),
     );
   }
+
+  // ── Error state ────────────────────────────────────────────────────────────
 
   Widget _buildError(String message) {
     return Center(
@@ -138,13 +149,15 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
             const SizedBox(height: AppSpacing.xl),
             ElevatedButton(
               onPressed: () => context.go(RouteNames.home),
-              child: const Text("Back to Home"),
+              child: const Text('Back to Home'),
             ),
           ],
         ),
       ),
     );
   }
+
+  // ── Active conversation ────────────────────────────────────────────────────
 
   Widget _buildActive(BuildContext context, SpeakingActive state) {
     final bloc = context.read<SpeakingBloc>();
@@ -161,11 +174,13 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
           ),
           const Divider(color: AppColors.border, height: 1),
           Expanded(child: _buildTranscript(state, isLuciaStreaming)),
-          _buildBottomArea(context, state, bloc),
+          _buildBottomPanel(context, state, bloc),
         ],
       ),
     );
   }
+
+  // ── Transcript ─────────────────────────────────────────────────────────────
 
   Widget _buildTranscript(SpeakingActive state, bool isLuciaStreaming) {
     final messages = state.transcript;
@@ -180,7 +195,8 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
         horizontal: AppSpacing.lg,
         vertical: AppSpacing.lg,
       ),
-      itemCount: messages.length + (hasPartial ? 1 : 0) + (showTyping ? 1 : 0),
+      itemCount:
+          messages.length + (hasPartial ? 1 : 0) + (showTyping ? 1 : 0),
       itemBuilder: (context, index) {
         if (index < messages.length) {
           final message = messages[index];
@@ -202,19 +218,36 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
     );
   }
 
-  Widget _buildBottomArea(
+  // ── Bottom panel ───────────────────────────────────────────────────────────
+  // Structure matches the design:
+  //   [ SPEAKING/LISTENING/THINKING label + waveform bars ]
+  //   [ ── divider ── ]
+  //   [ mic button ]
+  //   [ mode toggle ]
+
+  Widget _buildBottomPanel(
     BuildContext context,
     SpeakingActive state,
     SpeakingBloc bloc,
   ) {
+    // Amplitude stream from SttRepository — null-safe, waveform auto-animates
+    // if the stream is not yet wired or the interface doesn't expose it.
+    Stream<double>? ampStream;
+    try {
+      ampStream = sl<SttRepository>().amplitudeStream;
+    } catch (_) {
+      // SttRepository not yet registered or amplitudeStream not yet on the
+      // interface — waveform falls back to auto-animation gracefully.
+    }
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Phase indicator — replaces the fake waveform animation
-        _PhaseIndicator(phase: state.phase),
-
+        SpeakingWaveform(
+          phase: state.phase,
+          amplitudeStream: ampStream,
+        ),
         const Divider(color: AppColors.border, height: 1),
-
         Container(
           color: AppColors.bgPrimary,
           padding: const EdgeInsets.only(
@@ -242,110 +275,8 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
   }
 }
 
-// ── Phase indicator ────────────────────────────────────────────────────
-// Replaces the fake waveform. Shows a simple contextual status strip.
-
-class _PhaseIndicator extends StatelessWidget {
-  final ConversationPhase phase;
-
-  const _PhaseIndicator({required this.phase});
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      width: double.infinity,
-      height: 40,
-      color: AppColors.bgSurface,
-      child: Center(child: _buildContent()),
-    );
-  }
-
-  Widget _buildContent() {
-    switch (phase) {
-      case ConversationPhase.listening:
-        return const Text(
-          "Listening...",
-          style: TextStyle(
-            fontFamily: "DMSans",
-            fontSize: 12,
-            color: AppColors.textSecondary,
-            letterSpacing: 0.5,
-          ),
-        );
-
-      case ConversationPhase.processing:
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 6,
-              height: 6,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.accentPrimary,
-              ),
-            )
-                .animate(onPlay: (c) => c.repeat())
-                .fadeOut(duration: 600.ms)
-                .then()
-                .fadeIn(duration: 600.ms),
-            const SizedBox(width: 8),
-            const Text(
-              "Lucia is thinking...",
-              style: TextStyle(
-                fontFamily: "DMSans",
-                fontSize: 12,
-                color: AppColors.accentPrimary,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ],
-        );
-
-      case ConversationPhase.speaking:
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Three bars that animate up/down independently
-            ...[0, 1, 2].map(
-              (i) => Container(
-                    width: 3,
-                    height: 14,
-                    margin: const EdgeInsets.symmetric(horizontal: 2),
-                    decoration: BoxDecoration(
-                      color: AppColors.accentSecondary,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  )
-                  .animate(
-                    delay: (i * 120).ms,
-                    onPlay: (c) => c.repeat(reverse: true),
-                  )
-                  .scaleY(
-                    begin: 0.25,
-                    end: 1.0,
-                    duration: 500.ms,
-                    curve: Curves.easeInOut,
-                  ),
-            ),
-            const SizedBox(width: 10),
-            const Text(
-              "Lucia is speaking",
-              style: TextStyle(
-                fontFamily: "DMSans",
-                fontSize: 12,
-                color: AppColors.accentSecondary,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ],
-        );
-    }
-  }
-}
-
-// ── Top bar ────────────────────────────────────────────────────────────
+// ── Top bar ────────────────────────────────────────────────────────────────────
+// Matches design: [X] End Session ············ ● 00:07:14
 
 class _TopBar extends StatelessWidget {
   final Duration elapsed;
@@ -367,11 +298,12 @@ class _TopBar extends StatelessWidget {
       ),
       child: Row(
         children: [
+          // [X] button
           GestureDetector(
             onTap: onEnd,
             child: Container(
-              width: 36,
-              height: 36,
+              width: 34,
+              height: 34,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: AppColors.bgElevated,
@@ -380,17 +312,47 @@ class _TopBar extends StatelessWidget {
               child: const Icon(
                 Icons.close,
                 color: AppColors.textSecondary,
-                size: 18,
+                size: 16,
               ),
             ),
           ),
-          const Spacer(),
+          const SizedBox(width: AppSpacing.sm),
+          // "End Session" label
           Text(
-            formatDuration(elapsed),
-            style: AppTypography.labelMD.copyWith(
+            'End Session',
+            style: AppTypography.bodyMD.copyWith(
               color: AppColors.textSecondary,
-              fontFamily: "JetBrainsMono",
             ),
+          ),
+          const Spacer(),
+          // Red dot indicator + HH:MM:SS timer
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 7,
+                height: 7,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.error,
+                ),
+              )
+                  .animate(onPlay: (c) => c.repeat(reverse: true))
+                  .fadeOut(duration: 900.ms)
+                  .then()
+                  .fadeIn(duration: 900.ms),
+              const SizedBox(width: 6),
+              Text(
+                formatDuration(elapsed),
+                style: const TextStyle(
+                  fontFamily: 'JetBrainsMono',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textPrimary,
+                  letterSpacing: 1.0,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -398,7 +360,7 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-// ── Typing indicator ───────────────────────────────────────────────────
+// ── Typing indicator (inside transcript area) ──────────────────────────────────
 
 class _TypingIndicator extends StatelessWidget {
   const _TypingIndicator();
@@ -406,7 +368,10 @@ class _TypingIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: AppSpacing.lg, bottom: AppSpacing.sm),
+      padding: const EdgeInsets.only(
+        left: AppSpacing.lg,
+        bottom: AppSpacing.sm,
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: List.generate(3, (i) => _Dot(index: i)),
@@ -432,7 +397,7 @@ class _Dot extends StatelessWidget {
         )
         .animate(
           delay: (index * 150).ms,
-          onPlay: (controller) => controller.repeat(reverse: true),
+          onPlay: (c) => c.repeat(reverse: true),
         )
         .scaleXY(begin: 0.6, end: 1.0, duration: 400.ms);
   }
