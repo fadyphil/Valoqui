@@ -1,9 +1,9 @@
 // lib/core/theme/app_theme.dart
 
 import "package:flutter/material.dart";
-import "app_colors.dart";
-import "app_typography.dart";
-import "app_spacing.dart";
+import "package:valoqui/core/theme/app_colors.dart";
+import "package:valoqui/core/theme/app_spacing.dart";
+import "package:valoqui/core/theme/app_typography.dart";
 
 class AppTheme {
   static ThemeData get dark {
@@ -80,12 +80,28 @@ class AppTheme {
         titleTextStyle: AppTypography.labelLG,
         iconTheme: IconThemeData(color: AppColors.textPrimary),
       ),
+      // Material 2's BottomNavigationBar ignores the app fontFamily entirely
+      // unless selectedLabelStyle / unselectedLabelStyle are set explicitly.
+      // Without these, nav bar labels render in the system default font even
+      // though every other text widget in the app uses DMSans / Fraunces.
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppColors.bgSurface,
         selectedItemColor: AppColors.accentPrimary,
         unselectedItemColor: AppColors.textSecondary,
         type: BottomNavigationBarType.fixed,
         showUnselectedLabels: true,
+        // Color is driven by selectedItemColor / unselectedItemColor above;
+        // these styles only need to carry the font metadata.
+        selectedLabelStyle: TextStyle(
+          fontFamily: AppTypography.dmSans,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelStyle: TextStyle(
+          fontFamily: AppTypography.dmSans,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
       ),
       dividerColor: AppColors.border,
       cardTheme: CardThemeData(
