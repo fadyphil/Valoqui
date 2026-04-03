@@ -1,117 +1,102 @@
 // lib/core/data/datasources/android_stt_datasource.dart
+//
+// Sprint 2 implementation — Android SpeechRecognizer via speech_to_text.
+// NOTE (ARCH-101): This datasource has a hard ~7-second OS ceiling on PTT
+// sessions and a mic-conflict with always-on VAD. It is a Sprint 2 stand-in.
+// Sprint 3 replaces it with GroqSttDatasource (record + Groq Whisper).
+// Swap: one new file + one line in service_locator.dart.
 
-import "dart:async";
-import "package:flutter/foundation.dart";
-import "package:fpdart/fpdart.dart";
-import "package:speech_to_text/speech_recognition_result.dart";
-import "package:speech_to_text/speech_to_text.dart";
-import "package:valoqui/core/domain/models/app_failure.dart";
+import 'dart:async';
 
-@Deprecated(
-  'Migrating to offline Sherpa-ONNX unified pipeline to fix Android OS cutoffs. '
-  'Use SherpaSttDatasource instead. (ARCH-101)',
-)
+import 'package:flutter/foundation.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:speech_to_text/speech_recognition_result.dart';
+import 'package:speech_to_text/speech_to_text.dart';
+import 'package:valoqui/core/domain/models/app_failure.dart';
+
 class AndroidSttDatasource {
-  /// Pass the required [SpeechToText] class/instance here to have clean dependency injection.
-  AndroidSttDatasource({required SpeechToText stt}) : _stt = stt;
+  final SpeechToText _stt = SpeechToText();
 
-  final SpeechToText _stt;
-
-  // Partial results → live UI display (user bubble updates while speaking)
-  final StreamController<String> _partialController =
-      StreamController<String>.broadcast();
-
-  // Final results → utterance processing (triggers LLM call in always-on mode)
-  final StreamController<String> _finalController =
-      StreamController<String>.broadcast();
+  final _transcriptController = StreamController<String>.broadcast();
+  final _amplitudeController = StreamController<double>.broadcast();
 
   bool _initialized = false;
 
-  Stream<String> get transcriptStream => _partialController.stream;
-  Stream<String> get finalTranscriptStream => _finalController.stream;
+  // ── Public streams ─────────────────────────────────────────────────────────
+
+  Stream<String> get transcriptStream => _transcriptController.stream;
+
+  /// Normalized 0.0–1.0 amplitude.
+  /// speech_to_text onSoundLevelChange reports ~0–10 on Android.
+  Stream<double> get amplitudeStream => _amplitudeController.stream;
+
   bool get isListening => _stt.isListening;
+
+  // ── Lifecycle ──────────────────────────────────────────────────────────────
 
   Future<Either<AppFailure, bool>> initialize() async {
     try {
       _initialized = await _stt.initialize(
         onError: (error) {
-          debugPrint(
-            "[STT] Error: ${error.errorMsg} (permanent: ${error.permanent})",
-          );
+          debugPrint('[STT] Error: ${error.errorMsg}');
         },
-        debugLogging: kDebugMode,
       );
-
-      if (!_initialized) return left(const AppFailure.sttNotAvailable());
       return right(_initialized);
     } catch (e) {
-      return left(AppFailure.sttFailure(message: "STT init failed: $e"));
+      return left(AppFailure.sttFailure(message: 'STT init failed: $e'));
     }
   }
 
-  /// Start listening.
-  ///
-  /// [alwaysOnMode] controls the silence-detection window:
-  ///   - true  (always-on): pauseFor = 2s — silence ends the utterance and
-  ///     fires a final result, which the BLoC uses to trigger the LLM call.
-  ///   - false (push-to-talk): pauseFor = 60s — silence does NOT end the
-  ///     session; the button release calls stopListening() explicitly.
-  ///     listenFor is extended to 5 minutes for long PTT inputs.
-  Future<Either<AppFailure, void>> startListening({
-    bool alwaysOnMode = true,
-  }) async {
-    if (!_initialized) return left(const AppFailure.sttNotAvailable());
-    if (_stt.isListening) return right(null); // guard against double-start
-
+  Future<Either<AppFailure, void>> startListening() async {
+    if (!_initialized) {
+      return left(const AppFailure.sttNotAvailable());
+    }
     try {
       await _stt.listen(
-        localeId: "es-ES",
         onResult: (SpeechRecognitionResult result) {
-          if (result.recognizedWords.isEmpty) return;
-
-          // Always emit partial so the user bubble updates live
-          _partialController.add(result.recognizedWords);
-
-          // Emit final only when STT confirms the utterance is done.
-          // BLoC uses this to fire the LLM call in always-on mode.
-          if (result.finalResult) {
-            _finalController.add(result.recognizedWords);
+          if (result.recognizedWords.isNotEmpty) {
+            _transcriptController.add(result.recognizedWords);
           }
         },
-        // PTT: long timeout — button release, not silence, ends recording.
-        // Always-on: short timeout — silence is the natural utterance boundary.
-        listenFor: alwaysOnMode
-            ? const Duration(seconds: 30)
-            : const Duration(minutes: 5),
-        pauseFor: alwaysOnMode
-            ? const Duration(seconds: 2)
-            : const Duration(seconds: 60),
+        onSoundLevelChange: (double level) {
+          // level is roughly 0–10 on Android; clamp and normalize to 0.0–1.0
+          final normalized = (level / 10.0).clamp(0.0, 1.0);
+          if (!_amplitudeController.isClosed) {
+            _amplitudeController.add(normalized);
+          }
+        },
         listenOptions: SpeechListenOptions(
-          listenMode: ListenMode.dictation,
           partialResults: true,
           cancelOnError: false,
+          listenMode: ListenMode.dictation,
         ),
+        listenFor: const Duration(seconds: 30),
+        pauseFor: const Duration(seconds: 3),
+        // Do NOT set localeId — auto-detection handles Spanish + English.
+        // Setting 'es_ES' breaks English input entirely.
       );
-
       return right(null);
     } catch (e) {
-      return left(AppFailure.sttFailure(message: "Failed to start STT: $e"));
+      return left(AppFailure.sttFailure(message: 'Failed to start listening: $e'));
     }
   }
 
   Future<Either<AppFailure, String>> stopListening() async {
     try {
       await _stt.stop();
+      // Decay amplitude to zero when not listening
+      if (!_amplitudeController.isClosed) {
+        _amplitudeController.add(0.0);
+      }
       return right(_stt.lastRecognizedWords);
     } catch (e) {
-      return left(AppFailure.sttFailure(message: "Failed to stop STT: $e"));
+      return left(AppFailure.sttFailure(message: 'Failed to stop listening: $e'));
     }
   }
 
   Future<void> dispose() async {
     await _stt.cancel();
-    await _partialController.close();
-    await _finalController.close();
+    await _transcriptController.close();
+    await _amplitudeController.close();
   }
 }
-

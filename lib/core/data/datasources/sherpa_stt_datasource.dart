@@ -1,23 +1,4 @@
 // lib/core/data/datasources/sherpa_stt_datasource.dart
-//
-// Two decode paths — only one fires per mode:
-//
-//   PTT (push-to-talk):
-//     MicPressed → startListening() → buffer PCM bytes → MicReleased →
-//     stopListening() → _decodeUtterance(pcmBytes) → _decodeFloat32()
-//
-//   Always-on:
-//     VAD emits completed SpeechSegment → _onSpeechSegment(Float32List) →
-//     _decodeFloat32() directly — no PCM buffering involved.
-//
-// Root cause of the always-on silence (fixed here):
-//   The previous code tried to buffer real-time audioStream bytes and decode
-//   them when voiceActivityStream emitted false. But sherpa-onnx VAD is
-//   segment-based: isEmpty() only becomes false AFTER silence follows speech,
-//   at which point the audio has already passed through the stream. The VAD
-//   also never emitted false (only true, from completed segments), so
-//   _decodeUtterance was never called. Fix: listen to speechSegmentStream
-//   which carries the completed segment's own samples.
 
 import "dart:async";
 import "dart:io";
@@ -99,10 +80,12 @@ class _SherpaDecodeIsolate {
   ) async {
     final handshake = ReceivePort();
     try {
-      await Isolate.spawn(
-        _sherpaIsolateEntry,
-        [handshake.sendPort, encoderPath, decoderPath, tokensPath],
-      );
+      await Isolate.spawn(_sherpaIsolateEntry, [
+        handshake.sendPort,
+        encoderPath,
+        decoderPath,
+        tokensPath,
+      ]);
       final reply = await handshake.first;
       if (reply is SendPort) {
         _port = reply;
@@ -143,17 +126,20 @@ class SherpaSttDatasource {
 
   final StreamController<String> _textController =
       StreamController<String>.broadcast();
-  Stream<String> get textStream => _textController.stream;
+  final StreamController<double> _amplitudeController =
+      StreamController<double>.broadcast();
 
-  // voiceActivityStream subscription — keeps _onVadEvent for PTT compat.
+  Stream<String> get textStream => _textController.stream;
+  Stream<double> get amplitudeStream => _amplitudeController.stream;
+
   StreamSubscription<bool>? _vadSub;
-  // audioStream subscription — raw PCM bytes for PTT buffering.
   StreamSubscription<List<int>>? _audioSub;
-  // speechSegmentStream subscription — always-on decode path.
   StreamSubscription<Float32List>? _segmentSub;
 
   final BytesBuilder _audioBuffer = BytesBuilder();
   bool _isRecordingUtterance = false;
+
+  bool get isListening => _isRecordingUtterance;
 
   String _encoderPath = "";
   String _decoderPath = "";
@@ -187,12 +173,7 @@ class SherpaSttDatasource {
         _fallbackRecognizer = _buildRecognizer();
       }
 
-      // Always-on path: decode completed speech segments directly.
-      _segmentSub = _vadRepository.speechSegmentStream.listen(
-        _onSpeechSegment,
-      );
-
-      // PTT path: buffer raw bytes while button held, decode on release.
+      _segmentSub = _vadRepository.speechSegmentStream.listen(_onSpeechSegment);
       _vadSub = _vadRepository.voiceActivityStream.listen(_onVadEvent);
       _audioSub = _vadRepository.audioStream.listen(_onAudioBytesReceived);
 
@@ -210,17 +191,23 @@ class SherpaSttDatasource {
     _isRecordingUtterance = true;
   }
 
-  void stopListening() {
-    if (!_isRecordingUtterance) return;
+  Future<String> stopListening() async {
+    if (!_isRecordingUtterance) return "";
     _isRecordingUtterance = false;
-    _decodeUtterance(_audioBuffer.takeBytes());
+
+    // Decay amplitude to zero visually when stopping
+    if (!_amplitudeController.isClosed) {
+      _amplitudeController.add(0.0);
+    }
+
+    final bytes = _audioBuffer.takeBytes();
+    await _decodeUtterance(bytes);
+
+    // Final text arrives via textStream, returning empty here aligns with contract
+    return "";
   }
 
   // ── Always-on segment path ────────────────────────────────────────────────
-  //
-  // Called when the VAD emits a completed SpeechSegment (speech + silence).
-  // The segment already contains the utterance audio as Float32 — decode it
-  // directly without going through the PCM buffer.
 
   void _onSpeechSegment(Float32List samples) {
     debugPrint("[STT] Segment received — ${samples.length} samples, decoding…");
@@ -228,10 +215,6 @@ class SherpaSttDatasource {
   }
 
   // ── PTT / VAD buffer path ─────────────────────────────────────────────────
-  //
-  // _onVadEvent is kept for PTT compatibility but is effectively a no-op in
-  // always-on mode: voiceActivityStream emits true→false back-to-back after
-  // a segment completes, so the buffer is always empty by the time false fires.
 
   void _onVadEvent(bool isSpeaking) {
     if (isSpeaking) {
@@ -239,7 +222,7 @@ class SherpaSttDatasource {
       _isRecordingUtterance = true;
     } else if (_isRecordingUtterance) {
       _isRecordingUtterance = false;
-      _decodeUtterance(_audioBuffer.takeBytes()); // empty in always-on, no-op
+      _decodeUtterance(_audioBuffer.takeBytes());
     }
   }
 
@@ -247,14 +230,50 @@ class SherpaSttDatasource {
     if (_isRecordingUtterance) {
       _audioBuffer.add(chunk);
     }
+    // Calculate and emit amplitude continuously whenever audio flows
+    _calculateAndEmitAmplitude(chunk);
+  }
+
+  // Extracts peak volume from 16-bit PCM chunk and normalizes it to 0.0 - 1.0
+  // Extracts peak volume from 16-bit PCM chunk and normalizes it to 0.0 - 1.0
+  void _calculateAndEmitAmplitude(List<int> chunk) {
+    if (_amplitudeController.isClosed || chunk.isEmpty) return;
+
+    // FIX: Ensure memory alignment. If the offset isn't a multiple of 2,
+    // we must create a fresh, cleanly aligned copy of the bytes.
+    Uint8List bytes;
+    if (chunk is Uint8List && chunk.offsetInBytes % 2 == 0) {
+      bytes = chunk;
+    } else {
+      bytes = Uint8List.fromList(chunk);
+    }
+
+    final int16 = Int16List.view(
+      bytes.buffer,
+      bytes.offsetInBytes,
+      bytes.length ~/ 2,
+    );
+
+    int maxAmplitude = 0;
+    for (int i = 0; i < int16.length; i++) {
+      final absValue = int16[i].abs();
+      if (absValue > maxAmplitude) {
+        maxAmplitude = absValue;
+      }
+    }
+
+    // Max value for 16-bit PCM is 32768.
+    final normalized = (maxAmplitude / 32768.0).clamp(0.0, 1.0);
+    _amplitudeController.add(normalized);
   }
 
   // ── Decode ────────────────────────────────────────────────────────────────
 
   Future<void> _decodeUtterance(List<int> pcmBytes) async {
     if (pcmBytes.isEmpty) return;
-    final bytes =
-        pcmBytes is Uint8List ? pcmBytes : Uint8List.fromList(pcmBytes);
+    final bytes = pcmBytes is Uint8List
+        ? pcmBytes
+        : Uint8List.fromList(pcmBytes);
     await _decodeFloat32(_pcm16ToFloat32(bytes));
   }
 
@@ -308,7 +327,12 @@ class SherpaSttDatasource {
     );
   }
 
-  static Float32List _pcm16ToFloat32(Uint8List bytes) {
+  static Float32List _pcm16ToFloat32(Uint8List rawBytes) {
+    // FIX: Ensure memory alignment for decoding as well
+    final bytes = rawBytes.offsetInBytes % 2 == 0
+        ? rawBytes
+        : Uint8List.fromList(rawBytes);
+
     final int16 = Int16List.view(
       bytes.buffer,
       bytes.offsetInBytes,
@@ -335,7 +359,6 @@ class SherpaSttDatasource {
         ),
         flush: true,
       );
-      debugPrint("[STT] Copied $assetPath");
     }
     return localPath;
   }
@@ -347,5 +370,6 @@ class SherpaSttDatasource {
     _decodeIsolate.dispose();
     _fallbackRecognizer?.free();
     if (!_textController.isClosed) await _textController.close();
+    if (!_amplitudeController.isClosed) await _amplitudeController.close();
   }
 }

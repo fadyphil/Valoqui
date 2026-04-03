@@ -57,7 +57,7 @@ class SherpaVadDatasource {
         sileroVad: sherpa.SileroVadModelConfig(
           model: modelPath,
           threshold: 0.5,
-          minSilenceDuration: 0.5,
+          minSilenceDuration: 0.8,
           minSpeechDuration: 0.25,
           windowSize: 512,
         ),

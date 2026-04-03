@@ -12,16 +12,31 @@ class SherpaSttRepository implements SttRepository {
     : _datasource = datasource;
 
   @override
-  Future<Either<AppFailure, void>> initialize() => _datasource.initialize();
+  Future<Either<AppFailure, bool>> initialize() async {
+    final result = await _datasource.initialize();
+    return result.map((_) => true); // Maps void to bool to satisfy interface
+  }
 
   @override
   Stream<String> get transcriptStream => _datasource.textStream;
 
   @override
-  void startListening() => _datasource.startListening();
+  Stream<double> get amplitudeStream => _datasource.amplitudeStream;
 
   @override
-  void stopListening() => _datasource.stopListening();
+  bool get isListening => _datasource.isListening;
+
+  @override
+  Future<Either<AppFailure, void>> startListening() async {
+    _datasource.startListening();
+    return right(null);
+  }
+
+  @override
+  Future<Either<AppFailure, String>> stopListening() async {
+    final resultText = await _datasource.stopListening();
+    return right(resultText);
+  }
 
   @override
   Future<void> dispose() => _datasource.dispose();
