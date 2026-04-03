@@ -1,12 +1,4 @@
 // lib/core/data/datasources/android_stt_datasource.dart
-//
-// Two key fixes vs v1:
-//   1. localeId: 'es-ES' — without this the device uses its default language
-//      (English/Arabic) and Spanish is never recognized.
-//   2. Separate finalTranscriptStream — emits only when result.finalResult==true.
-//      The BLoC uses this to trigger LLM calls in always-on mode, removing
-//      the dependency on sherpa VAD (which was fighting the SpeechRecognizer
-//      for the microphone and causing empty transcripts).
 
 import "dart:async";
 import "package:flutter/foundation.dart";
@@ -15,15 +7,21 @@ import "package:speech_to_text/speech_recognition_result.dart";
 import "package:speech_to_text/speech_to_text.dart";
 import "package:valoqui/core/domain/models/app_failure.dart";
 
+@Deprecated(
+  'Migrating to offline Sherpa-ONNX unified pipeline to fix Android OS cutoffs. '
+  'Use SherpaSttDatasource instead. (ARCH-101)',
+)
 class AndroidSttDatasource {
-  final SpeechToText _stt = SpeechToText();
+  /// Pass the required [SpeechToText] class/instance here to have clean dependency injection.
+  AndroidSttDatasource({required SpeechToText stt}) : _stt = stt;
+
+  final SpeechToText _stt;
 
   // Partial results → live UI display (user bubble updates while speaking)
   final StreamController<String> _partialController =
       StreamController<String>.broadcast();
 
   // Final results → utterance processing (triggers LLM call in always-on mode)
-  // Fires only once per utterance, after pauseFor silence threshold.
   final StreamController<String> _finalController =
       StreamController<String>.broadcast();
 
@@ -51,15 +49,22 @@ class AndroidSttDatasource {
     }
   }
 
-  Future<Either<AppFailure, void>> startListening() async {
+  /// Start listening.
+  ///
+  /// [alwaysOnMode] controls the silence-detection window:
+  ///   - true  (always-on): pauseFor = 2s — silence ends the utterance and
+  ///     fires a final result, which the BLoC uses to trigger the LLM call.
+  ///   - false (push-to-talk): pauseFor = 60s — silence does NOT end the
+  ///     session; the button release calls stopListening() explicitly.
+  ///     listenFor is extended to 5 minutes for long PTT inputs.
+  Future<Either<AppFailure, void>> startListening({
+    bool alwaysOnMode = true,
+  }) async {
     if (!_initialized) return left(const AppFailure.sttNotAvailable());
     if (_stt.isListening) return right(null); // guard against double-start
 
     try {
       await _stt.listen(
-        // FIX 1: Set es-ES so the Google Spanish recognition model is used.
-        // The Spanish model handles common English/Arabic words mixed in —
-        // acceptable trade-off for a Spanish learning app.
         localeId: "es-ES",
         onResult: (SpeechRecognitionResult result) {
           if (result.recognizedWords.isEmpty) return;
@@ -67,15 +72,20 @@ class AndroidSttDatasource {
           // Always emit partial so the user bubble updates live
           _partialController.add(result.recognizedWords);
 
-          // FIX 2: Only emit to finalController when STT is actually done.
-          // This is the signal the BLoC uses to fire the LLM call.
+          // Emit final only when STT confirms the utterance is done.
+          // BLoC uses this to fire the LLM call in always-on mode.
           if (result.finalResult) {
             _finalController.add(result.recognizedWords);
           }
         },
-        listenFor: const Duration(seconds: 30),
-        // 2 seconds of silence → fires final result → BLoC processes utterance
-        pauseFor: const Duration(seconds: 2),
+        // PTT: long timeout — button release, not silence, ends recording.
+        // Always-on: short timeout — silence is the natural utterance boundary.
+        listenFor: alwaysOnMode
+            ? const Duration(seconds: 30)
+            : const Duration(minutes: 5),
+        pauseFor: alwaysOnMode
+            ? const Duration(seconds: 2)
+            : const Duration(seconds: 60),
         listenOptions: SpeechListenOptions(
           listenMode: ListenMode.dictation,
           partialResults: true,
@@ -104,3 +114,4 @@ class AndroidSttDatasource {
     await _finalController.close();
   }
 }
+

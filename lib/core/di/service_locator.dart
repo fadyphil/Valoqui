@@ -46,14 +46,14 @@ import "package:valoqui/features/onboarding/bloc/onboarding_bloc.dart";
 import "package:valoqui/core/network/dio_client.dart";
 
 // ── Sprint 2: Datasources ─────────────────────────────────────
-import "package:valoqui/core/data/datasources/android_stt_datasource.dart";
+// import "package:valoqui/core/data/datasources/android_stt_datasource.dart";
 import "package:valoqui/core/data/datasources/sherpa_tts_datasource.dart";
 import "package:valoqui/core/data/datasources/sherpa_vad_datasource.dart";
 import "package:valoqui/core/data/datasources/groq_llm_datasource.dart";
 import "package:valoqui/core/data/datasources/gemini_llm_datasource.dart";
 
 // ── Sprint 2: Repositories ────────────────────────────────────
-import "package:valoqui/core/data/repositories/android_stt_repository.dart";
+// import "package:valoqui/core/data/repositories/android_stt_repository.dart";
 import "package:valoqui/core/data/repositories/sherpa_tts_repository.dart";
 import "package:valoqui/core/data/repositories/sherpa_vad_repository.dart";
 import "package:valoqui/core/data/repositories/groq_llm_repository.dart";
