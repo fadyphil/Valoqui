@@ -7,6 +7,13 @@ import "package:valoqui/core/theme/app_typography.dart";
 
 class AppTheme {
   static ThemeData get dark {
+    // 1. Create a base text theme using DMSans for all default/fallback styles
+    final baseTextTheme = ThemeData.dark().textTheme.apply(
+      fontFamily: AppTypography.dmSans,
+      bodyColor: AppColors.textPrimary,
+      displayColor: AppColors.textPrimary,
+    );
+
     return ThemeData(
       brightness: Brightness.dark,
       primaryColor: AppColors.accentPrimary,
@@ -21,8 +28,12 @@ class AppTheme {
         onSurface: AppColors.textPrimary,
         onError: Colors.white,
       ),
-      fontFamily: AppTypography.dmSans,
-      textTheme: const TextTheme(
+
+      // FIX: Removed global fontFamily declaration here so it doesn't
+      // overwrite the Fraunces styles inside the textTheme below.
+
+      // 2. Overlay your explicit typography onto the base theme
+      textTheme: baseTextTheme.copyWith(
         displayLarge: AppTypography.displayXL,
         headlineLarge: AppTypography.headingLG,
         headlineMedium: AppTypography.headingMD,
@@ -80,18 +91,12 @@ class AppTheme {
         titleTextStyle: AppTypography.labelLG,
         iconTheme: IconThemeData(color: AppColors.textPrimary),
       ),
-      // Material 2's BottomNavigationBar ignores the app fontFamily entirely
-      // unless selectedLabelStyle / unselectedLabelStyle are set explicitly.
-      // Without these, nav bar labels render in the system default font even
-      // though every other text widget in the app uses DMSans / Fraunces.
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppColors.bgSurface,
         selectedItemColor: AppColors.accentPrimary,
         unselectedItemColor: AppColors.textSecondary,
         type: BottomNavigationBarType.fixed,
         showUnselectedLabels: true,
-        // Color is driven by selectedItemColor / unselectedItemColor above;
-        // these styles only need to carry the font metadata.
         selectedLabelStyle: TextStyle(
           fontFamily: AppTypography.dmSans,
           fontSize: 12,

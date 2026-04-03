@@ -96,7 +96,6 @@ flutter:
           weight: 400
 
   assets:
-    - assets/fonts/
     - assets/images/
     - assets/tts/vits-piper-es_ES-sharvard-medium/es_ES-sharvard-medium.onnx
     - assets/tts/vits-piper-es_ES-sharvard-medium/es_ES-sharvard-medium.onnx.json
