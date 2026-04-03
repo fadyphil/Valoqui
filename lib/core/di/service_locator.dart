@@ -5,14 +5,17 @@
 // Order: datasources → repositories → use cases → blocs
 
 import "package:get_it/get_it.dart";
+// import "package:speech_to_text/speech_to_text.dart";
 
 // ── Sprint 1: Data layer ──────────────────────────────────────
 import "package:valoqui/core/data/datasources/firebase_auth_datasource.dart";
 import "package:valoqui/core/data/datasources/firestore_datasource.dart";
 import "package:valoqui/core/data/datasources/secure_storage_datasource.dart";
+import "package:valoqui/core/data/datasources/sherpa_stt_datasource.dart";
 import "package:valoqui/core/data/repositories/android_key_storage_repository.dart";
 import "package:valoqui/core/data/repositories/firebase_auth_repository.dart";
 import "package:valoqui/core/data/repositories/firebase_user_repository.dart";
+import "package:valoqui/core/data/repositories/sherpa_stt_repository.dart";
 
 // ── Sprint 1: Domain interfaces ───────────────────────────────
 import "package:valoqui/core/domain/repositories/user_repository.dart";
@@ -184,18 +187,22 @@ Future<void> setupServiceLocator() async {
   // ── Step 6: Sprint 2 datasources (singletons) ────────────
   // Singletons because TTS and VAD models are expensive to load
   // and must survive across the speaking → report navigation.
+  // SpeechToText speechToText = SpeechToText();
 
-  sl.registerLazySingleton<AndroidSttDatasource>(
-    () => AndroidSttDatasource(),
+  // sl.registerLazySingleton<AndroidSttDatasource>(
+  //   () => AndroidSttDatasource(stt: speechToText),
+  // );
+  // inside service_locator.dart
+  sl.registerLazySingleton<SherpaSttDatasource>(
+    () => SherpaSttDatasource(vadRepository: sl()),
+  );
+  sl.registerLazySingleton<SttRepository>(
+    () => SherpaSttRepository(datasource: sl()),
   );
 
-  sl.registerLazySingleton<SherpaTtsDatasource>(
-    () => SherpaTtsDatasource(),
-  );
+  sl.registerLazySingleton<SherpaTtsDatasource>(() => SherpaTtsDatasource());
 
-  sl.registerLazySingleton<SherpaVadDatasource>(
-    () => SherpaVadDatasource(),
-  );
+  sl.registerLazySingleton<SherpaVadDatasource>(() => SherpaVadDatasource());
 
   sl.registerLazySingleton<GroqLlmDatasource>(
     () => GroqLlmDatasource(dio: sl<DioClient>().groqDio),
@@ -206,9 +213,9 @@ Future<void> setupServiceLocator() async {
   );
 
   // ── Step 7: Sprint 2 repositories (singletons, against interfaces) ──
-  sl.registerLazySingleton<SttRepository>(
-    () => AndroidSttRepository(datasource: sl<AndroidSttDatasource>()),
-  );
+  // sl.registerLazySingleton<SttRepository>(
+  //   () => AndroidSttRepository(datasource: sl<AndroidSttDatasource>()),
+  // );
 
   sl.registerLazySingleton<TtsRepository>(
     () => SherpaTtsRepository(datasource: sl<SherpaTtsDatasource>()),

@@ -4,20 +4,16 @@ import "package:fpdart/fpdart.dart";
 import "package:valoqui/core/domain/models/app_failure.dart";
 
 abstract class SttRepository {
-  Future<Either<AppFailure, bool>> initialize();
+  Future<Either<AppFailure, void>> initialize();
 
-  /// Partial results — emits continuously while the user is speaking.
-  /// Use to update the live user transcript bubble in the UI.
+  /// Emits final transcribed text once per utterance.
   Stream<String> get transcriptStream;
 
-  /// Final results — emits exactly once per utterance, after the configured
-  /// silence threshold (pauseFor). Use this to trigger the LLM call in
-  /// always-on mode instead of relying on the VAD.
-  Stream<String> get finalTranscriptStream;
+  /// PTT: start buffering audio. Call on mic press.
+  void startListening();
 
-  Future<Either<AppFailure, void>> startListening();
-  Future<Either<AppFailure, String>> stopListening();
+  /// PTT: stop buffering and decode immediately. Call on mic release.
+  void stopListening();
 
-  bool get isListening;
   Future<void> dispose();
 }

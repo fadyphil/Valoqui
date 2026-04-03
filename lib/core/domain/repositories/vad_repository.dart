@@ -7,6 +7,8 @@
 // bypasses VAD entirely — mic recording starts on button press, stops
 // on button release.
 
+import "dart:typed_data";
+
 import "package:fpdart/fpdart.dart";
 import "package:valoqui/core/domain/models/app_failure.dart";
 
@@ -22,10 +24,22 @@ abstract interface class VadRepository {
   /// Stops monitoring.
   Future<void> stopMonitoring();
 
-  /// Emits [true] when speech is detected, [false] when silence is detected.
-  /// The implementation debounces silence to avoid cutting off mid-sentence
-  /// (configured silence threshold: ~500ms).
+  /// Emits [true] then [false] for each completed speech segment.
+  /// Used by the bloc for active-speaking-time tracking only.
+  ///
+  /// NOTE: sherpa-onnx Silero VAD is segment-based — a segment becomes
+  /// available only after silence follows speech. Both events are emitted
+  /// back-to-back once per utterance, not in real time. For actual STT
+  /// decoding, listen to [speechSegmentStream] which carries the segment
+  /// samples directly.
   Stream<bool> get voiceActivityStream;
+
+  /// Emits the Float32 samples of each completed speech segment.
+  /// This is the primary trigger for always-on STT decoding.
+  /// SherpaSttDatasource subscribes here and bypasses the PCM buffer.
+  Stream<Float32List> get speechSegmentStream;
+
+  Stream<Uint8List> get audioStream;
 
   /// Releases all resources.
   Future<void> dispose();
