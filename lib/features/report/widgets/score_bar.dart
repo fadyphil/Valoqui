@@ -21,10 +21,7 @@ class ScoreBar extends StatelessWidget {
       child: Row(
         children: [
           // Label
-          SizedBox(
-            width: 96,
-            child: Text(label, style: AppTypography.labelMD),
-          ),
+          SizedBox(width: 96, child: Text(label, style: AppTypography.labelMD)),
           // Bar
           Expanded(
             child: ClipRRect(
@@ -32,23 +29,22 @@ class ScoreBar extends StatelessWidget {
               child: Container(
                 height: 8,
                 color: AppColors.border,
-                child: FractionallySizedBox(
-                  alignment: Alignment.centerLeft,
-                  widthFactor: fraction,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.accentPrimary,
-                          AppColors.success,
-                        ],
+                child:
+                    FractionallySizedBox(
+                      alignment: Alignment.centerLeft,
+                      widthFactor: fraction,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppColors.accentPrimary,
+                              AppColors.success,
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(AppSpacing.xs),
+                        ),
                       ),
-                      borderRadius: BorderRadius.circular(AppSpacing.xs),
-                    ),
-                  ),
-                )
-                    .animate()
-                    .scaleX(
+                    ).animate().scaleX(
                       begin: 0,
                       end: 1,
                       duration: 800.ms,

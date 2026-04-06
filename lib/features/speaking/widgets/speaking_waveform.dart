@@ -102,7 +102,8 @@ class _SpeakingWaveformState extends State<SpeakingWaveform>
         }
         // Active speech: amplitude sets the ceiling, wave adds organic variation
         final sine = sin(t * 2 * pi * 1.45 + offset);
-        final amp = 0.2 + _amplitude * 0.8; // floor at 20% so bars never flatten
+        final amp =
+            0.2 + _amplitude * 0.8; // floor at 20% so bars never flatten
         return _minH + (sine * 0.5 + 0.5) * (_maxH - _minH) * amp;
 
       case ConversationPhase.processing:
@@ -123,7 +124,11 @@ class _SpeakingWaveformState extends State<SpeakingWaveform>
         // Smoothly blend toward amber as the user's voice gets louder
         if (_amplitude > 0.25) {
           final t = ((_amplitude - 0.25) / 0.75).clamp(0.0, 1.0);
-          return Color.lerp(AppColors.accentSecondary, AppColors.accentPrimary, t)!;
+          return Color.lerp(
+            AppColors.accentSecondary,
+            AppColors.accentPrimary,
+            t,
+          )!;
         }
         return AppColors.accentSecondary;
 
@@ -179,10 +184,7 @@ class _SpeakingWaveformState extends State<SpeakingWaveform>
               color: _labelColor,
               letterSpacing: 1.4,
             ),
-            child: SizedBox(
-              width: 58,
-              child: Text(_label),
-            ),
+            child: SizedBox(width: 58, child: Text(_label)),
           ),
           const SizedBox(width: 10),
 

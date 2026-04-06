@@ -113,9 +113,7 @@ class FirestoreDatasource {
         ),
       );
     } catch (e) {
-      return left(
-        AppFailure.databaseFailure(message: "Failed to save XP: $e"),
-      );
+      return left(AppFailure.databaseFailure(message: "Failed to save XP: $e"));
     }
   }
 

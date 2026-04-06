@@ -12,7 +12,9 @@ import "package:valoqui/core/domain/models/app_user.dart";
 import "package:valoqui/shared/widgets/loading_overlay.dart";
 
 class MockAuthBloc extends MockBloc<AuthEvent, AuthState> implements AuthBloc {}
-class MockOnboardingBloc extends MockBloc<OnboardingEvent, OnboardingState> implements OnboardingBloc {}
+
+class MockOnboardingBloc extends MockBloc<OnboardingEvent, OnboardingState>
+    implements OnboardingBloc {}
 
 void main() {
   late MockAuthBloc mockAuthBloc;
@@ -44,8 +46,12 @@ void main() {
 
   group("LevelSelectionScreen", () {
     testWidgets("renders all levels correctly", (tester) async {
-      when(() => mockAuthBloc.state).thenReturn(AuthState.authenticated(user: tUser));
-      when(() => mockOnboardingBloc.state).thenReturn(const OnboardingState.initial());
+      when(
+        () => mockAuthBloc.state,
+      ).thenReturn(AuthState.authenticated(user: tUser));
+      when(
+        () => mockOnboardingBloc.state,
+      ).thenReturn(const OnboardingState.initial());
 
       await tester.pumpWidget(createWidgetUnderTest());
 
@@ -56,18 +62,30 @@ void main() {
       expect(find.text("Elementary"), findsOneWidget);
     });
 
-    testWidgets("shows loading overlay when onboarding is loading", (tester) async {
-      when(() => mockAuthBloc.state).thenReturn(AuthState.authenticated(user: tUser));
-      when(() => mockOnboardingBloc.state).thenReturn(const OnboardingState.loading());
+    testWidgets("shows loading overlay when onboarding is loading", (
+      tester,
+    ) async {
+      when(
+        () => mockAuthBloc.state,
+      ).thenReturn(AuthState.authenticated(user: tUser));
+      when(
+        () => mockOnboardingBloc.state,
+      ).thenReturn(const OnboardingState.loading());
 
       await tester.pumpWidget(createWidgetUnderTest());
 
       expect(find.byType(LoadingOverlay), findsOneWidget);
     });
 
-    testWidgets("selects and submits level when cards and button are tapped", (tester) async {
-      when(() => mockAuthBloc.state).thenReturn(AuthState.authenticated(user: tUser));
-      when(() => mockOnboardingBloc.state).thenReturn(const OnboardingState.initial());
+    testWidgets("selects and submits level when cards and button are tapped", (
+      tester,
+    ) async {
+      when(
+        () => mockAuthBloc.state,
+      ).thenReturn(AuthState.authenticated(user: tUser));
+      when(
+        () => mockOnboardingBloc.state,
+      ).thenReturn(const OnboardingState.initial());
 
       await tester.pumpWidget(createWidgetUnderTest());
 
@@ -79,12 +97,21 @@ void main() {
       await tester.tap(find.text("Let's Start →"));
       await tester.pump();
 
-      verify(() => mockOnboardingBloc.add(const SubmitLevel(uid: "123", level: "A2"))).called(1);
+      verify(
+        () =>
+            mockOnboardingBloc.add(const SubmitLevel(uid: "123", level: "A2")),
+      ).called(1);
     });
 
-    testWidgets("accessibility: level cards meet minimum touch targets", (tester) async {
-      when(() => mockAuthBloc.state).thenReturn(AuthState.authenticated(user: tUser));
-      when(() => mockOnboardingBloc.state).thenReturn(const OnboardingState.initial());
+    testWidgets("accessibility: level cards meet minimum touch targets", (
+      tester,
+    ) async {
+      when(
+        () => mockAuthBloc.state,
+      ).thenReturn(AuthState.authenticated(user: tUser));
+      when(
+        () => mockOnboardingBloc.state,
+      ).thenReturn(const OnboardingState.initial());
 
       await tester.pumpWidget(createWidgetUnderTest());
 

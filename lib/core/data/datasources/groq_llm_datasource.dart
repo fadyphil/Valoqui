@@ -93,7 +93,8 @@ class GroqLlmDatasource {
       } else {
         yield left(
           AppFailure.llmFailure(
-            message: "Groq stream error [${e.response?.statusCode}]: ${e.message}",
+            message:
+                "Groq stream error [${e.response?.statusCode}]: ${e.message}",
           ),
         );
       }
@@ -131,8 +132,7 @@ class GroqLlmDatasource {
         );
       }
 
-      final content =
-          choices[0]["message"]["content"] as String? ?? "";
+      final content = choices[0]["message"]["content"] as String? ?? "";
       return right(content);
     } on DioException catch (e) {
       if (e.response?.statusCode == 429) {
@@ -140,7 +140,8 @@ class GroqLlmDatasource {
       }
       return left(
         AppFailure.reportGenerationFailed(
-          message: "Groq report error [${e.response?.statusCode}]: ${e.message}",
+          message:
+              "Groq report error [${e.response?.statusCode}]: ${e.message}",
         ),
       );
     } catch (e) {

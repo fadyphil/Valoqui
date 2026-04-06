@@ -15,7 +15,7 @@ class FirebaseUserRepository implements UserRepository {
   final FirestoreDatasource _datasource;
 
   const FirebaseUserRepository({required FirestoreDatasource datasource})
-      : _datasource = datasource;
+    : _datasource = datasource;
 
   @override
   Future<Either<AppFailure, void>> createUserIfNotExists({

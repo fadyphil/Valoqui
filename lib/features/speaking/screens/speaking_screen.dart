@@ -36,15 +36,13 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
     final homeState = context.read<HomeBloc>().state;
 
     if (authState is AuthAuthenticated) {
-      final cefrLevel =
-          homeState is HomeLoaded ? homeState.profile.currentCefrLevel : 'A1';
+      final cefrLevel = homeState is HomeLoaded
+          ? homeState.profile.currentCefrLevel
+          : 'A1';
 
       context.read<SpeakingBloc>().add(
-            SessionStarted(
-              userId: authState.user.uid,
-              userCefrLevel: cefrLevel,
-            ),
-          );
+        SessionStarted(userId: authState.user.uid, userCefrLevel: cefrLevel),
+      );
     }
   }
 
@@ -161,7 +159,8 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
 
   Widget _buildActive(BuildContext context, SpeakingActive state) {
     final bloc = context.read<SpeakingBloc>();
-    final isLuciaStreaming = state.phase == ConversationPhase.processing &&
+    final isLuciaStreaming =
+        state.phase == ConversationPhase.processing &&
         state.currentLuciaBuffer.isNotEmpty;
 
     return SafeArea(
@@ -184,9 +183,11 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
 
   Widget _buildTranscript(SpeakingActive state, bool isLuciaStreaming) {
     final messages = state.transcript;
-    final hasPartial = state.partialUserTranscript != null &&
+    final hasPartial =
+        state.partialUserTranscript != null &&
         state.partialUserTranscript!.isNotEmpty;
-    final showTyping = state.phase == ConversationPhase.processing &&
+    final showTyping =
+        state.phase == ConversationPhase.processing &&
         state.currentLuciaBuffer.isEmpty;
 
     return ListView.builder(
@@ -195,8 +196,7 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
         horizontal: AppSpacing.lg,
         vertical: AppSpacing.lg,
       ),
-      itemCount:
-          messages.length + (hasPartial ? 1 : 0) + (showTyping ? 1 : 0),
+      itemCount: messages.length + (hasPartial ? 1 : 0) + (showTyping ? 1 : 0),
       itemBuilder: (context, index) {
         if (index < messages.length) {
           final message = messages[index];
@@ -243,10 +243,7 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        SpeakingWaveform(
-          phase: state.phase,
-          amplitudeStream: ampStream,
-        ),
+        SpeakingWaveform(phase: state.phase, amplitudeStream: ampStream),
         const Divider(color: AppColors.border, height: 1),
         Container(
           color: AppColors.bgPrimary,
@@ -330,13 +327,13 @@ class _TopBar extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 7,
-                height: 7,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.error,
-                ),
-              )
+                    width: 7,
+                    height: 7,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.error,
+                    ),
+                  )
                   .animate(onPlay: (c) => c.repeat(reverse: true))
                   .fadeOut(duration: 900.ms)
                   .then()

@@ -23,18 +23,20 @@ class TranscriptBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(
-        left: message.isAssistant ? 0 : AppSpacing.x3l,
-        right: message.isUser ? 0 : AppSpacing.x3l,
-        bottom: AppSpacing.sm,
-      ),
-      child: Align(
-        alignment:
-            message.isUser ? Alignment.centerRight : Alignment.centerLeft,
-        child: message.isAssistant ? _LuciaBubble(message: message, isStreaming: isStreaming)
-            : _UserBubble(message: message),
-      ),
-    )
+          padding: EdgeInsets.only(
+            left: message.isAssistant ? 0 : AppSpacing.x3l,
+            right: message.isUser ? 0 : AppSpacing.x3l,
+            bottom: AppSpacing.sm,
+          ),
+          child: Align(
+            alignment: message.isUser
+                ? Alignment.centerRight
+                : Alignment.centerLeft,
+            child: message.isAssistant
+                ? _LuciaBubble(message: message, isStreaming: isStreaming)
+                : _UserBubble(message: message),
+          ),
+        )
         .animate()
         .fadeIn(duration: 200.ms)
         .slideY(begin: 0.08, end: 0, duration: 200.ms, curve: Curves.easeOut);
@@ -89,10 +91,7 @@ class _LuciaBubble extends StatelessWidget {
                   text: message.content,
                   style: AppTypography.transcript,
                 ),
-                if (isStreaming)
-                  WidgetSpan(
-                    child: _StreamingCursor(),
-                  ),
+                if (isStreaming) WidgetSpan(child: _StreamingCursor()),
               ],
             ),
           ),
@@ -152,9 +151,12 @@ class _UserBubble extends StatelessWidget {
 class _StreamingCursor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Text("▋", style: AppTypography.transcript.copyWith(
-      color: AppColors.accentSecondary,
-    ))
+    return Text(
+          "▋",
+          style: AppTypography.transcript.copyWith(
+            color: AppColors.accentSecondary,
+          ),
+        )
         .animate(onPlay: (controller) => controller.repeat())
         .fadeIn(duration: 500.ms)
         .then()

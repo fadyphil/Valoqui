@@ -35,10 +35,7 @@ class GenerateReport {
 
       // On last attempt return whatever failure we have
       if (attempt == 3) {
-        return parsed.fold(
-          (f) => left(f),
-          right,
-        );
+        return parsed.fold((f) => left(f), right);
       }
 
       // Exponential back-off before retry (1s, 2s)

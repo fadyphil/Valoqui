@@ -99,7 +99,8 @@ class GeminiLlmDatasource {
     } on DioException catch (e) {
       yield left(
         AppFailure.llmFailure(
-          message: "Gemini stream error [${e.response?.statusCode}]: ${e.message}",
+          message:
+              "Gemini stream error [${e.response?.statusCode}]: ${e.message}",
         ),
       );
     } catch (e) {
@@ -122,15 +123,11 @@ class GeminiLlmDatasource {
               ],
             },
           ],
-          "generationConfig": {
-            "maxOutputTokens": 2000,
-            "temperature": 0.3,
-          },
+          "generationConfig": {"maxOutputTokens": 2000, "temperature": 0.3},
         },
       );
 
-      final candidates =
-          response.data?["candidates"] as List<dynamic>?;
+      final candidates = response.data?["candidates"] as List<dynamic>?;
       if (candidates == null || candidates.isEmpty) {
         return left(
           const AppFailure.reportGenerationFailed(
@@ -145,7 +142,8 @@ class GeminiLlmDatasource {
     } on DioException catch (e) {
       return left(
         AppFailure.reportGenerationFailed(
-          message: "Gemini report error [${e.response?.statusCode}]: ${e.message}",
+          message:
+              "Gemini report error [${e.response?.statusCode}]: ${e.message}",
         ),
       );
     } catch (e) {

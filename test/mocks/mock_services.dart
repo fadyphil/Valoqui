@@ -18,26 +18,39 @@ import "package:valoqui/core/domain/repositories/user_repository.dart";
 import "package:valoqui/core/domain/repositories/key_storage_repository.dart";
 
 // ── Datasource Mocks ───────────────────────────────────
-class MockFirebaseAuthDatasource extends Mock implements FirebaseAuthDatasource {}
+class MockFirebaseAuthDatasource extends Mock
+    implements FirebaseAuthDatasource {}
+
 class MockFirestoreDatasource extends Mock implements FirestoreDatasource {}
-class MockSecureStorageDatasource extends Mock implements SecureStorageDatasource {}
+
+class MockSecureStorageDatasource extends Mock
+    implements SecureStorageDatasource {}
 
 // ── Repository Mocks ───────────────────────────────────
 class MockAuthRepository extends Mock implements AuthRepository {}
+
 class MockUserRepository extends Mock implements UserRepository {}
+
 class MockKeyStorageRepository extends Mock implements KeyStorageRepository {}
 
 // ── Auth UseCase Mocks ─────────────────────────────────
 class MockSignInWithGoogle extends Mock implements SignInWithGoogle {}
+
 class MockSignOut extends Mock implements SignOut {}
+
 class MockWatchAuthState extends Mock implements WatchAuthState {}
 
 // ── Onboarding UseCase Mocks ───────────────────────────
 class MockCheckOnboardingStatus extends Mock implements CheckOnboardingStatus {}
-class MockMarkOnboardingComplete extends Mock implements MarkOnboardingComplete {}
+
+class MockMarkOnboardingComplete extends Mock
+    implements MarkOnboardingComplete {}
+
 class MockSaveGeminiKey extends Mock implements SaveGeminiKey {}
+
 class MockSaveGroqKey extends Mock implements SaveGroqKey {}
 
 // ── User UseCase Mocks ─────────────────────────────────
 class MockUpdateUserLevel extends Mock implements UpdateUserLevel {}
+
 class MockWatchUserProfile extends Mock implements WatchUserProfile {}

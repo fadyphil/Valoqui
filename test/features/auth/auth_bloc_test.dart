@@ -42,8 +42,9 @@ void main() {
       blocTest<AuthBloc, AuthState>(
         "emits authenticated when watchAuthState returns a user",
         build: () {
-          when(() => mockWatchAuthState.execute())
-              .thenAnswer((_) => Stream.value(tUser));
+          when(
+            () => mockWatchAuthState.execute(),
+          ).thenAnswer((_) => Stream.value(tUser));
           return buildBloc();
         },
         act: (bloc) => bloc.add(const AuthStarted()),
@@ -54,8 +55,9 @@ void main() {
       blocTest<AuthBloc, AuthState>(
         "emits unauthenticated when watchAuthState returns null",
         build: () {
-          when(() => mockWatchAuthState.execute())
-              .thenAnswer((_) => Stream.value(null));
+          when(
+            () => mockWatchAuthState.execute(),
+          ).thenAnswer((_) => Stream.value(null));
           return buildBloc();
         },
         act: (bloc) => bloc.add(const AuthStarted()),
@@ -67,8 +69,9 @@ void main() {
       blocTest<AuthBloc, AuthState>(
         "emits [loading, authenticated] on successful sign in",
         build: () {
-          when(() => mockSignInWithGoogle.execute())
-              .thenAnswer((_) async => right(tUser));
+          when(
+            () => mockSignInWithGoogle.execute(),
+          ).thenAnswer((_) async => right(tUser));
           return buildBloc();
         },
         act: (bloc) => bloc.add(const AuthSignInWithGoogle()),
@@ -81,8 +84,9 @@ void main() {
       blocTest<AuthBloc, AuthState>(
         "emits [loading, unauthenticated] when sign in is cancelled",
         build: () {
-          when(() => mockSignInWithGoogle.execute())
-              .thenAnswer((_) async => left(const AppFailure.signInCancelled()));
+          when(
+            () => mockSignInWithGoogle.execute(),
+          ).thenAnswer((_) async => left(const AppFailure.signInCancelled()));
           return buildBloc();
         },
         act: (bloc) => bloc.add(const AuthSignInWithGoogle()),
@@ -96,7 +100,8 @@ void main() {
         "emits [loading, error] on sign in failure",
         build: () {
           when(() => mockSignInWithGoogle.execute()).thenAnswer(
-            (_) async => left(const AppFailure.authFailure(message: "Server Error")),
+            (_) async =>
+                left(const AppFailure.authFailure(message: "Server Error")),
           );
           return buildBloc();
         },
@@ -112,7 +117,9 @@ void main() {
       blocTest<AuthBloc, AuthState>(
         "emits [loading] and waits for stream to emit null on success",
         build: () {
-          when(() => mockSignOut.execute()).thenAnswer((_) async => right(null));
+          when(
+            () => mockSignOut.execute(),
+          ).thenAnswer((_) async => right(null));
           return buildBloc();
         },
         act: (bloc) => bloc.add(const AuthSignOutRequested()),
@@ -123,7 +130,8 @@ void main() {
         "emits [loading, error] on sign out failure",
         build: () {
           when(() => mockSignOut.execute()).thenAnswer(
-            (_) async => left(const AppFailure.authFailure(message: "Sign Out Failed")),
+            (_) async =>
+                left(const AppFailure.authFailure(message: "Sign Out Failed")),
           );
           return buildBloc();
         },

@@ -9,11 +9,10 @@ class AndroidSttRepository implements SttRepository {
   final AndroidSttDatasource _datasource;
 
   const AndroidSttRepository({required AndroidSttDatasource datasource})
-      : _datasource = datasource;
+    : _datasource = datasource;
 
   @override
-  Future<Either<AppFailure, bool>> initialize() =>
-      _datasource.initialize();
+  Future<Either<AppFailure, bool>> initialize() => _datasource.initialize();
 
   @override
   Stream<String> get transcriptStream => _datasource.transcriptStream;

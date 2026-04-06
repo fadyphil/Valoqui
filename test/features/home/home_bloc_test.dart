@@ -32,8 +32,9 @@ void main() {
       blocTest<HomeBloc, HomeState>(
         "emits [loading, loaded] when profile is found",
         build: () {
-          when(() => mockWatchUserProfile.execute(any()))
-              .thenAnswer((_) => Stream.value(tUser));
+          when(
+            () => mockWatchUserProfile.execute(any()),
+          ).thenAnswer((_) => Stream.value(tUser));
           return buildBloc();
         },
         act: (bloc) => bloc.add(const WatchProfile("123")),
@@ -46,8 +47,9 @@ void main() {
       blocTest<HomeBloc, HomeState>(
         "emits [loading, error] when profile is null",
         build: () {
-          when(() => mockWatchUserProfile.execute(any()))
-              .thenAnswer((_) => Stream.value(null));
+          when(
+            () => mockWatchUserProfile.execute(any()),
+          ).thenAnswer((_) => Stream.value(null));
           return buildBloc();
         },
         act: (bloc) => bloc.add(const WatchProfile("123")),
@@ -60,14 +62,17 @@ void main() {
       blocTest<HomeBloc, HomeState>(
         "emits [loading, error] on stream error",
         build: () {
-          when(() => mockWatchUserProfile.execute(any()))
-              .thenAnswer((_) => Stream.error("Stream Error"));
+          when(
+            () => mockWatchUserProfile.execute(any()),
+          ).thenAnswer((_) => Stream.error("Stream Error"));
           return buildBloc();
         },
         act: (bloc) => bloc.add(const WatchProfile("123")),
         expect: () => [
           const HomeState.loading(),
-          const HomeState.error(message: "Failed to load profile: Stream Error"),
+          const HomeState.error(
+            message: "Failed to load profile: Stream Error",
+          ),
         ],
       );
     });

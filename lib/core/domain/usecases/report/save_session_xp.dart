@@ -12,7 +12,7 @@ class SaveSessionXp {
   final UserRepository _userRepository;
 
   const SaveSessionXp({required UserRepository userRepository})
-      : _userRepository = userRepository;
+    : _userRepository = userRepository;
 
   Future<Either<AppFailure, void>> execute({
     required String uid,

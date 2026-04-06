@@ -28,7 +28,9 @@ void main() {
 
   group("SignInScreen", () {
     testWidgets("renders correctly in unauthenticated state", (tester) async {
-      when(() => mockAuthBloc.state).thenReturn(const AuthState.unauthenticated());
+      when(
+        () => mockAuthBloc.state,
+      ).thenReturn(const AuthState.unauthenticated());
 
       await tester.pumpWidget(createWidgetUnderTest());
 
@@ -37,7 +39,9 @@ void main() {
       expect(find.text("Continue with Google"), findsOneWidget);
     });
 
-    testWidgets("shows loading indicator when state is loading", (tester) async {
+    testWidgets("shows loading indicator when state is loading", (
+      tester,
+    ) async {
       when(() => mockAuthBloc.state).thenReturn(const AuthState.loading());
 
       await tester.pumpWidget(createWidgetUnderTest());
@@ -45,8 +49,12 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
 
-    testWidgets("adds AuthSignInWithGoogle event when button is pressed", (tester) async {
-      when(() => mockAuthBloc.state).thenReturn(const AuthState.unauthenticated());
+    testWidgets("adds AuthSignInWithGoogle event when button is pressed", (
+      tester,
+    ) async {
+      when(
+        () => mockAuthBloc.state,
+      ).thenReturn(const AuthState.unauthenticated());
 
       await tester.pumpWidget(createWidgetUnderTest());
 
@@ -56,7 +64,9 @@ void main() {
       verify(() => mockAuthBloc.add(const AuthSignInWithGoogle())).called(1);
     });
 
-    testWidgets("shows error message SnackBar when state changes to error", (tester) async {
+    testWidgets("shows error message SnackBar when state changes to error", (
+      tester,
+    ) async {
       const errorMsg = "Login Failed";
       // Start with unauthenticated
       whenListen(
@@ -74,8 +84,12 @@ void main() {
       expect(find.text(errorMsg), findsOneWidget);
     });
 
-    testWidgets("accessibility: button meets tap target guidelines", (tester) async {
-      when(() => mockAuthBloc.state).thenReturn(const AuthState.unauthenticated());
+    testWidgets("accessibility: button meets tap target guidelines", (
+      tester,
+    ) async {
+      when(
+        () => mockAuthBloc.state,
+      ).thenReturn(const AuthState.unauthenticated());
 
       await tester.pumpWidget(createWidgetUnderTest());
 

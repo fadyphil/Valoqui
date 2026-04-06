@@ -77,7 +77,9 @@ class AndroidSttDatasource {
       );
       return right(null);
     } catch (e) {
-      return left(AppFailure.sttFailure(message: 'Failed to start listening: $e'));
+      return left(
+        AppFailure.sttFailure(message: 'Failed to start listening: $e'),
+      );
     }
   }
 
@@ -90,7 +92,9 @@ class AndroidSttDatasource {
       }
       return right(_stt.lastRecognizedWords);
     } catch (e) {
-      return left(AppFailure.sttFailure(message: 'Failed to stop listening: $e'));
+      return left(
+        AppFailure.sttFailure(message: 'Failed to stop listening: $e'),
+      );
     }
   }
 

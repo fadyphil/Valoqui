@@ -38,7 +38,9 @@ void main() {
       blocTest<OnboardingBloc, OnboardingState>(
         "emits [loading, complete] when onboarding is done",
         build: () {
-          when(() => mockCheckStatus.execute()).thenAnswer((_) async => right(true));
+          when(
+            () => mockCheckStatus.execute(),
+          ).thenAnswer((_) async => right(true));
           return buildBloc();
         },
         act: (bloc) => bloc.add(const CheckOnboardingStatusEvent()),
@@ -51,7 +53,9 @@ void main() {
       blocTest<OnboardingBloc, OnboardingState>(
         "emits [loading, initial] when onboarding is NOT done",
         build: () {
-          when(() => mockCheckStatus.execute()).thenAnswer((_) async => right(false));
+          when(
+            () => mockCheckStatus.execute(),
+          ).thenAnswer((_) async => right(false));
           return buildBloc();
         },
         act: (bloc) => bloc.add(const CheckOnboardingStatusEvent()),
@@ -66,11 +70,13 @@ void main() {
       blocTest<OnboardingBloc, OnboardingState>(
         "emits [loading, groqKeyComplete] on success",
         build: () {
-          when(() => mockSaveGroqKey.execute(any(), any()))
-              .thenAnswer((_) async => right(null));
+          when(
+            () => mockSaveGroqKey.execute(any(), any()),
+          ).thenAnswer((_) async => right(null));
           return buildBloc();
         },
-        act: (bloc) => bloc.add(const SubmitGroqKey(uid: tUid, key: "gsk_test")),
+        act: (bloc) =>
+            bloc.add(const SubmitGroqKey(uid: tUid, key: "gsk_test")),
         expect: () => [
           const OnboardingState.loading(),
           const OnboardingState.groqKeyComplete(),
@@ -81,11 +87,13 @@ void main() {
         "emits [loading, error] on failure",
         build: () {
           when(() => mockSaveGroqKey.execute(any(), any())).thenAnswer(
-            (_) async => left(const AppFailure.storageFailure(message: "Failed")),
+            (_) async =>
+                left(const AppFailure.storageFailure(message: "Failed")),
           );
           return buildBloc();
         },
-        act: (bloc) => bloc.add(const SubmitGroqKey(uid: tUid, key: "gsk_test")),
+        act: (bloc) =>
+            bloc.add(const SubmitGroqKey(uid: tUid, key: "gsk_test")),
         expect: () => [
           const OnboardingState.loading(),
           const OnboardingState.error(message: "Failed"),
@@ -97,11 +105,13 @@ void main() {
       blocTest<OnboardingBloc, OnboardingState>(
         "emits [loading, geminiStepComplete] on success",
         build: () {
-          when(() => mockSaveGeminiKey.execute(any(), any()))
-              .thenAnswer((_) async => right(null));
+          when(
+            () => mockSaveGeminiKey.execute(any(), any()),
+          ).thenAnswer((_) async => right(null));
           return buildBloc();
         },
-        act: (bloc) => bloc.add(const SubmitGeminiKey(uid: tUid, key: "gem_test")),
+        act: (bloc) =>
+            bloc.add(const SubmitGeminiKey(uid: tUid, key: "gem_test")),
         expect: () => [
           const OnboardingState.loading(),
           const OnboardingState.geminiStepComplete(),
@@ -120,10 +130,12 @@ void main() {
       blocTest<OnboardingBloc, OnboardingState>(
         "emits [loading, complete] on success (level + mark complete)",
         build: () {
-          when(() => mockUpdateLevel.execute(any(), any()))
-              .thenAnswer((_) async => right(null));
-          when(() => mockMarkComplete.execute())
-              .thenAnswer((_) async => right(null));
+          when(
+            () => mockUpdateLevel.execute(any(), any()),
+          ).thenAnswer((_) async => right(null));
+          when(
+            () => mockMarkComplete.execute(),
+          ).thenAnswer((_) async => right(null));
           return buildBloc();
         },
         act: (bloc) => bloc.add(const SubmitLevel(uid: tUid, level: "A2")),
@@ -137,7 +149,8 @@ void main() {
         "emits [loading, error] if level update fails",
         build: () {
           when(() => mockUpdateLevel.execute(any(), any())).thenAnswer(
-            (_) async => left(const AppFailure.databaseFailure(message: "DB Error")),
+            (_) async =>
+                left(const AppFailure.databaseFailure(message: "DB Error")),
           );
           return buildBloc();
         },

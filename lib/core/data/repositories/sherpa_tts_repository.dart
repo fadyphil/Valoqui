@@ -9,11 +9,10 @@ class SherpaTtsRepository implements TtsRepository {
   final SherpaTtsDatasource _datasource;
 
   const SherpaTtsRepository({required SherpaTtsDatasource datasource})
-      : _datasource = datasource;
+    : _datasource = datasource;
 
   @override
-  Future<Either<AppFailure, void>> initialize() =>
-      _datasource.initialize();
+  Future<Either<AppFailure, void>> initialize() => _datasource.initialize();
 
   @override
   Future<Either<AppFailure, void>> speak(String text) =>

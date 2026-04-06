@@ -37,7 +37,9 @@ class DioClient {
       BaseOptions(
         baseUrl: baseUrl,
         connectTimeout: const Duration(seconds: 10),
-        receiveTimeout: const Duration(seconds: 60), // ← was 30, bumped for LLM streaming
+        receiveTimeout: const Duration(
+          seconds: 60,
+        ), // ← was 30, bumped for LLM streaming
         headers: {"Content-Type": "application/json"},
       ),
     );
