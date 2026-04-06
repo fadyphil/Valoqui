@@ -50,6 +50,8 @@ firebase.json
 google-services.json
 ignore/
 GEMINI.md
+AGENTS.md
+opencode.json
 
 # Sensitive files & Secrets
 .env
