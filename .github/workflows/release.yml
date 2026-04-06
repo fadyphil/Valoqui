@@ -1,0 +1,123 @@
+name: Release
+
+# Triggered by pushing a version tag (e.g., v0.3.0, v1.0.0-beta.1).
+# This is your CD pipeline. It builds the release APK and publishes
+# a GitHub Release with auto-generated release notes from your commit history.
+#
+# To trigger: git tag v0.3.0 && git push origin v0.3.0
+#
+# NOTE: This builds an UNSIGNED release APK. For Play Store distribution,
+# you will need to add signing configuration (keystore as a secret).
+# That's a separate step covered in the workflow comments below.
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+*'   # Matches v1.0.0, v0.3.0, v1.0.0-beta.1, etc.
+
+jobs:
+  release:
+    name: Release Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history is required for auto-generating release notes
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.4'
+          channel: stable
+          cache: true
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Get valoqui_lints dependencies
+        working-directory: valoqui_lints
+        run: dart pub get
+
+      - name: Cache pub dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+          key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: pub-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run build_runner
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      # ⚠️  FIREBASE: Uncomment when you have the secret configured.
+      - name: Write google-services.json
+        run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
+
+      # Extract the version number from the tag (strips the leading 'v').
+      # v0.3.0 → 0.3.0. Used to verify pubspec.yaml is in sync.
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      # Verify that pubspec.yaml version matches the git tag.
+      # Prevents the embarrassing situation of tagging v0.4.0 but shipping
+      # an APK that self-reports as v0.3.0 inside the app.
+      - name: Verify pubspec.yaml version matches tag
+        run: |
+          PUBSPEC_VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}' | cut -d'+' -f1)
+          TAG_VERSION=${{ steps.version.outputs.VERSION }}
+          echo "pubspec.yaml version: $PUBSPEC_VERSION"
+          echo "Git tag version:      $TAG_VERSION"
+          if [ "$PUBSPEC_VERSION" != "$TAG_VERSION" ]; then
+            echo "ERROR: Version mismatch. Update pubspec.yaml to version: $TAG_VERSION before tagging."
+            exit 1
+          fi
+
+      # ─── SIGNING (disabled until you have a keystore) ──────────────────────
+      # To enable signing for Play Store distribution:
+      # 1. Generate a keystore: keytool -genkey -v -keystore valoqui.jks ...
+      # 2. Base64 encode it: base64 -w 0 valoqui.jks
+      # 3. Add these GitHub secrets:
+      #    KEYSTORE_BASE64, KEY_ALIAS, KEY_PASSWORD, STORE_PASSWORD
+      # 4. Uncomment the block below.
+      #
+      # - name: Set up signing
+      #   run: |
+      #     echo '${{ secrets.KEYSTORE_BASE64 }}' | base64 --decode > android/app/valoqui.jks
+      #     echo "storeFile=valoqui.jks" >> android/key.properties
+      #     echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
+      #     echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+      #     echo "storePassword=${{ secrets.STORE_PASSWORD }}" >> android/key.properties
+      # ───────────────────────────────────────────────────────────────────────
+
+      - name: Build release APK
+        run: flutter build apk --release --dart-define=GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
+        # When signing is enabled, add:
+        # --dart-define=... for any API keys needed at runtime
+
+      - name: Upload release APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: valoqui-${{ github.ref_name }}.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 90
+
+      # Creates a GitHub Release with:
+      # - The APK attached as a downloadable asset
+      # - Auto-generated release notes from commits since the last tag
+      # Release notes pull from your commit messages — another reason to write
+      # meaningful commits.
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Valoqui ${{ github.ref_name }}
+          files: build/app/outputs/flutter-apk/app-release.apk
+          generate_release_notes: true   # Pulls from commits between tags
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}  # v1.0.0-beta.1 → marked as pre-release
