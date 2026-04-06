@@ -35,9 +35,9 @@ class ReportScreen extends StatelessWidget {
       body: BlocBuilder<ReportBloc, ReportState>(
         builder: (context, state) => switch (state) {
           ReportInitial() => _buildGenerating(
-              const Duration(seconds: 0),
-              const Duration(seconds: 0),
-            ),
+            const Duration(seconds: 0),
+            const Duration(seconds: 0),
+          ),
           ReportGenerating(:final totalDuration, :final activeSpeakingTime) =>
             _buildGenerating(totalDuration, activeSpeakingTime),
           ReportLoaded() => _buildLoaded(context, state),
@@ -92,7 +92,10 @@ class ReportScreen extends StatelessWidget {
                   horizontal: AppSpacing.lg,
                   vertical: AppSpacing.sm,
                 ),
-                child: XpBreakdownCard(xp: report.xpBreakdown, profile: profile),
+                child: XpBreakdownCard(
+                  xp: report.xpBreakdown,
+                  profile: profile,
+                ),
               ),
             ),
           if (report.topicsCovered.isNotEmpty)
@@ -495,16 +498,16 @@ class _GeneratingContentState extends State<_GeneratingContent>
 
             // ── Title ────────────────────────────────────────────────────────
             const Text(
-              'Analyzing your session...',
-              style: TextStyle(
-                fontFamily: 'Fraunces',
-                fontWeight: FontWeight.w700,
-                fontSize: 22,
-                color: AppColors.textPrimary,
-                height: 1.2,
-              ),
-              textAlign: TextAlign.center,
-            )
+                  'Analyzing your session...',
+                  style: TextStyle(
+                    fontFamily: 'Fraunces',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 22,
+                    color: AppColors.textPrimary,
+                    height: 1.2,
+                  ),
+                  textAlign: TextAlign.center,
+                )
                 .animate()
                 .fadeIn(duration: 400.ms, delay: 100.ms)
                 .slideY(begin: 0.15, end: 0, duration: 400.ms, delay: 100.ms),
@@ -518,16 +521,14 @@ class _GeneratingContentState extends State<_GeneratingContent>
                 color: AppColors.textSecondary,
               ),
               textAlign: TextAlign.center,
-            )
-                .animate()
-                .fadeIn(duration: 400.ms, delay: 200.ms),
+            ).animate().fadeIn(duration: 400.ms, delay: 200.ms),
 
             const SizedBox(height: AppSpacing.x3l),
 
             // ── Step list ────────────────────────────────────────────────────
-            _StepList(activeStep: _activeStep)
-                .animate()
-                .fadeIn(duration: 500.ms, delay: 300.ms),
+            _StepList(
+              activeStep: _activeStep,
+            ).animate().fadeIn(duration: 500.ms, delay: 300.ms),
 
             const SizedBox(height: AppSpacing.xxl),
 
@@ -536,9 +537,7 @@ class _GeneratingContentState extends State<_GeneratingContent>
               _StatsPill(
                 duration: widget.totalDuration,
                 formatDuration: widget.formatDuration,
-              )
-                  .animate()
-                  .fadeIn(duration: 400.ms, delay: 450.ms),
+              ).animate().fadeIn(duration: 400.ms, delay: 450.ms),
 
             const SizedBox(height: AppSpacing.x3l),
 
@@ -546,9 +545,7 @@ class _GeneratingContentState extends State<_GeneratingContent>
             Text(
               'This usually takes 5–10 seconds',
               style: AppTypography.caption,
-            )
-                .animate()
-                .fadeIn(duration: 400.ms, delay: 600.ms),
+            ).animate().fadeIn(duration: 400.ms, delay: 600.ms),
           ],
         ),
       ),
@@ -566,54 +563,61 @@ class _DashedCircleIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 100,
-      height: 100,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Slowly rotating dashed border
-          AnimatedBuilder(
-            animation: rotateController,
-            builder: (context, _) => Transform.rotate(
-              angle: rotateController.value * 2 * pi,
-              child: CustomPaint(
-                size: const Size(100, 100),
-                painter: _DashedCirclePainter(
-                  color: AppColors.accentPrimary.withValues(alpha: 0.6),
-                  dashCount: 20,
-                  strokeWidth: 1.5,
+          width: 100,
+          height: 100,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Slowly rotating dashed border
+              AnimatedBuilder(
+                animation: rotateController,
+                builder: (context, _) => Transform.rotate(
+                  angle: rotateController.value * 2 * pi,
+                  child: CustomPaint(
+                    size: const Size(100, 100),
+                    painter: _DashedCirclePainter(
+                      color: AppColors.accentPrimary.withValues(alpha: 0.6),
+                      dashCount: 20,
+                      strokeWidth: 1.5,
+                    ),
+                  ),
                 ),
               ),
-            ),
+              // Inner filled circle
+              Container(
+                    width: 76,
+                    height: 76,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.bgElevated,
+                      border: Border.all(color: AppColors.border, width: 1),
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.auto_awesome_rounded,
+                        color: AppColors.accentPrimary,
+                        size: 30,
+                      ),
+                    ),
+                  )
+                  .animate(onPlay: (c) => c.repeat(reverse: true))
+                  .scaleXY(
+                    begin: 0.96,
+                    end: 1.0,
+                    duration: 1800.ms,
+                    curve: Curves.easeInOut,
+                  ),
+            ],
           ),
-          // Inner filled circle
-          Container(
-            width: 76,
-            height: 76,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.bgElevated,
-              border: Border.all(
-                color: AppColors.border,
-                width: 1,
-              ),
-            ),
-            child: const Center(
-              child: Icon(
-                Icons.auto_awesome_rounded,
-                color: AppColors.accentPrimary,
-                size: 30,
-              ),
-            ),
-          )
-              .animate(onPlay: (c) => c.repeat(reverse: true))
-              .scaleXY(begin: 0.96, end: 1.0, duration: 1800.ms, curve: Curves.easeInOut),
-        ],
-      ),
-    )
+        )
         .animate()
         .fadeIn(duration: 500.ms)
-        .scaleXY(begin: 0.85, end: 1.0, duration: 500.ms, curve: Curves.easeOut);
+        .scaleXY(
+          begin: 0.85,
+          end: 1.0,
+          duration: 500.ms,
+          curve: Curves.easeOut,
+        );
   }
 }
 
@@ -662,7 +666,8 @@ class _DashedCirclePainter extends CustomPainter {
 // ── Step list ─────────────────────────────────────────────────────────────────
 
 class _StepList extends StatelessWidget {
-  final int activeStep; // 0=step1 in progress, 1=step2 in progress, 2=step3 in progress
+  final int
+  activeStep; // 0=step1 in progress, 1=step2 in progress, 2=step3 in progress
 
   const _StepList({required this.activeStep});
 
@@ -681,8 +686,8 @@ class _StepList extends StatelessWidget {
           status: activeStep == 1
               ? _StepStatus.active
               : activeStep > 1
-                  ? _StepStatus.done
-                  : _StepStatus.pending,
+              ? _StepStatus.done
+              : _StepStatus.pending,
         ),
         const SizedBox(height: AppSpacing.md),
         _StepRow(
@@ -690,8 +695,8 @@ class _StepList extends StatelessWidget {
           status: activeStep == 2
               ? _StepStatus.active
               : activeStep > 2
-                  ? _StepStatus.done
-                  : _StepStatus.pending,
+              ? _StepStatus.done
+              : _StepStatus.pending,
         ),
       ],
     );
@@ -710,11 +715,7 @@ class _StepRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        SizedBox(
-          width: 24,
-          height: 24,
-          child: _buildIcon(),
-        ),
+        SizedBox(width: 24, height: 24, child: _buildIcon()),
         const SizedBox(width: AppSpacing.md),
         Text(
           label,
@@ -725,7 +726,9 @@ class _StepRow extends StatelessWidget {
             color: switch (status) {
               _StepStatus.done => AppColors.success,
               _StepStatus.active => AppColors.accentPrimary,
-              _StepStatus.pending => AppColors.textSecondary.withValues(alpha: 0.5),
+              _StepStatus.pending => AppColors.textSecondary.withValues(
+                alpha: 0.5,
+              ),
             },
           ),
         ),
@@ -751,7 +754,12 @@ class _StepRow extends StatelessWidget {
               ),
             )
             .animate(onPlay: (c) => c.repeat(reverse: true))
-            .scaleXY(begin: 0.75, end: 1.0, duration: 700.ms, curve: Curves.easeInOut)
+            .scaleXY(
+              begin: 0.75,
+              end: 1.0,
+              duration: 700.ms,
+              curve: Curves.easeInOut,
+            )
             .fadeOut(begin: 0.5, duration: 700.ms)
             .then()
             .fadeIn(duration: 700.ms);
@@ -777,10 +785,7 @@ class _StatsPill extends StatelessWidget {
   final Duration duration;
   final String Function(Duration) formatDuration;
 
-  const _StatsPill({
-    required this.duration,
-    required this.formatDuration,
-  });
+  const _StatsPill({required this.duration, required this.formatDuration});
 
   @override
   Widget build(BuildContext context) {
@@ -843,5 +848,3 @@ class _TutorNote extends StatelessWidget {
     );
   }
 }
-
-

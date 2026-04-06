@@ -28,10 +28,7 @@ class MistakeCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Text(
-                "❌",
-                style: TextStyle(fontSize: 14),
-              ),
+              const Text("❌", style: TextStyle(fontSize: 14)),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
@@ -52,10 +49,7 @@ class MistakeCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Text(
-                "✅",
-                style: TextStyle(fontSize: 14),
-              ),
+              const Text("✅", style: TextStyle(fontSize: 14)),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
@@ -81,10 +75,7 @@ class MistakeCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  "📌",
-                  style: const TextStyle(fontSize: 13),
-                ),
+                Text("📌", style: const TextStyle(fontSize: 13)),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
