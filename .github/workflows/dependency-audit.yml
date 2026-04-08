@@ -2,16 +2,14 @@ name: Dependency Audit
 
 # Runs every Monday at 9 AM UTC and on manual trigger.
 # A solo project's biggest silent risk is a dependency silently becoming
-# vulnerable or unmaintained. This workflow surfaces that proactively
-# rather than you discovering it when something breaks.
+# vulnerable or unmaintained. This workflow surfaces that proactively.
 #
-# It does NOT block merges. It creates noise (GitHub notification) that
-# you should act on when time permits.
+# Does NOT block merges. Creates a GitHub notification to act on when time permits.
 
 on:
   schedule:
     - cron: '0 9 * * 1'   # Monday 9 AM UTC
-  workflow_dispatch:        # Allows manual trigger from the Actions tab
+  workflow_dispatch:
 
 jobs:
   audit:
@@ -27,30 +25,18 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Get valoqui_lints dependencies
-        working-directory: valoqui_lints
-        run: dart pub get
-
       - name: Install dependencies
         run: flutter pub get
 
-      # Checks for packages with known security advisories.
-      # `dart pub audit` queries the OSV (Open Source Vulnerability) database.
+      # Checks for packages with known security advisories against the OSV database.
       # If a vulnerability is found, the step fails and you get a notification.
       - name: Security audit
         run: dart pub audit
 
-      # Reports packages that have newer versions available.
-      # --no-dev-dependencies: only shows production deps (you care more about
+      # Reports packages with newer versions available.
+      # --no-dev-dependencies: only production deps (you care more about
       # packages that ship with the app than dev tools).
-      # This step does NOT fail the pipeline — it's informational.
-      # Read the output in the Actions tab when you have capacity.
+      # Does NOT fail the pipeline — informational only.
       - name: Check for outdated packages
         run: dart pub outdated --no-dev-dependencies
-        continue-on-error: true
-
-      # Also check the lint plugin's dependencies
-      - name: Check valoqui_lints for outdated packages
-        working-directory: valoqui_lints
-        run: dart pub outdated
         continue-on-error: true

@@ -19,7 +19,7 @@ concurrency:
 jobs:
   # ─────────────────────────────────────────────
   # JOB 1: Code Quality
-  # Format → Analyze → Custom Lint → Stale Generated Files
+  # Format → Analyze → Stale Generated Files
   # These are cheap and fast. Run first. Fail fast on the obvious stuff.
   # ─────────────────────────────────────────────
   quality:
@@ -29,19 +29,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Pinned to stable channel. Replace 'any' with your exact local version
+      # Pinned to stable channel. Replace with your exact local version
       # to guarantee parity: check with `flutter --version` locally.
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.41.4"
           channel: stable
-          cache: true # Caches the Flutter SDK itself between runs
-
-      # The custom lint plugin is a path dependency — it needs its own pub get
-      # before the main app can resolve it.
-      # - name: Get valoqui_lints dependencies
-      #   working-directory: valoqui_lints
-      #   run: dart pub get
+          cache: true
 
       # Cache the pub package cache. This is the biggest time saver.
       # On cache hit: skips downloading ~50+ packages from pub.dev every run.
@@ -59,28 +53,22 @@ jobs:
 
       # STEP 1: Format check.
       # Runs before analyze because it's near-instant.
-      # --set-exit-if-changed: exits with code 1 if any file would be reformatted,
-      # meaning the developer didn't run `dart format .` before pushing.
+      # --set-exit-if-changed: exits with code 1 if any file would be
+      # reformatted, meaning the developer didn't run `dart format .` locally.
       - name: Check formatting
         run: dart format --set-exit-if-changed .
 
-      # STEP 2: Static analysis with your strict analysis_options.yaml.
-      # This catches type errors, unawaited futures, unclosed sinks, etc.
-      # All the errors you promoted from warnings will fail the pipeline here.
+      # STEP 2: Static analysis driven by analysis_options.yaml.
+      # flutter analyze reads your analysis_options.yaml automatically —
+      # no separate custom_lint plugin needed. All rules configured there
+      # (lints, errors promoted from warnings, etc.) are enforced here.
       - name: Analyze
         run: flutter analyze
 
-      # STEP 3: Custom lint rules from valoqui_lints.
-      # Run separately from `flutter analyze` so failures are independently visible
-      # in the GitHub Actions UI. If analyze passes but custom lint fails,
-      # you know immediately which rule was violated.
-      - name: Custom lint (valoqui_lints)
-        run: dart run custom_lint
-
-      # STEP 4: Stale generated files check.
-      # Regenerates Freezed/build_runner output and checks if the result differs
-      # from what's committed. Catches the classic "forgot to run build_runner" bug.
-      # If generated files are stale, the diff will be non-empty → exit 1.
+      # STEP 3: Stale generated files check.
+      # Regenerates Freezed/build_runner output and checks if the result
+      # differs from what's committed. Catches the classic "forgot to run
+      # build_runner" bug before it reaches review.
       - name: Regenerate build_runner output
         run: dart run build_runner build --delete-conflicting-outputs
 
@@ -108,12 +96,9 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
+          flutter-version: "3.41.4"
           channel: stable
           cache: true
-
-      - name: Get valoqui_lints dependencies
-        working-directory: valoqui_lints
-        run: dart pub get
 
       - name: Cache pub dependencies
         uses: actions/cache@v4
@@ -136,15 +121,12 @@ jobs:
 
       # Coverage threshold enforcement.
       # START LOW (20%) since you're writing tests incrementally.
-      # The intent is to raise this number as you write more tests.
       # Suggested milestones: 20% → 40% (Sprint 3) → 60% (post-MVP)
-      # This does NOT fail if there are zero tests (lcov.info may be empty).
       - name: Install lcov
         run: sudo apt-get install -y lcov --quiet
 
       - name: Enforce coverage threshold
         run: |
-          # If no coverage data exists yet, skip the check gracefully
           if [ ! -f coverage/lcov.info ] || [ ! -s coverage/lcov.info ]; then
             echo "No coverage data found. Skipping threshold check."
             exit 0
@@ -152,7 +134,6 @@ jobs:
 
           THRESHOLD=20
 
-          # Parse total line coverage from lcov summary
           SUMMARY=$(lcov --summary coverage/lcov.info 2>&1)
           echo "$SUMMARY"
 
@@ -176,8 +157,6 @@ jobs:
               print(f'PASS: {coverage:.1f}% >= {threshold}%')
           "
 
-      # Upload coverage report as an artifact so you can inspect it
-      # without needing to run tests locally.
       - name: Upload coverage report
         if: always()
         uses: actions/upload-artifact@v4
@@ -205,15 +184,10 @@ jobs:
           channel: stable
           cache: true
 
-      # Java is required for the Android build toolchain
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
-
-      - name: Get valoqui_lints dependencies
-        working-directory: valoqui_lints
-        run: dart pub get
 
       - name: Cache pub dependencies
         uses: actions/cache@v4
@@ -232,25 +206,16 @@ jobs:
 
       # ⚠️  FIREBASE: google-services.json is required for the Android build.
       # It must NOT be committed to the repo.
-      # Setup: In your GitHub repo → Settings → Secrets and variables → Actions,
-      # add a secret named GOOGLE_SERVICES_JSON with the full content of the file.
-      # Then uncomment the step below.
-      #
+      # Setup: repo → Settings → Secrets → Actions → GOOGLE_SERVICES_JSON
       - name: Write google-services.json
         run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
-
-      # ⚠️  API KEYS: Any keys read from .env or dart-define at build time
-      # must also be injected here as secrets. Example:
-      # run: flutter build apk --debug --dart-define=GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
 
       - name: Build debug APK
         run: flutter build apk --debug --dart-define=GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
 
-      # The compiled APK is attached to this workflow run.
-      # Anyone with repo access can download it from the Actions tab and install it.
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
           name: debug-apk-${{ github.sha }}
           path: build/app/outputs/flutter-apk/app-debug.apk
-          retention-days: 7 # Debug builds don't need long retention
+          retention-days: 7
