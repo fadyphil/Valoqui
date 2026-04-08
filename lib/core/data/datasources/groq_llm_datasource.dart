@@ -70,12 +70,17 @@ class GroqLlmDatasource {
 
             try {
               final json = jsonDecode(data) as Map<String, dynamic>;
-              final choices = json["choices"] as List<dynamic>?;
+
+              // Cast choices explicitly
+              final choices = json['choices'] as List<dynamic>?;
               if (choices == null || choices.isEmpty) continue;
 
-              final delta = choices[0]["delta"] as Map<String, dynamic>?;
-              final token = delta?["content"] as String?;
+              // Cast first choice to Map before nested access
+              final firstChoice = choices[0] as Map<String, dynamic>;
+              final delta = firstChoice['delta'] as Map<String, dynamic>?;
+              if (delta == null) continue;
 
+              final token = delta['content'] as String?;
               if (token != null && token.isNotEmpty) {
                 yield right(token);
               }
@@ -132,7 +137,18 @@ class GroqLlmDatasource {
         );
       }
 
-      final content = choices[0]["message"]["content"] as String? ?? "";
+      // Explicit casts to avoid dynamic calls
+      final firstChoice = choices[0] as Map<String, dynamic>;
+      final message = firstChoice['message'] as Map<String, dynamic>?;
+      if (message == null) {
+        return left(
+          const AppFailure.reportGenerationFailed(
+            message: "Groq response missing 'message' field",
+          ),
+        );
+      }
+      final content = message['content'] as String? ?? '';
+
       return right(content);
     } on DioException catch (e) {
       if (e.response?.statusCode == 429) {

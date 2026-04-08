@@ -55,7 +55,9 @@ class FirebaseAuthDatasource {
       if (e.code == GoogleSignInExceptionCode.canceled) {
         return left(const AppFailure.signInCancelled());
       }
-      return left(AppFailure.authFailure(message: "Google Sign-In failed."));
+      return left(
+        const AppFailure.authFailure(message: "Google Sign-In failed."),
+      );
     } on FirebaseAuthException catch (e) {
       return left(
         AppFailure.authFailure(message: e.message ?? "Authentication failed."),

@@ -77,14 +77,23 @@ class GeminiLlmDatasource {
 
             try {
               final json = jsonDecode(data) as Map<String, dynamic>;
+
+              // Cast candidates explicitly
               final candidates = json["candidates"] as List<dynamic>?;
               if (candidates == null || candidates.isEmpty) continue;
 
-              final parts =
-                  candidates[0]["content"]?["parts"] as List<dynamic>?;
+              // Cast the first candidate to Map before accessing nested fields
+              final firstCandidate = candidates[0] as Map<String, dynamic>;
+              final content =
+                  firstCandidate['content'] as Map<String, dynamic>?;
+              if (content == null) continue;
+
+              final parts = content['parts'] as List<dynamic>?;
               if (parts == null || parts.isEmpty) continue;
 
-              final token = parts[0]["text"] as String?;
+              // Cast the first part to Map before accessing 'text'
+              final firstPart = parts[0] as Map<String, dynamic>;
+              final token = firstPart['text'] as String?;
               if (token != null && token.isNotEmpty) {
                 yield right(token);
               }
@@ -136,9 +145,22 @@ class GeminiLlmDatasource {
         );
       }
 
-      final content =
-          candidates[0]["content"]["parts"][0]["text"] as String? ?? "";
-      return right(content);
+      final firstCandidate = candidates[0] as Map<String, dynamic>;
+
+      final content = firstCandidate["content"] as Map<String, dynamic>?;
+      // This is explicit type casting for following the the Defesive i/o never trust the API , this allows for gracefull  error or mismatch handling
+      final parts = content?["parts"] as List<dynamic>?;
+      if (parts == null || parts.isEmpty) {
+        return left(
+          const AppFailure.reportGenerationFailed(
+            message: "Gemini response missing 'parts' field",
+          ),
+        );
+      }
+
+      final firstPart = parts[0] as Map<String, dynamic>;
+      final text = firstPart["text"] as String? ?? '';
+      return right(text);
     } on DioException catch (e) {
       return left(
         AppFailure.reportGenerationFailed(
