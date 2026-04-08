@@ -53,6 +53,9 @@ sealed class SpeakingState with _$SpeakingState {
     /// Null when the user is not speaking.
     String? partialUserTranscript,
 
+    /// The current amplitude of the user's speech.
+    @Default(0.0) double amplitude,
+
     /// Non-fatal error message shown as a toast (e.g. network hiccup).
     /// Null when there is no error.
     String? errorMessage,

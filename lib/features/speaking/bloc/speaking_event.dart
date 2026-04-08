@@ -46,8 +46,6 @@ class _TimerTick extends SpeakingEvent {
 }
 
 /// VAD detected voice activity change.
-/// Still used for active-speaking-time tracking even though
-/// we no longer use it to trigger utterance processing.
 class _VoiceActivityChanged extends SpeakingEvent {
   final bool isActive;
   const _VoiceActivityChanged(this.isActive);
@@ -55,23 +53,13 @@ class _VoiceActivityChanged extends SpeakingEvent {
   List<Object?> get props => [isActive];
 }
 
-/// STT emitted a partial transcript (live display only).
+/// STT emitted a (partial or final) transcript.
 class _TranscriptReceived extends SpeakingEvent {
   final String text;
   const _TranscriptReceived(this.text);
   @override
   List<Object?> get props => [text];
 }
-
-/// STT emitted a FINAL transcript — this is the signal to fire the LLM.
-/// Replaces VAD-based silence detection for always-on mode, removing
-/// the mic conflict between sherpa VAD recorder and SpeechRecognizer.
-// class _FinalTranscriptReceived extends SpeakingEvent {
-//   final String text;
-//   const _FinalTranscriptReceived(this.text);
-//   @override
-//   List<Object?> get props => [text];
-// }
 
 /// LLM streamed a new token.
 class _LlmTokenReceived extends SpeakingEvent {
@@ -94,9 +82,7 @@ class _LlmError extends SpeakingEvent {
   List<Object?> get props => [failure];
 }
 
-/// TTS finished playing — transition back to listening and restart STT.
-/// Replaces the direct _resumeListening() call so we can emit a state
-/// change (phase → listening) from inside a proper BLoC handler.
+/// TTS finished playing — transition back to listening.
 class _TtsFinished extends SpeakingEvent {
   const _TtsFinished();
 }
@@ -104,4 +90,15 @@ class _TtsFinished extends SpeakingEvent {
 /// TTS began playing — gate the VAD so TTS audio can't reach Silero.
 class _TtsStarted extends SpeakingEvent {
   const _TtsStarted();
+}
+
+/// Mic amplitude updated — dispatched by the amplitude stream subscription.
+/// This is a proper event so emit() is only ever called inside a handler,
+/// satisfying flutter_bloc's constraint that emit must not be called from
+/// outside an event handler.
+class _AmplitudeChanged extends SpeakingEvent {
+  final double amplitude;
+  const _AmplitudeChanged(this.amplitude);
+  @override
+  List<Object?> get props => [amplitude];
 }
