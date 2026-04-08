@@ -35,7 +35,7 @@ class ScoreBar extends StatelessWidget {
                       widthFactor: fraction,
                       child: Container(
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
+                          gradient: const LinearGradient(
                             colors: [
                               AppColors.accentPrimary,
                               AppColors.success,

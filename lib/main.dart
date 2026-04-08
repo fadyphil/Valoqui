@@ -3,10 +3,10 @@
 import "package:firebase_core/firebase_core.dart";
 import "package:flutter/material.dart";
 import "package:flutter/services.dart";
-import "firebase_options.dart";
-import "core/di/service_locator.dart";
-import "app.dart";
 import "package:sherpa_onnx/sherpa_onnx.dart" as sherpa;
+import 'package:valoqui/app.dart';
+import 'package:valoqui/core/di/service_locator.dart';
+import 'package:valoqui/firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

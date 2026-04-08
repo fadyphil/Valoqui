@@ -3,15 +3,15 @@
 import "package:flutter/material.dart";
 import "package:flutter_bloc/flutter_bloc.dart";
 import "package:go_router/go_router.dart";
+import 'package:valoqui/core/domain/models/app_user.dart';
 import "package:valoqui/core/router/route_names.dart";
+import 'package:valoqui/core/theme/app_colors.dart';
+import 'package:valoqui/core/theme/app_spacing.dart';
+import 'package:valoqui/core/theme/app_typography.dart';
 import "package:valoqui/features/auth/bloc/auth_bloc.dart";
 import "package:valoqui/features/home/bloc/home_bloc.dart";
-import "../../../../core/domain/models/app_user.dart";
-import "../../../../core/theme/app_colors.dart";
-import "../../../../core/theme/app_typography.dart";
-import "../../../../core/theme/app_spacing.dart";
-import "../../../../shared/widgets/xp_progress_bar.dart";
-import "../../../../shared/widgets/level_badge.dart";
+import 'package:valoqui/shared/widgets/level_badge.dart';
+import 'package:valoqui/shared/widgets/xp_progress_bar.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -361,7 +361,7 @@ class _LastSessionCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Last Session", style: AppTypography.labelMD),
+                const Text("Last Session", style: AppTypography.labelMD),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   "${profile.totalSessionCount} sessions completed",
@@ -382,7 +382,7 @@ class _BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return DecoratedBox(
       decoration: const BoxDecoration(
         color: AppColors.bgSurface,
         border: Border(top: BorderSide(color: AppColors.border, width: 0.5)),

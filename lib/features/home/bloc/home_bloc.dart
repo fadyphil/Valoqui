@@ -4,8 +4,8 @@ import "dart:async";
 import "package:equatable/equatable.dart";
 import "package:flutter_bloc/flutter_bloc.dart";
 import "package:freezed_annotation/freezed_annotation.dart";
-import "../../../../core/domain/models/app_user.dart";
-import "../../../../core/domain/usecases/user/watch_user_profile.dart";
+import 'package:valoqui/core/domain/models/app_user.dart';
+import 'package:valoqui/core/domain/usecases/user/watch_user_profile.dart';
 
 part "home_event.dart";
 part "home_state.dart";
@@ -35,7 +35,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           add(const _ProfileError("User profile not found."));
         }
       },
-      onError: (error) => add(_ProfileError("Failed to load profile: $error")),
+      onError: (Object error) =>
+          add(_ProfileError("Failed to load profile: $error")),
     );
   }
 

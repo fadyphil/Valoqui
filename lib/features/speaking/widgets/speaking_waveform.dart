@@ -2,25 +2,25 @@
 //
 // Animated waveform bar strip shown in the bottom panel of the speaking screen.
 // Always visible; animation style changes per conversation phase.
-// Reacts to real microphone amplitude when an amplitudeStream is provided.
+// Reacts to real microphone amplitude passed directly as a double from
+// SpeakingActive.amplitude (pushed through the BLoC state via _AmplitudeChanged).
 
-import 'dart:async';
-import 'dart:math';
-import 'package:flutter/material.dart';
-import 'package:valoqui/core/theme/app_colors.dart';
-import 'package:valoqui/features/speaking/bloc/speaking_bloc.dart';
+import "dart:math";
+import "package:flutter/material.dart";
+import "package:valoqui/core/theme/app_colors.dart";
+import "package:valoqui/features/speaking/bloc/speaking_bloc.dart";
 
 class SpeakingWaveform extends StatefulWidget {
   final ConversationPhase phase;
 
-  /// Normalized 0.0–1.0 amplitude from mic input (from SttRepository).
-  /// When null or 0 the waveform uses auto-animation only.
-  final Stream<double>? amplitudeStream;
+  /// Normalized 0.0–1.0 amplitude from the BLoC state.
+  /// Defaults to 0 when the mic is inactive.
+  final double amplitudeStream;
 
   const SpeakingWaveform({
     super.key,
     required this.phase,
-    this.amplitudeStream,
+    this.amplitudeStream = 0.0,
   });
 
   @override
@@ -30,11 +30,8 @@ class SpeakingWaveform extends StatefulWidget {
 class _SpeakingWaveformState extends State<SpeakingWaveform>
     with SingleTickerProviderStateMixin {
   // Single controller drives the time-base for all bars.
-  // 1800 ms ≈ one full sine cycle feels organic — not too fast, not sluggish.
+  // 1800 ms ≈ one full sine cycle — organic, not jittery.
   late final AnimationController _ticker;
-
-  StreamSubscription<double>? _ampSub;
-  double _amplitude = 0.0;
 
   static const _barCount = 32;
   static const _maxH = 34.0;
@@ -47,67 +44,37 @@ class _SpeakingWaveformState extends State<SpeakingWaveform>
       vsync: this,
       duration: const Duration(milliseconds: 1800),
     )..repeat();
-    _subscribeAmplitude();
-  }
-
-  void _subscribeAmplitude() {
-    _ampSub = widget.amplitudeStream?.listen((v) {
-      if (mounted) setState(() => _amplitude = v.clamp(0.0, 1.0));
-    });
-  }
-
-  @override
-  void didUpdateWidget(covariant SpeakingWaveform old) {
-    super.didUpdateWidget(old);
-
-    // Re-subscribe if a new stream is provided
-    if (old.amplitudeStream != widget.amplitudeStream) {
-      _ampSub?.cancel();
-      _subscribeAmplitude();
-    }
-
-    // Decay amplitude instantly when we leave the listening phase
-    if (old.phase != widget.phase &&
-        widget.phase != ConversationPhase.listening) {
-      setState(() => _amplitude = 0.0);
-    }
   }
 
   @override
   void dispose() {
-    _ampSub?.cancel();
     _ticker.dispose();
     super.dispose();
   }
 
-  // ── Per-bar height calculation ─────────────────────────────────────────────
+  // ── Per-bar height ─────────────────────────────────────────────────────────
 
   double _barHeight(int i, double t) {
-    // Per-bar phase offset creates independent wave character for each bar
     final offset = (i / _barCount) * 2 * pi;
+    final amplitude = widget.amplitudeStream.clamp(0.0, 1.0);
 
     switch (widget.phase) {
       case ConversationPhase.speaking:
-        // Rich dual-frequency animation while TTS plays — looks like real speech
         final w1 = sin(t * 2 * pi * 1.0 + offset);
         final w2 = sin(t * 2 * pi * 1.65 + offset * 1.3);
         final combined = (w1 * 0.65 + w2 * 0.35) * 0.5 + 0.5;
         return _minH + combined * (_maxH - _minH);
 
       case ConversationPhase.listening:
-        if (_amplitude < 0.03) {
-          // Near-silence: very gentle idle ripple so bars don't look frozen
+        if (amplitude < 0.03) {
           final idle = sin(t * 2 * pi * 0.55 + offset) * 0.5 + 0.5;
           return _minH + idle * 5.0;
         }
-        // Active speech: amplitude sets the ceiling, wave adds organic variation
         final sine = sin(t * 2 * pi * 1.45 + offset);
-        final amp =
-            0.2 + _amplitude * 0.8; // floor at 20% so bars never flatten
+        final amp = 0.2 + amplitude * 0.8;
         return _minH + (sine * 0.5 + 0.5) * (_maxH - _minH) * amp;
 
       case ConversationPhase.processing:
-        // Very subtle low-energy pulse — "thinking" should feel calm
         final idle = sin(t * 2 * pi * 0.45 + offset) * 0.5 + 0.5;
         return _minH + idle * 3.5;
     }
@@ -116,14 +83,14 @@ class _SpeakingWaveformState extends State<SpeakingWaveform>
   // ── Dynamic colour ─────────────────────────────────────────────────────────
 
   Color get _barColor {
+    final amplitude = widget.amplitudeStream.clamp(0.0, 1.0);
     switch (widget.phase) {
       case ConversationPhase.speaking:
         return AppColors.accentSecondary;
 
       case ConversationPhase.listening:
-        // Smoothly blend toward amber as the user's voice gets louder
-        if (_amplitude > 0.25) {
-          final t = ((_amplitude - 0.25) / 0.75).clamp(0.0, 1.0);
+        if (amplitude > 0.25) {
+          final t = ((amplitude - 0.25) / 0.75).clamp(0.0, 1.0);
           return Color.lerp(
             AppColors.accentSecondary,
             AppColors.accentPrimary,
@@ -137,25 +104,26 @@ class _SpeakingWaveformState extends State<SpeakingWaveform>
     }
   }
 
-  // ── Label copy & colour ────────────────────────────────────────────────────
+  // ── Label ──────────────────────────────────────────────────────────────────
 
   String get _label {
     switch (widget.phase) {
       case ConversationPhase.speaking:
-        return 'SPEAKING';
+        return "SPEAKING";
       case ConversationPhase.listening:
-        return 'LISTENING';
+        return "LISTENING";
       case ConversationPhase.processing:
-        return 'THINKING';
+        return "THINKING";
     }
   }
 
   Color get _labelColor {
+    final amplitude = widget.amplitudeStream.clamp(0.0, 1.0);
     switch (widget.phase) {
       case ConversationPhase.speaking:
         return AppColors.accentSecondary;
       case ConversationPhase.listening:
-        return _amplitude > 0.1
+        return amplitude > 0.1
             ? AppColors.textSecondary
             : AppColors.textSecondary.withValues(alpha: 0.55);
       case ConversationPhase.processing:
@@ -174,11 +142,10 @@ class _SpeakingWaveformState extends State<SpeakingWaveform>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Left label — fixed width so bars always start at the same x position
           AnimatedDefaultTextStyle(
             duration: const Duration(milliseconds: 300),
             style: TextStyle(
-              fontFamily: 'DMSans',
+              fontFamily: "DMSans",
               fontSize: 9,
               fontWeight: FontWeight.w700,
               color: _labelColor,
@@ -187,8 +154,6 @@ class _SpeakingWaveformState extends State<SpeakingWaveform>
             child: SizedBox(width: 58, child: Text(_label)),
           ),
           const SizedBox(width: 10),
-
-          // Waveform bars
           Expanded(
             child: AnimatedBuilder(
               animation: _ticker,

@@ -5,10 +5,10 @@ import "package:equatable/equatable.dart";
 import "package:flutter_bloc/flutter_bloc.dart";
 import "package:freezed_annotation/freezed_annotation.dart";
 import "package:valoqui/core/domain/models/app_failure.dart";
-import "../../../../core/domain/models/app_user.dart";
-import "../../../../core/domain/usecases/auth/sign_in_with_google.dart";
-import "../../../../core/domain/usecases/auth/sign_out.dart";
-import "../../../../core/domain/usecases/auth/watch_auth_state.dart";
+import 'package:valoqui/core/domain/models/app_user.dart';
+import 'package:valoqui/core/domain/usecases/auth/sign_in_with_google.dart';
+import 'package:valoqui/core/domain/usecases/auth/sign_out.dart';
+import 'package:valoqui/core/domain/usecases/auth/watch_auth_state.dart';
 
 part "auth_event.dart";
 part "auth_state.dart";

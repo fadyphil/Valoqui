@@ -542,7 +542,7 @@ class _GeneratingContentState extends State<_GeneratingContent>
             const SizedBox(height: AppSpacing.x3l),
 
             // ── Footer hint ───────────────────────────────────────────────────
-            Text(
+            const Text(
               'This usually takes 5–10 seconds',
               style: AppTypography.caption,
             ).animate().fadeIn(duration: 400.ms, delay: 600.ms),

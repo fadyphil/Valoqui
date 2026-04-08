@@ -3,16 +3,15 @@
 import "package:equatable/equatable.dart";
 import "package:flutter_bloc/flutter_bloc.dart";
 import "package:freezed_annotation/freezed_annotation.dart";
-import "../../../../core/domain/usecases/onboarding/check_onboarding_status.dart";
-import "../../../../core/domain/usecases/onboarding/save_groq_key.dart";
-import "../../../../core/domain/usecases/onboarding/save_gemini_key.dart";
-import "../../../../core/domain/usecases/onboarding/mark_onboarding_complete.dart";
-import "../../../../core/domain/usecases/user/update_user_level.dart";
-
-part "onboarding_event.dart";
-part "onboarding_state.dart";
+import 'package:valoqui/core/domain/usecases/onboarding/check_onboarding_status.dart';
+import 'package:valoqui/core/domain/usecases/onboarding/mark_onboarding_complete.dart';
+import 'package:valoqui/core/domain/usecases/onboarding/save_gemini_key.dart';
+import 'package:valoqui/core/domain/usecases/onboarding/save_groq_key.dart';
+import 'package:valoqui/core/domain/usecases/user/update_user_level.dart';
 
 part "onboarding_bloc.freezed.dart";
+part "onboarding_event.dart";
+part "onboarding_state.dart";
 
 class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
   final CheckOnboardingStatus _checkOnboardingStatus;

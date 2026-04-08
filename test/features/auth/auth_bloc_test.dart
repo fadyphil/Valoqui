@@ -2,11 +2,12 @@
 
 import "package:bloc_test/bloc_test.dart";
 import "package:flutter_test/flutter_test.dart";
-import "package:mocktail/mocktail.dart";
 import "package:fpdart/fpdart.dart";
-import "package:valoqui/features/auth/bloc/auth_bloc.dart";
-import "package:valoqui/core/domain/models/app_user.dart";
+import "package:mocktail/mocktail.dart";
 import "package:valoqui/core/domain/models/app_failure.dart";
+import "package:valoqui/core/domain/models/app_user.dart";
+import "package:valoqui/features/auth/bloc/auth_bloc.dart";
+
 import "../../mocks/mock_services.dart";
 
 void main() {
@@ -14,7 +15,7 @@ void main() {
   late MockSignOut mockSignOut;
   late MockWatchAuthState mockWatchAuthState;
 
-  final tUser = AppUser(
+  const tUser = AppUser(
     uid: "123",
     displayName: "Test User",
     email: "test@example.com",
@@ -48,7 +49,7 @@ void main() {
           return buildBloc();
         },
         act: (bloc) => bloc.add(const AuthStarted()),
-        expect: () => [AuthState.authenticated(user: tUser)],
+        expect: () => [const AuthState.authenticated(user: tUser)],
         verify: (_) => verify(() => mockWatchAuthState.execute()).called(1),
       );
 
@@ -77,7 +78,7 @@ void main() {
         act: (bloc) => bloc.add(const AuthSignInWithGoogle()),
         expect: () => [
           const AuthState.loading(),
-          AuthState.authenticated(user: tUser),
+          const AuthState.authenticated(user: tUser),
         ],
       );
 

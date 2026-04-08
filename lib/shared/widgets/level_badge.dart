@@ -1,9 +1,9 @@
 // lib/shared/widgets/level_badge.dart
 
 import "package:flutter/material.dart";
-import "../../core/theme/app_colors.dart";
-import "../../core/theme/app_typography.dart";
-import "../../core/theme/app_spacing.dart";
+import 'package:valoqui/core/theme/app_colors.dart';
+import 'package:valoqui/core/theme/app_spacing.dart';
+import 'package:valoqui/core/theme/app_typography.dart';
 
 class LevelBadge extends StatelessWidget {
   final String level;

@@ -2,10 +2,11 @@
 
 import "package:bloc_test/bloc_test.dart";
 import "package:flutter_test/flutter_test.dart";
-import "package:mocktail/mocktail.dart";
 import "package:fpdart/fpdart.dart";
-import "package:valoqui/features/onboarding/bloc/onboarding_bloc.dart";
+import "package:mocktail/mocktail.dart";
 import "package:valoqui/core/domain/models/app_failure.dart";
+import "package:valoqui/features/onboarding/bloc/onboarding_bloc.dart";
+
 import "../../mocks/mock_services.dart";
 
 void main() {
@@ -120,7 +121,7 @@ void main() {
 
       blocTest<OnboardingBloc, OnboardingState>(
         "emits [geminiStepComplete] on SkipGeminiKey",
-        build: () => buildBloc(),
+        build: buildBloc,
         act: (bloc) => bloc.add(const SkipGeminiKey()),
         expect: () => [const OnboardingState.geminiStepComplete()],
       );

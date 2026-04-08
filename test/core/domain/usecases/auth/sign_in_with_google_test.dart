@@ -1,11 +1,12 @@
 // test/core/domain/usecases/auth/sign_in_with_google_test.dart
 
 import "package:flutter_test/flutter_test.dart";
-import "package:mocktail/mocktail.dart";
 import "package:fpdart/fpdart.dart";
-import "package:valoqui/core/domain/usecases/auth/sign_in_with_google.dart";
-import "package:valoqui/core/domain/models/app_user.dart";
+import "package:mocktail/mocktail.dart";
 import "package:valoqui/core/domain/models/app_failure.dart";
+import "package:valoqui/core/domain/models/app_user.dart";
+import "package:valoqui/core/domain/usecases/auth/sign_in_with_google.dart";
+
 import "../../../../mocks/mock_services.dart";
 
 void main() {
@@ -13,7 +14,7 @@ void main() {
   late MockUserRepository mockUserRepository;
   late SignInWithGoogle useCase;
 
-  final tUser = AppUser(
+  const tUser = AppUser(
     uid: "123",
     displayName: "Test User",
     email: "test@example.com",

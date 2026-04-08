@@ -1,22 +1,20 @@
 // lib/features/speaking/screens/speaking_screen.dart
 
-import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
-import 'package:valoqui/core/di/service_locator.dart';
-import 'package:valoqui/core/domain/models/conversation_message.dart';
-import 'package:valoqui/core/domain/repositories/stt_repository.dart';
-import 'package:valoqui/core/router/route_names.dart';
-import 'package:valoqui/core/theme/app_colors.dart';
-import 'package:valoqui/core/theme/app_spacing.dart';
-import 'package:valoqui/core/theme/app_typography.dart';
-import 'package:valoqui/features/auth/bloc/auth_bloc.dart';
-import 'package:valoqui/features/home/bloc/home_bloc.dart';
-import 'package:valoqui/features/speaking/bloc/speaking_bloc.dart';
-import 'package:valoqui/features/speaking/widgets/mic_button.dart';
-import 'package:valoqui/features/speaking/widgets/speaking_waveform.dart';
-import 'package:valoqui/features/speaking/widgets/transcript_bubble.dart';
+import "package:flutter/material.dart";
+import "package:flutter_animate/flutter_animate.dart";
+import "package:flutter_bloc/flutter_bloc.dart";
+import "package:go_router/go_router.dart";
+import "package:valoqui/core/domain/models/conversation_message.dart";
+import "package:valoqui/core/router/route_names.dart";
+import "package:valoqui/core/theme/app_colors.dart";
+import "package:valoqui/core/theme/app_spacing.dart";
+import "package:valoqui/core/theme/app_typography.dart";
+import "package:valoqui/features/auth/bloc/auth_bloc.dart";
+import "package:valoqui/features/home/bloc/home_bloc.dart";
+import "package:valoqui/features/speaking/bloc/speaking_bloc.dart";
+import "package:valoqui/features/speaking/widgets/mic_button.dart";
+import "package:valoqui/features/speaking/widgets/speaking_waveform.dart";
+import "package:valoqui/features/speaking/widgets/transcript_bubble.dart";
 
 class SpeakingScreen extends StatefulWidget {
   const SpeakingScreen({super.key});
@@ -38,7 +36,7 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
     if (authState is AuthAuthenticated) {
       final cefrLevel = homeState is HomeLoaded
           ? homeState.profile.currentCefrLevel
-          : 'A1';
+          : "A1";
 
       context.read<SpeakingBloc>().add(
         SessionStarted(userId: authState.user.uid, userCefrLevel: cefrLevel),
@@ -64,12 +62,11 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
     });
   }
 
-  /// HH:MM:SS — matches the design (e.g. "00:07:14")
   String _formatDuration(Duration d) {
-    final h = d.inHours.toString().padLeft(2, '0');
-    final m = (d.inMinutes % 60).toString().padLeft(2, '0');
-    final s = (d.inSeconds % 60).toString().padLeft(2, '0');
-    return '$h:$m:$s';
+    final h = d.inHours.toString().padLeft(2, "0");
+    final m = (d.inMinutes % 60).toString().padLeft(2, "0");
+    final s = (d.inSeconds % 60).toString().padLeft(2, "0");
+    return "$h:$m:$s";
   }
 
   @override
@@ -106,7 +103,7 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
     );
   }
 
-  // ── Loading state ──────────────────────────────────────────────────────────
+  // ── Loading ────────────────────────────────────────────────────────────────
 
   Widget _buildLoading() {
     return const Center(
@@ -116,9 +113,9 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
           CircularProgressIndicator(color: AppColors.accentPrimary),
           SizedBox(height: AppSpacing.lg),
           Text(
-            'Getting Lucia ready...',
+            "Getting Lucia ready...",
             style: TextStyle(
-              fontFamily: 'DMSans',
+              fontFamily: "DMSans",
               fontSize: 14,
               color: AppColors.textSecondary,
             ),
@@ -128,7 +125,7 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
     );
   }
 
-  // ── Error state ────────────────────────────────────────────────────────────
+  // ── Error ──────────────────────────────────────────────────────────────────
 
   Widget _buildError(String message) {
     return Center(
@@ -147,7 +144,7 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
             const SizedBox(height: AppSpacing.xl),
             ElevatedButton(
               onPressed: () => context.go(RouteNames.home),
-              child: const Text('Back to Home'),
+              child: const Text("Back to Home"),
             ),
           ],
         ),
@@ -173,7 +170,7 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
           ),
           const Divider(color: AppColors.border, height: 1),
           Expanded(child: _buildTranscript(state, isLuciaStreaming)),
-          _buildBottomPanel(context, state, bloc),
+          _buildBottomPanel(context, bloc),
         ],
       ),
     );
@@ -219,55 +216,64 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
   }
 
   // ── Bottom panel ───────────────────────────────────────────────────────────
-  // Structure matches the design:
-  //   [ SPEAKING/LISTENING/THINKING label + waveform bars ]
-  //   [ ── divider ── ]
-  //   [ mic button ]
-  //   [ mode toggle ]
+  //
+  // Uses a dedicated BlocBuilder scoped to SpeakingActive so that high-frequency
+  // amplitude updates (which fire on every mic tick) only rebuild this section
+  // rather than the entire screen.  The buildWhen predicate further restricts
+  // rebuilds to changes in amplitude, phase, or micMode — the three fields
+  // this widget actually uses.
+  //
+  // The outer _buildActive already verified state is SpeakingActive, but the
+  // inner BlocBuilder receives a fresh SpeakingState each time, so we must
+  // guard with `is SpeakingActive` before accessing subtype fields.
 
-  Widget _buildBottomPanel(
-    BuildContext context,
-    SpeakingActive state,
-    SpeakingBloc bloc,
-  ) {
-    // Amplitude stream from SttRepository — null-safe, waveform auto-animates
-    // if the stream is not yet wired or the interface doesn't expose it.
-    Stream<double>? ampStream;
-    try {
-      ampStream = sl<SttRepository>().amplitudeStream;
-    } catch (_) {
-      // SttRepository not yet registered or amplitudeStream not yet on the
-      // interface — waveform falls back to auto-animation gracefully.
-    }
+  Widget _buildBottomPanel(BuildContext context, SpeakingBloc bloc) {
+    return BlocBuilder<SpeakingBloc, SpeakingState>(
+      buildWhen: (prev, curr) {
+        if (curr is! SpeakingActive) return false;
+        if (prev is! SpeakingActive) return true;
+        return prev.amplitude != curr.amplitude ||
+            prev.phase != curr.phase ||
+            prev.micMode != curr.micMode;
+      },
+      builder: (context, state) {
+        // Guard: if state is not SpeakingActive (e.g. brief transition to
+        // SpeakingEnded), return an empty box to avoid accessing missing fields.
+        if (state is! SpeakingActive) return const SizedBox.shrink();
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SpeakingWaveform(phase: state.phase, amplitudeStream: ampStream),
-        const Divider(color: AppColors.border, height: 1),
-        Container(
-          color: AppColors.bgPrimary,
-          padding: const EdgeInsets.only(
-            top: AppSpacing.xl,
-            bottom: AppSpacing.xl,
-          ),
-          child: Column(
-            children: [
-              MicButton(
-                phase: state.phase,
-                micMode: state.micMode,
-                onPressDown: () => bloc.add(const MicPressed()),
-                onPressUp: () => bloc.add(const MicReleased()),
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SpeakingWaveform(
+              phase: state.phase,
+              amplitudeStream: state.amplitude,
+            ),
+            const Divider(color: AppColors.border, height: 1),
+            Container(
+              color: AppColors.bgPrimary,
+              padding: const EdgeInsets.only(
+                top: AppSpacing.xl,
+                bottom: AppSpacing.xl,
               ),
-              const SizedBox(height: AppSpacing.lg),
-              MicModeToggle(
-                micMode: state.micMode,
-                onToggle: () => bloc.add(const MicModeToggled()),
+              child: Column(
+                children: [
+                  MicButton(
+                    phase: state.phase,
+                    micMode: state.micMode,
+                    onPressDown: () => bloc.add(const MicPressed()),
+                    onPressUp: () => bloc.add(const MicReleased()),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  MicModeToggle(
+                    micMode: state.micMode,
+                    onToggle: () => bloc.add(const MicModeToggled()),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
-      ],
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -295,7 +301,6 @@ class _TopBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // [X] button
           GestureDetector(
             onTap: onEnd,
             child: Container(
@@ -314,15 +319,13 @@ class _TopBar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
-          // "End Session" label
           Text(
-            'End Session',
+            "End Session",
             style: AppTypography.bodyMD.copyWith(
               color: AppColors.textSecondary,
             ),
           ),
           const Spacer(),
-          // Red dot indicator + HH:MM:SS timer
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -342,7 +345,7 @@ class _TopBar extends StatelessWidget {
               Text(
                 formatDuration(elapsed),
                 style: const TextStyle(
-                  fontFamily: 'JetBrainsMono',
+                  fontFamily: "JetBrainsMono",
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: AppColors.textPrimary,
@@ -357,7 +360,7 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-// ── Typing indicator (inside transcript area) ──────────────────────────────────
+// ── Typing indicator ──────────────────────────────────────────────────────────
 
 class _TypingIndicator extends StatelessWidget {
   const _TypingIndicator();

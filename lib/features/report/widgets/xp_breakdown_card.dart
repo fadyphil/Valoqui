@@ -30,7 +30,7 @@ class XpBreakdownCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("XP EARNED", style: AppTypography.labelSM),
+          const Text("XP EARNED", style: AppTypography.labelSM),
           const SizedBox(height: AppSpacing.lg),
 
           // XP rows
@@ -59,7 +59,7 @@ class XpBreakdownCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("🏆  TOTAL", style: AppTypography.labelLG),
+              const Text("🏆  TOTAL", style: AppTypography.labelLG),
               Text(
                 "+${xp.totalXp} XP",
                 style: AppTypography.labelLG.copyWith(

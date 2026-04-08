@@ -128,12 +128,12 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function()?  initializing,TResult Function( List<ConversationMessage> transcript,  ConversationPhase phase,  MicMode micMode,  Duration elapsed,  Duration activeSpeakingTime,  String currentLuciaBuffer,  String? partialUserTranscript,  String? errorMessage)?  active,TResult Function( List<ConversationMessage> transcript,  Duration totalDuration,  Duration activeSpeakingTime,  String userId,  String userCefrLevel)?  ended,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function()?  initializing,TResult Function( List<ConversationMessage> transcript,  ConversationPhase phase,  MicMode micMode,  Duration elapsed,  Duration activeSpeakingTime,  String currentLuciaBuffer,  String? partialUserTranscript,  double amplitude,  String? errorMessage)?  active,TResult Function( List<ConversationMessage> transcript,  Duration totalDuration,  Duration activeSpeakingTime,  String userId,  String userCefrLevel)?  ended,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case SpeakingInitial() when initial != null:
 return initial();case SpeakingInitializing() when initializing != null:
 return initializing();case SpeakingActive() when active != null:
-return active(_that.transcript,_that.phase,_that.micMode,_that.elapsed,_that.activeSpeakingTime,_that.currentLuciaBuffer,_that.partialUserTranscript,_that.errorMessage);case SpeakingEnded() when ended != null:
+return active(_that.transcript,_that.phase,_that.micMode,_that.elapsed,_that.activeSpeakingTime,_that.currentLuciaBuffer,_that.partialUserTranscript,_that.amplitude,_that.errorMessage);case SpeakingEnded() when ended != null:
 return ended(_that.transcript,_that.totalDuration,_that.activeSpeakingTime,_that.userId,_that.userCefrLevel);case SpeakingError() when error != null:
 return error(_that.message);case _:
   return orElse();
@@ -153,12 +153,12 @@ return error(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function()  initializing,required TResult Function( List<ConversationMessage> transcript,  ConversationPhase phase,  MicMode micMode,  Duration elapsed,  Duration activeSpeakingTime,  String currentLuciaBuffer,  String? partialUserTranscript,  String? errorMessage)  active,required TResult Function( List<ConversationMessage> transcript,  Duration totalDuration,  Duration activeSpeakingTime,  String userId,  String userCefrLevel)  ended,required TResult Function( String message)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function()  initializing,required TResult Function( List<ConversationMessage> transcript,  ConversationPhase phase,  MicMode micMode,  Duration elapsed,  Duration activeSpeakingTime,  String currentLuciaBuffer,  String? partialUserTranscript,  double amplitude,  String? errorMessage)  active,required TResult Function( List<ConversationMessage> transcript,  Duration totalDuration,  Duration activeSpeakingTime,  String userId,  String userCefrLevel)  ended,required TResult Function( String message)  error,}) {final _that = this;
 switch (_that) {
 case SpeakingInitial():
 return initial();case SpeakingInitializing():
 return initializing();case SpeakingActive():
-return active(_that.transcript,_that.phase,_that.micMode,_that.elapsed,_that.activeSpeakingTime,_that.currentLuciaBuffer,_that.partialUserTranscript,_that.errorMessage);case SpeakingEnded():
+return active(_that.transcript,_that.phase,_that.micMode,_that.elapsed,_that.activeSpeakingTime,_that.currentLuciaBuffer,_that.partialUserTranscript,_that.amplitude,_that.errorMessage);case SpeakingEnded():
 return ended(_that.transcript,_that.totalDuration,_that.activeSpeakingTime,_that.userId,_that.userCefrLevel);case SpeakingError():
 return error(_that.message);}
 }
@@ -174,12 +174,12 @@ return error(_that.message);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function()?  initializing,TResult? Function( List<ConversationMessage> transcript,  ConversationPhase phase,  MicMode micMode,  Duration elapsed,  Duration activeSpeakingTime,  String currentLuciaBuffer,  String? partialUserTranscript,  String? errorMessage)?  active,TResult? Function( List<ConversationMessage> transcript,  Duration totalDuration,  Duration activeSpeakingTime,  String userId,  String userCefrLevel)?  ended,TResult? Function( String message)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function()?  initializing,TResult? Function( List<ConversationMessage> transcript,  ConversationPhase phase,  MicMode micMode,  Duration elapsed,  Duration activeSpeakingTime,  String currentLuciaBuffer,  String? partialUserTranscript,  double amplitude,  String? errorMessage)?  active,TResult? Function( List<ConversationMessage> transcript,  Duration totalDuration,  Duration activeSpeakingTime,  String userId,  String userCefrLevel)?  ended,TResult? Function( String message)?  error,}) {final _that = this;
 switch (_that) {
 case SpeakingInitial() when initial != null:
 return initial();case SpeakingInitializing() when initializing != null:
 return initializing();case SpeakingActive() when active != null:
-return active(_that.transcript,_that.phase,_that.micMode,_that.elapsed,_that.activeSpeakingTime,_that.currentLuciaBuffer,_that.partialUserTranscript,_that.errorMessage);case SpeakingEnded() when ended != null:
+return active(_that.transcript,_that.phase,_that.micMode,_that.elapsed,_that.activeSpeakingTime,_that.currentLuciaBuffer,_that.partialUserTranscript,_that.amplitude,_that.errorMessage);case SpeakingEnded() when ended != null:
 return ended(_that.transcript,_that.totalDuration,_that.activeSpeakingTime,_that.userId,_that.userCefrLevel);case SpeakingError() when error != null:
 return error(_that.message);case _:
   return null;
@@ -257,7 +257,7 @@ String toString() {
 
 
 class SpeakingActive implements SpeakingState {
-  const SpeakingActive({required final  List<ConversationMessage> transcript, required this.phase, required this.micMode, required this.elapsed, required this.activeSpeakingTime, required this.currentLuciaBuffer, this.partialUserTranscript, this.errorMessage}): _transcript = transcript;
+  const SpeakingActive({required final  List<ConversationMessage> transcript, required this.phase, required this.micMode, required this.elapsed, required this.activeSpeakingTime, required this.currentLuciaBuffer, this.partialUserTranscript, this.amplitude = 0.0, this.errorMessage}): _transcript = transcript;
   
 
 /// Full transcript displayed in the scroll view.
@@ -283,6 +283,8 @@ class SpeakingActive implements SpeakingState {
 /// STT partial result shown live in the user bubble while speaking.
 /// Null when the user is not speaking.
  final  String? partialUserTranscript;
+/// The current amplitude of the user's speech.
+@JsonKey() final  double amplitude;
 /// Non-fatal error message shown as a toast (e.g. network hiccup).
 /// Null when there is no error.
  final  String? errorMessage;
@@ -297,16 +299,16 @@ $SpeakingActiveCopyWith<SpeakingActive> get copyWith => _$SpeakingActiveCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SpeakingActive&&const DeepCollectionEquality().equals(other._transcript, _transcript)&&(identical(other.phase, phase) || other.phase == phase)&&(identical(other.micMode, micMode) || other.micMode == micMode)&&(identical(other.elapsed, elapsed) || other.elapsed == elapsed)&&(identical(other.activeSpeakingTime, activeSpeakingTime) || other.activeSpeakingTime == activeSpeakingTime)&&(identical(other.currentLuciaBuffer, currentLuciaBuffer) || other.currentLuciaBuffer == currentLuciaBuffer)&&(identical(other.partialUserTranscript, partialUserTranscript) || other.partialUserTranscript == partialUserTranscript)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SpeakingActive&&const DeepCollectionEquality().equals(other._transcript, _transcript)&&(identical(other.phase, phase) || other.phase == phase)&&(identical(other.micMode, micMode) || other.micMode == micMode)&&(identical(other.elapsed, elapsed) || other.elapsed == elapsed)&&(identical(other.activeSpeakingTime, activeSpeakingTime) || other.activeSpeakingTime == activeSpeakingTime)&&(identical(other.currentLuciaBuffer, currentLuciaBuffer) || other.currentLuciaBuffer == currentLuciaBuffer)&&(identical(other.partialUserTranscript, partialUserTranscript) || other.partialUserTranscript == partialUserTranscript)&&(identical(other.amplitude, amplitude) || other.amplitude == amplitude)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_transcript),phase,micMode,elapsed,activeSpeakingTime,currentLuciaBuffer,partialUserTranscript,errorMessage);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_transcript),phase,micMode,elapsed,activeSpeakingTime,currentLuciaBuffer,partialUserTranscript,amplitude,errorMessage);
 
 @override
 String toString() {
-  return 'SpeakingState.active(transcript: $transcript, phase: $phase, micMode: $micMode, elapsed: $elapsed, activeSpeakingTime: $activeSpeakingTime, currentLuciaBuffer: $currentLuciaBuffer, partialUserTranscript: $partialUserTranscript, errorMessage: $errorMessage)';
+  return 'SpeakingState.active(transcript: $transcript, phase: $phase, micMode: $micMode, elapsed: $elapsed, activeSpeakingTime: $activeSpeakingTime, currentLuciaBuffer: $currentLuciaBuffer, partialUserTranscript: $partialUserTranscript, amplitude: $amplitude, errorMessage: $errorMessage)';
 }
 
 
@@ -317,7 +319,7 @@ abstract mixin class $SpeakingActiveCopyWith<$Res> implements $SpeakingStateCopy
   factory $SpeakingActiveCopyWith(SpeakingActive value, $Res Function(SpeakingActive) _then) = _$SpeakingActiveCopyWithImpl;
 @useResult
 $Res call({
- List<ConversationMessage> transcript, ConversationPhase phase, MicMode micMode, Duration elapsed, Duration activeSpeakingTime, String currentLuciaBuffer, String? partialUserTranscript, String? errorMessage
+ List<ConversationMessage> transcript, ConversationPhase phase, MicMode micMode, Duration elapsed, Duration activeSpeakingTime, String currentLuciaBuffer, String? partialUserTranscript, double amplitude, String? errorMessage
 });
 
 
@@ -334,7 +336,7 @@ class _$SpeakingActiveCopyWithImpl<$Res>
 
 /// Create a copy of SpeakingState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? transcript = null,Object? phase = null,Object? micMode = null,Object? elapsed = null,Object? activeSpeakingTime = null,Object? currentLuciaBuffer = null,Object? partialUserTranscript = freezed,Object? errorMessage = freezed,}) {
+@pragma('vm:prefer-inline') $Res call({Object? transcript = null,Object? phase = null,Object? micMode = null,Object? elapsed = null,Object? activeSpeakingTime = null,Object? currentLuciaBuffer = null,Object? partialUserTranscript = freezed,Object? amplitude = null,Object? errorMessage = freezed,}) {
   return _then(SpeakingActive(
 transcript: null == transcript ? _self._transcript : transcript // ignore: cast_nullable_to_non_nullable
 as List<ConversationMessage>,phase: null == phase ? _self.phase : phase // ignore: cast_nullable_to_non_nullable
@@ -343,7 +345,8 @@ as MicMode,elapsed: null == elapsed ? _self.elapsed : elapsed // ignore: cast_nu
 as Duration,activeSpeakingTime: null == activeSpeakingTime ? _self.activeSpeakingTime : activeSpeakingTime // ignore: cast_nullable_to_non_nullable
 as Duration,currentLuciaBuffer: null == currentLuciaBuffer ? _self.currentLuciaBuffer : currentLuciaBuffer // ignore: cast_nullable_to_non_nullable
 as String,partialUserTranscript: freezed == partialUserTranscript ? _self.partialUserTranscript : partialUserTranscript // ignore: cast_nullable_to_non_nullable
-as String?,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
+as String?,amplitude: null == amplitude ? _self.amplitude : amplitude // ignore: cast_nullable_to_non_nullable
+as double,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

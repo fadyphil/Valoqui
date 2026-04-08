@@ -57,15 +57,15 @@ class _LuciaBubble extends StatelessWidget {
       constraints: BoxConstraints(
         maxWidth: MediaQuery.of(context).size.width * 0.78,
       ),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         gradient: AppColors.luciaBubbleGradient,
-        borderRadius: const BorderRadius.only(
+        borderRadius: BorderRadius.only(
           topLeft: Radius.circular(16),
           topRight: Radius.circular(16),
           bottomRight: Radius.circular(16),
           bottomLeft: Radius.circular(4), // flat corner pointing left
         ),
-        border: const Border(
+        border: Border(
           left: BorderSide(color: AppColors.accentSecondary, width: 3),
         ),
       ),

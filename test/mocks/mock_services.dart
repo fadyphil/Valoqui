@@ -1,6 +1,12 @@
 // test/mocks/mock_services.dart
 
 import "package:mocktail/mocktail.dart";
+import "package:valoqui/core/data/datasources/firebase_auth_datasource.dart";
+import "package:valoqui/core/data/datasources/firestore_datasource.dart";
+import "package:valoqui/core/data/datasources/secure_storage_datasource.dart";
+import "package:valoqui/core/domain/repositories/auth_repository.dart";
+import "package:valoqui/core/domain/repositories/key_storage_repository.dart";
+import "package:valoqui/core/domain/repositories/user_repository.dart";
 import "package:valoqui/core/domain/usecases/auth/sign_in_with_google.dart";
 import "package:valoqui/core/domain/usecases/auth/sign_out.dart";
 import "package:valoqui/core/domain/usecases/auth/watch_auth_state.dart";
@@ -10,12 +16,6 @@ import "package:valoqui/core/domain/usecases/onboarding/save_gemini_key.dart";
 import "package:valoqui/core/domain/usecases/onboarding/save_groq_key.dart";
 import "package:valoqui/core/domain/usecases/user/update_user_level.dart";
 import "package:valoqui/core/domain/usecases/user/watch_user_profile.dart";
-import "package:valoqui/core/data/datasources/firebase_auth_datasource.dart";
-import "package:valoqui/core/data/datasources/firestore_datasource.dart";
-import "package:valoqui/core/data/datasources/secure_storage_datasource.dart";
-import "package:valoqui/core/domain/repositories/auth_repository.dart";
-import "package:valoqui/core/domain/repositories/user_repository.dart";
-import "package:valoqui/core/domain/repositories/key_storage_repository.dart";
 
 // ── Datasource Mocks ───────────────────────────────────
 class MockFirebaseAuthDatasource extends Mock

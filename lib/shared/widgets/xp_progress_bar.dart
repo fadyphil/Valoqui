@@ -1,8 +1,8 @@
 // lib/shared/widgets/xp_progress_bar.dart
 
 import "package:flutter/material.dart";
-import "../../core/theme/app_colors.dart";
-import "../../core/theme/app_spacing.dart";
+import 'package:valoqui/core/theme/app_colors.dart';
+import 'package:valoqui/core/theme/app_spacing.dart';
 
 class XPProgressBar extends StatelessWidget {
   final double progress;

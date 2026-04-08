@@ -10,67 +10,56 @@ import "package:get_it/get_it.dart";
 // ── Sprint 1: Data layer ──────────────────────────────────────
 import "package:valoqui/core/data/datasources/firebase_auth_datasource.dart";
 import "package:valoqui/core/data/datasources/firestore_datasource.dart";
+import "package:valoqui/core/data/datasources/gemini_llm_datasource.dart";
+import "package:valoqui/core/data/datasources/groq_llm_datasource.dart";
 import "package:valoqui/core/data/datasources/secure_storage_datasource.dart";
 import "package:valoqui/core/data/datasources/sherpa_stt_datasource.dart";
+// ── Sprint 2: Datasources ─────────────────────────────────────
+// import "package:valoqui/core/data/datasources/android_stt_datasource.dart";
+import "package:valoqui/core/data/datasources/sherpa_tts_datasource.dart";
+import "package:valoqui/core/data/datasources/sherpa_vad_datasource.dart";
 import "package:valoqui/core/data/repositories/android_key_storage_repository.dart";
 import "package:valoqui/core/data/repositories/firebase_auth_repository.dart";
 import "package:valoqui/core/data/repositories/firebase_user_repository.dart";
+import "package:valoqui/core/data/repositories/groq_llm_repository.dart";
 import "package:valoqui/core/data/repositories/sherpa_stt_repository.dart";
-
-// ── Sprint 1: Domain interfaces ───────────────────────────────
-import "package:valoqui/core/domain/repositories/user_repository.dart";
+// ── Sprint 2: Repositories ────────────────────────────────────
+// import "package:valoqui/core/data/repositories/android_stt_repository.dart";
+import "package:valoqui/core/data/repositories/sherpa_tts_repository.dart";
+import "package:valoqui/core/data/repositories/sherpa_vad_repository.dart";
 import "package:valoqui/core/domain/repositories/auth_repository.dart";
 import "package:valoqui/core/domain/repositories/key_storage_repository.dart";
-
+import "package:valoqui/core/domain/repositories/llm_repository.dart";
+// ── Sprint 2: Domain interfaces ───────────────────────────────
+import "package:valoqui/core/domain/repositories/stt_repository.dart";
+import "package:valoqui/core/domain/repositories/tts_repository.dart";
+// ── Sprint 1: Domain interfaces ───────────────────────────────
+import "package:valoqui/core/domain/repositories/user_repository.dart";
+import "package:valoqui/core/domain/repositories/vad_repository.dart";
 // ── Sprint 1: Use cases — auth ────────────────────────────────
 import "package:valoqui/core/domain/usecases/auth/sign_in_with_google.dart";
 import "package:valoqui/core/domain/usecases/auth/sign_out.dart";
 import "package:valoqui/core/domain/usecases/auth/watch_auth_state.dart";
-
-// ── Sprint 1: Use cases — user ────────────────────────────────
-import "package:valoqui/core/domain/usecases/user/update_user_level.dart";
-import "package:valoqui/core/domain/usecases/user/watch_user_profile.dart";
-
 // ── Sprint 1: Use cases — onboarding ─────────────────────────
 import "package:valoqui/core/domain/usecases/onboarding/check_onboarding_status.dart";
 import "package:valoqui/core/domain/usecases/onboarding/mark_onboarding_complete.dart";
 import "package:valoqui/core/domain/usecases/onboarding/save_gemini_key.dart";
 import "package:valoqui/core/domain/usecases/onboarding/save_groq_key.dart";
-
+// ── Sprint 2: Use cases — report ──────────────────────────────
+import "package:valoqui/core/domain/usecases/report/generate_report.dart";
+import "package:valoqui/core/domain/usecases/report/save_session_xp.dart";
+// ── Sprint 1: Use cases — user ────────────────────────────────
+import "package:valoqui/core/domain/usecases/user/update_user_level.dart";
+import "package:valoqui/core/domain/usecases/user/watch_user_profile.dart";
+// ── Sprint 1: Network ─────────────────────────────────────────
+import "package:valoqui/core/network/dio_client.dart";
 // ── Sprint 1: BLoCs ───────────────────────────────────────────
 import "package:valoqui/features/auth/bloc/auth_bloc.dart";
 import "package:valoqui/features/home/bloc/home_bloc.dart";
 import "package:valoqui/features/onboarding/bloc/onboarding_bloc.dart";
-
-// ── Sprint 1: Network ─────────────────────────────────────────
-import "package:valoqui/core/network/dio_client.dart";
-
-// ── Sprint 2: Datasources ─────────────────────────────────────
-// import "package:valoqui/core/data/datasources/android_stt_datasource.dart";
-import "package:valoqui/core/data/datasources/sherpa_tts_datasource.dart";
-import "package:valoqui/core/data/datasources/sherpa_vad_datasource.dart";
-import "package:valoqui/core/data/datasources/groq_llm_datasource.dart";
-import "package:valoqui/core/data/datasources/gemini_llm_datasource.dart";
-
-// ── Sprint 2: Repositories ────────────────────────────────────
-// import "package:valoqui/core/data/repositories/android_stt_repository.dart";
-import "package:valoqui/core/data/repositories/sherpa_tts_repository.dart";
-import "package:valoqui/core/data/repositories/sherpa_vad_repository.dart";
-import "package:valoqui/core/data/repositories/groq_llm_repository.dart";
-
-// ── Sprint 2: Domain interfaces ───────────────────────────────
-import "package:valoqui/core/domain/repositories/stt_repository.dart";
-import "package:valoqui/core/domain/repositories/tts_repository.dart";
-import "package:valoqui/core/domain/repositories/vad_repository.dart";
-import "package:valoqui/core/domain/repositories/llm_repository.dart";
-
-// ── Sprint 2: Use cases — report ──────────────────────────────
-import "package:valoqui/core/domain/usecases/report/generate_report.dart";
-import "package:valoqui/core/domain/usecases/report/save_session_xp.dart";
-
+import "package:valoqui/features/report/bloc/report_bloc.dart";
 // ── Sprint 2: BLoCs ───────────────────────────────────────────
 import "package:valoqui/features/speaking/bloc/speaking_bloc.dart";
-import "package:valoqui/features/report/bloc/report_bloc.dart";
 
 final GetIt sl = GetIt.instance;
 
@@ -78,14 +67,12 @@ Future<void> setupServiceLocator() async {
   // ── Step 1: Data sources (singletons) ────────────────────
   // Raw SDK wrappers — one instance for the app lifetime
 
-  sl.registerLazySingleton<FirebaseAuthDatasource>(
-    () => FirebaseAuthDatasource(),
-  );
+  sl.registerLazySingleton<FirebaseAuthDatasource>(FirebaseAuthDatasource.new);
 
-  sl.registerLazySingleton<FirestoreDatasource>(() => FirestoreDatasource());
+  sl.registerLazySingleton<FirestoreDatasource>(FirestoreDatasource.new);
 
   sl.registerLazySingleton<SecureStorageDatasource>(
-    () => SecureStorageDatasource(),
+    SecureStorageDatasource.new,
   );
 
   // ── Step 2: Repositories (singletons) ────────────────────
@@ -200,9 +187,9 @@ Future<void> setupServiceLocator() async {
     () => SherpaSttRepository(datasource: sl()),
   );
 
-  sl.registerLazySingleton<SherpaTtsDatasource>(() => SherpaTtsDatasource());
+  sl.registerLazySingleton<SherpaTtsDatasource>(SherpaTtsDatasource.new);
 
-  sl.registerLazySingleton<SherpaVadDatasource>(() => SherpaVadDatasource());
+  sl.registerLazySingleton<SherpaVadDatasource>(SherpaVadDatasource.new);
 
   sl.registerLazySingleton<GroqLlmDatasource>(
     () => GroqLlmDatasource(dio: sl<DioClient>().groqDio),

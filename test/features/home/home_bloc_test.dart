@@ -3,14 +3,15 @@
 import "package:bloc_test/bloc_test.dart";
 import "package:flutter_test/flutter_test.dart";
 import "package:mocktail/mocktail.dart";
-import "package:valoqui/features/home/bloc/home_bloc.dart";
 import "package:valoqui/core/domain/models/app_user.dart";
+import "package:valoqui/features/home/bloc/home_bloc.dart";
+
 import "../../mocks/mock_services.dart";
 
 void main() {
   late MockWatchUserProfile mockWatchUserProfile;
 
-  final tUser = AppUser(
+  const tUser = AppUser(
     uid: "123",
     displayName: "Test User",
     email: "test@example.com",
@@ -40,7 +41,7 @@ void main() {
         act: (bloc) => bloc.add(const WatchProfile("123")),
         expect: () => [
           const HomeState.loading(),
-          HomeState.loaded(profile: tUser),
+          const HomeState.loaded(profile: tUser),
         ],
       );
 

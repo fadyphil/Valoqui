@@ -6,8 +6,8 @@ import "package:mocktail/mocktail.dart";
 import "package:valoqui/app.dart";
 import "package:valoqui/core/di/service_locator.dart";
 import "package:valoqui/features/auth/bloc/auth_bloc.dart";
-import "package:valoqui/features/onboarding/bloc/onboarding_bloc.dart";
 import "package:valoqui/features/home/bloc/home_bloc.dart";
+import "package:valoqui/features/onboarding/bloc/onboarding_bloc.dart";
 
 class MockAuthBloc extends MockBloc<AuthEvent, AuthState> implements AuthBloc {}
 

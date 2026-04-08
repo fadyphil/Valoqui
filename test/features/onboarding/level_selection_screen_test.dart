@@ -5,10 +5,10 @@ import "package:flutter/material.dart";
 import "package:flutter_bloc/flutter_bloc.dart";
 import "package:flutter_test/flutter_test.dart";
 import "package:mocktail/mocktail.dart";
+import "package:valoqui/core/domain/models/app_user.dart";
 import "package:valoqui/features/auth/bloc/auth_bloc.dart";
 import "package:valoqui/features/onboarding/bloc/onboarding_bloc.dart";
 import "package:valoqui/features/onboarding/screens/level_selection_screen.dart";
-import "package:valoqui/core/domain/models/app_user.dart";
 import "package:valoqui/shared/widgets/loading_overlay.dart";
 
 class MockAuthBloc extends MockBloc<AuthEvent, AuthState> implements AuthBloc {}
@@ -20,7 +20,7 @@ void main() {
   late MockAuthBloc mockAuthBloc;
   late MockOnboardingBloc mockOnboardingBloc;
 
-  final tUser = AppUser(
+  const tUser = AppUser(
     uid: "123",
     displayName: "Test",
     email: "test@test.com",
@@ -48,7 +48,7 @@ void main() {
     testWidgets("renders all levels correctly", (tester) async {
       when(
         () => mockAuthBloc.state,
-      ).thenReturn(AuthState.authenticated(user: tUser));
+      ).thenReturn(const AuthState.authenticated(user: tUser));
       when(
         () => mockOnboardingBloc.state,
       ).thenReturn(const OnboardingState.initial());
@@ -67,7 +67,7 @@ void main() {
     ) async {
       when(
         () => mockAuthBloc.state,
-      ).thenReturn(AuthState.authenticated(user: tUser));
+      ).thenReturn(const AuthState.authenticated(user: tUser));
       when(
         () => mockOnboardingBloc.state,
       ).thenReturn(const OnboardingState.loading());
@@ -82,7 +82,7 @@ void main() {
     ) async {
       when(
         () => mockAuthBloc.state,
-      ).thenReturn(AuthState.authenticated(user: tUser));
+      ).thenReturn(const AuthState.authenticated(user: tUser));
       when(
         () => mockOnboardingBloc.state,
       ).thenReturn(const OnboardingState.initial());
@@ -108,7 +108,7 @@ void main() {
     ) async {
       when(
         () => mockAuthBloc.state,
-      ).thenReturn(AuthState.authenticated(user: tUser));
+      ).thenReturn(const AuthState.authenticated(user: tUser));
       when(
         () => mockOnboardingBloc.state,
       ).thenReturn(const OnboardingState.initial());

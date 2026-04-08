@@ -8,13 +8,13 @@ import "package:flutter/material.dart";
 import "package:flutter/services.dart";
 import "package:flutter_bloc/flutter_bloc.dart";
 import "package:url_launcher/url_launcher.dart";
+import 'package:valoqui/core/theme/app_colors.dart';
+import 'package:valoqui/core/theme/app_spacing.dart';
+import 'package:valoqui/core/theme/app_typography.dart';
 import "package:valoqui/features/auth/bloc/auth_bloc.dart";
 import "package:valoqui/features/onboarding/bloc/onboarding_bloc.dart";
-import "../../../../core/theme/app_colors.dart";
-import "../../../../core/theme/app_typography.dart";
-import "../../../../core/theme/app_spacing.dart";
-import "../../../../shared/widgets/onboarding_progress_dots.dart";
-import "../../../../shared/widgets/loading_overlay.dart";
+import 'package:valoqui/shared/widgets/loading_overlay.dart';
+import 'package:valoqui/shared/widgets/onboarding_progress_dots.dart';
 
 class GeminiSetupScreen extends StatefulWidget {
   const GeminiSetupScreen({super.key});
@@ -112,7 +112,7 @@ class _GeminiSetupScreenState extends State<GeminiSetupScreen> {
                         size: 32,
                       ),
                       const SizedBox(height: AppSpacing.lg),
-                      Text(
+                      const Text(
                         "Add a backup\nAI connection",
                         style: AppTypography.headingLG,
                       ),
@@ -182,14 +182,14 @@ class _GeminiSetupScreenState extends State<GeminiSetupScreen> {
                         },
                       ),
                       const SizedBox(height: AppSpacing.md),
-                      Row(
+                      const Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.lock_outline_rounded,
                             size: 14,
                             color: AppColors.textSecondary,
                           ),
-                          const SizedBox(width: AppSpacing.xs),
+                          SizedBox(width: AppSpacing.xs),
                           Text(
                             "Stored privately on your device only. Never shared.",
                             style: AppTypography.caption,
