@@ -1,7 +1,7 @@
 // lib/core/theme/app_typography.dart
 
 import "package:flutter/material.dart";
-import "app_colors.dart";
+import 'package:valoqui/core/theme/app_colors.dart';
 
 abstract class AppTypography {
   static const String fraunces = "Fraunces";

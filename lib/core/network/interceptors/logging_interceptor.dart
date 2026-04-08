@@ -13,7 +13,11 @@ class LoggingInterceptor extends Interceptor {
   }
 
   @override
-  void onResponse(Response response, ResponseInterceptorHandler handler) {
+  void onResponse(
+    //The Semantics of Types — Using the Right Name Dart's type system is a communication tool. Every use of that vocabulary should be precise.
+    Response<dynamic> response,
+    ResponseInterceptorHandler handler,
+  ) {
     if (kDebugMode) {
       debugPrint(
         "[DIO] <-- ${response.statusCode} ${response.requestOptions.path}",

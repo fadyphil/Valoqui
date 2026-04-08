@@ -51,7 +51,7 @@ google-services.json
 ignore/
 GEMINI.md
 AGENTS.md
-opencode.json
+.opencode/
 
 # Sensitive files & Secrets
 .env
