@@ -29,6 +29,34 @@ import "package:path_provider/path_provider.dart";
 import "package:sherpa_onnx/sherpa_onnx.dart" as sherpa;
 import "package:valoqui/core/domain/models/app_failure.dart";
 
+/// Text-to-Speech datasource using sherpa-onnx VITS-Piper engine.
+///
+/// This datasource synthesizes Spanish speech from text and plays it via
+/// [just_audio.AudioPlayer]. It manages an internal queue to handle multiple
+/// [speak()] calls in sequence, draining them one sentence at a time.
+///
+/// ## Key Design Decisions
+/// * **Rotating output files**: Alternates between `lucia_0.wav` and
+///   `lucia_1.wav` to avoid [just_audio] serving cached audio when the URI
+///   hasn't changed. Since we `await play()` before writing the next file,
+///   the "other" slot is always free.
+/// * **Player reset before each sentence**: Calls `stop()` + `seek(0)` before
+///   `play()` to ensure the player is in a clean state regardless of how the
+///   previous sentence ended.
+/// * **Re-entrancy guard**: Sets `_isDrainingQueue = true` synchronously
+///   before the fire-and-forget `_drainQueue()` call to prevent multiple
+///   concurrent drain loops (engineering_lessons #1).
+/// * **Queue-based synthesis**: Text is enqueued via [speak()] and processed
+///   sequentially. This prevents overlapping audio and ensures natural pacing.
+///
+/// ## Stream Contract
+/// [speakingStateStream] emits:
+/// * `true` when the queue starts draining (first sentence begins playing)
+/// * `false` when the queue is empty and playback has completed
+///
+/// Consumers can use this to show/hide a "speaking" indicator. The stream
+/// does not emit per-sentence events — only queue-level start/complete.
+
 class SherpaTtsDatasource {
   static const String _modelAssetDir =
       "assets/tts/vits-piper-es_ES-sharvard-medium";
@@ -47,14 +75,43 @@ class SherpaTtsDatasource {
 
   // Alternates between lucia_0.wav and lucia_1.wav so just_audio never
   // sees the same URI for consecutive sentences (avoids stale cache).
+
+  /// Alternates between 0 and 1 to produce `lucia_speech_0.wav` /
+  /// `lucia_speech_1.wav`. Prevents just_audio cache hits when the same
+  /// URI is reused for consecutive sentences.
+
   int _wavIndex = 0;
 
   bool _initialized = false;
 
+  /// Stream emitting `true` when TTS playback starts, `false` when complete.
+  ///
+  /// Used by the UI to show a speaking indicator. Emits at the queue level,
+  /// not per-sentence: `true` on first sentence start, `false` after last
+  /// sentence finishes or [stop()] is called.
+
   Stream<bool> get speakingStateStream => _speakingController.stream;
+
+  /// Returns `true` if the queue is currently being drained.
+  ///
+  /// This is a synchronous snapshot of `_isDrainingQueue`. For reactive
+  /// updates, listen to [speakingStateStream] instead.
+
   bool get isSpeaking => _isDrainingQueue;
 
   // ── Initialization ────────────────────────────────────
+
+  /// Initializes the VITS-Piper TTS engine and copies model files to disk.
+  ///
+  /// Copies the ONNX model, config, tokens, and espeak-ng data from assets
+  /// to the application documents directory if not already present. Then
+  /// instantiates the sherpa-onnx [sherpa.OfflineTts] engine.
+  ///
+  /// Returns [right] on success, or [left] with an [AppFailure] if:
+  /// * Model file copy fails
+  /// * Native TTS initialization fails (e.g., OOM, incompatible device)
+  ///
+  /// Safe to call multiple times — re-initialization is idempotent.
 
   Future<Either<AppFailure, void>> initialize() async {
     try {
@@ -95,25 +152,54 @@ class SherpaTtsDatasource {
 
   // ── Public speak — enqueues text ───────────────────────
 
+  /// Enqueues [text] for speech synthesis and playback.
+  ///
+  /// If the queue is idle, starts draining immediately via fire-and-forget
+  /// `_drainQueue()`. The re-entrancy guard `_isDrainingQueue` is set
+  /// synchronously before the async call to prevent race conditions where
+  /// multiple drain loops could start concurrently (engineering_lessons #1).
+  ///
+  /// Returns [right] on successful enqueue, or [left] with
+  /// [AppFailure.ttsNotInitialized] if [initialize()] was not called first.
+  ///
+  /// Note: This method does not wait for playback to complete. Use
+  /// [speakingStateStream] to react to start/complete events.
+
   Future<Either<AppFailure, void>> speak(String text) async {
     if (!_initialized || _tts == null) {
       return left(const AppFailure.ttsNotInitialized());
     }
     _speechQueue.add(text);
     if (!_isDrainingQueue) {
-      _drainQueue(); // fire-and-forget
+      // NEW: no await between check and set to avoid multiple instances of the _drainqueue and to avoid race condtions
+      _isDrainingQueue = true;
+      // fire-and-forget is now safe (no await)
+      // Explicitly document intentional fire and forget (note: honestly i don't get why we are doing any of thins)
+      unawaited(_drainQueue());
     }
     return right(null);
   }
 
   // ── Internal queue drain ───────────────────────────────
 
+  /// Drains the speech queue, synthesizing and playing one sentence at a time.
+  ///
+  /// Emits `true` on [speakingStateStream] when starting, `false` when done.
+  /// Checks `_isDrainingQueue` at each iteration to allow [stop()] to halt
+  /// playback cleanly mid-queue.
+  ///
+  /// This method is intentionally fire-and-forget from [speak()]. The
+  /// re-entrancy guard ensures only one instance runs at a time.
+
   Future<void> _drainQueue() async {
-    _isDrainingQueue = true;
+    // NEW: guard condition to exist if stop() is called
+    if (!_isDrainingQueue) return;
+
+    // _isDrainingQueue = true;
     if (!_speakingController.isClosed) _speakingController.add(true);
 
     while (_speechQueue.isNotEmpty) {
-      if (!_isDrainingQueue) break;
+      if (!_isDrainingQueue) break; // exist cleanly if stop() was called
       final text = _speechQueue.removeAt(0);
       await _playSingleSentence(text);
     }
@@ -123,6 +209,17 @@ class SherpaTtsDatasource {
       if (!_speakingController.isClosed) _speakingController.add(false);
     }
   }
+
+  /// Synthesizes [text] to WAV and plays it via just_audio.
+  ///
+  /// Uses rotating filenames (`lucia_speech_0.wav` / `lucia_speech_1.wav`)
+  /// to avoid just_audio serving a cached audio source when the URI hasn't
+  /// changed. Before each play, explicitly resets the player with `stop()`
+  /// and `seek(0)` to ensure a clean state.
+  ///
+  /// Errors during synthesis or playback are logged but do not propagate —
+  /// the queue continues to the next sentence. This is intentional: a single
+  /// failed sentence should not halt the entire conversation flow.
 
   Future<void> _playSingleSentence(String text) async {
     if (!_isDrainingQueue) return; // stop() was called mid-queue
@@ -158,6 +255,12 @@ class SherpaTtsDatasource {
 
   // ── Stop ──────────────────────────────────────────────
 
+  /// Stops all pending and current TTS playback immediately.
+  ///
+  /// Clears the speech queue, sets the drain guard to `false`, stops the
+  /// audio player, and emits `false` on [speakingStateStream]. Safe to call
+  /// multiple times — idempotent and guards against already-stopped state.
+
   Future<void> stop() async {
     _isDrainingQueue = false;
     _speechQueue.clear();
@@ -166,6 +269,16 @@ class SherpaTtsDatasource {
   }
 
   // ── Dispose ────────────────────────────────────────────
+
+  /// Releases all resources held by this datasource.
+  ///
+  /// Stops playback, clears the queue, disposes the [AudioPlayer], and closes
+  /// the speaking state stream controller. The native sherpa-onnx TTS engine
+  /// is freed automatically when the Dart wrapper is garbage collected — no
+  /// explicit `.free()` is required for this particular FFI binding.
+  ///
+  /// Safe to call multiple times. All cleanup operations are guarded against
+  /// already-disposed state.
 
   Future<void> dispose() async {
     _isDrainingQueue = false;
@@ -176,12 +289,23 @@ class SherpaTtsDatasource {
 
   // ── Asset copying ──────────────────────────────────────
 
+  /// Copies all TTS model files from assets to [destDir].
+  ///
+  /// Copies the ONNX model, config JSON, tokens file, and the entire
+  /// espeak-ng data directory. Files are only copied if they don't already
+  /// exist, avoiding redundant I/O on subsequent sessions.
+
   Future<void> _copyModelFiles(String destDir) async {
     await _copyAsset("$_modelAssetDir/$_modelFile", "$destDir/$_modelFile");
     await _copyAsset("$_modelAssetDir/$_configFile", "$destDir/$_configFile");
     await _copyAsset("$_modelAssetDir/$_tokensFile", "$destDir/$_tokensFile");
     await _copyEspeakData(destDir);
   }
+
+  /// Copies a single asset file to [destPath] if it doesn't already exist.
+  ///
+  /// Creates parent directories as needed. Uses [rootBundle.load] to read
+  /// the asset and [File.writeAsBytes] to write it to disk.
 
   Future<void> _copyAsset(String assetPath, String destPath) async {
     final file = File(destPath);
@@ -192,9 +316,14 @@ class SherpaTtsDatasource {
     debugPrint("[TTS] Copied $assetPath");
   }
 
+  /// Copies the espeak-ng data directory from assets to [destDir].
+  ///
+  /// Iterates over the asset manifest to find all files under the espeak
+  /// prefix, then copies each one while preserving the relative path structure.
+
   Future<void> _copyEspeakData(String destDir) async {
     final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
-    final prefix = "$_modelAssetDir/$_espeakDir/";
+    const prefix = "$_modelAssetDir/$_espeakDir/";
     final assets = manifest.listAssets().where((p) => p.startsWith(prefix));
     for (final assetPath in assets) {
       final rel = assetPath.substring(prefix.length);
