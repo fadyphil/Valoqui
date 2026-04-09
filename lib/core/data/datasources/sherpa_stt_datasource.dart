@@ -67,12 +67,12 @@ void _sherpaIsolateEntry(List<dynamic> args) {
         final result = recognizer.getResult(stream);
         stream.free();
         replyPort.send(result.text);
-      } catch (e) {
+      } on Exception catch (e) {
         debugPrint("[STT Isolate] Decode error: $e");
         replyPort.send("");
       }
     });
-  } catch (e) {
+  } on Exception catch (e) {
     mainPort.send("error: $e");
   }
 }
@@ -151,7 +151,7 @@ class _SherpaDecodeIsolate {
       }
       debugPrint("[STT Isolate] Init reply was not a SendPort: $reply");
       return false;
-    } catch (e) {
+    } on Exception catch (e) {
       debugPrint("[STT Isolate] Spawn failed: $e");
       return false;
     } finally {
@@ -210,7 +210,7 @@ class _SherpaDecodeIsolate {
               )
               as String;
       return text;
-    } catch (e) {
+    } on Exception catch (e) {
       debugPrint("[STT Isolate] Decode error: $e");
       return "";
     } finally {
@@ -387,7 +387,7 @@ class SherpaSttDatasource {
       _audioSub = _vadRepository.audioStream.listen(_onAudioBytesReceived);
 
       return right(null);
-    } catch (e) {
+    } on Exception catch (e) {
       debugPrint("[STT] Init failed: $e");
       // FIXED: was AppFailure.networkFailure — incorrect because model-file
       // copying, isolate spawn, and recogniser construction are all local
@@ -572,7 +572,7 @@ class SherpaSttDatasource {
       final result = _fallbackRecognizer!.getResult(stream);
       stream.free();
       return result.text;
-    } catch (e) {
+    } on Exception catch (e) {
       debugPrint("[STT] Sync decode error: $e");
       return "";
     }
@@ -640,10 +640,14 @@ class SherpaSttDatasource {
     final docDir = await getApplicationDocumentsDirectory();
     final localPath = "${docDir.path}/$assetPath";
     final file = File(localPath);
-    if (!await file.exists()) {
-      await file.parent.create(recursive: true);
+
+    // Use sync File methods — I/O runs on background isolate on mobile,
+    // so sync doesn't block the UI and reduces async overhead.
+    // Also: existsSync() returns bool directly, fixing the negation lint error.
+    if (!file.existsSync()) {
+      file.parent.createSync(recursive: true);
       final byteData = await rootBundle.load(assetPath);
-      await file.writeAsBytes(
+      file.writeAsBytesSync(
         byteData.buffer.asUint8List(
           byteData.offsetInBytes,
           byteData.lengthInBytes,

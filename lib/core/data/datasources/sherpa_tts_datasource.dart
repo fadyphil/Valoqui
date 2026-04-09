@@ -145,7 +145,7 @@ class SherpaTtsDatasource {
       _tts = sherpa.OfflineTts(config);
       _initialized = true;
       return right(null);
-    } catch (e) {
+    } on Exception catch (e) {
       return left(AppFailure.ttsFailure(message: "TTS init failed: $e"));
     }
   }
@@ -248,7 +248,7 @@ class SherpaTtsDatasource {
       await _player.setFilePath(wavPath);
       await _player.seek(Duration.zero);
       await _player.play(); // resolves when this sentence finishes
-    } catch (e) {
+    } on Exception catch (e) {
       debugPrint("[TTS] Error playing sentence: $e");
     }
   }
@@ -309,10 +309,14 @@ class SherpaTtsDatasource {
 
   Future<void> _copyAsset(String assetPath, String destPath) async {
     final file = File(destPath);
-    if (await file.exists()) return;
-    await file.parent.create(recursive: true);
+
+    // Use sync File methods — I/O runs on background isolate on mobile,
+    // so sync doesn't block the UI and reduces async overhead.
+    // Also: existsSync() returns bool directly, fixing the negation lint error.
+    if (file.existsSync()) return;
+    file.parent.createSync(recursive: true);
     final bytes = await rootBundle.load(assetPath);
-    await file.writeAsBytes(bytes.buffer.asUint8List());
+    file.writeAsBytesSync(bytes.buffer.asUint8List());
     debugPrint("[TTS] Copied $assetPath");
   }
 

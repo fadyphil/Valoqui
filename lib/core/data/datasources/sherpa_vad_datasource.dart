@@ -132,7 +132,7 @@ class SherpaVadDatasource {
 
       debugPrint("[VAD] Silero VAD model loaded from $modelPath");
       return right(null);
-    } catch (e) {
+    } on Exception catch (e) {
       debugPrint("[VAD] Init failed: $e — session will use push-to-talk");
       return left(AppFailure.networkFailure(message: "VAD init failed: $e"));
     }
@@ -231,7 +231,7 @@ class SherpaVadDatasource {
       );
 
       return right(null);
-    } catch (e) {
+    } on Exception catch (e) {
       // FIXED: was AppFailure.networkFailure — incorrect because this is a
       // local audio hardware / recorder initialisation failure, not a network
       // call. Using sttFailure gives the BLoC the correct domain context and
@@ -253,7 +253,7 @@ class SherpaVadDatasource {
       if (await _recorder.isRecording()) {
         await _recorder.stop();
       }
-    } catch (e) {
+    } on Exception catch (e) {
       debugPrint("[VAD] Safely ignored error stopping recorder: $e");
     }
   }
@@ -279,7 +279,7 @@ class SherpaVadDatasource {
 
     try {
       await _recorder.dispose();
-    } catch (e) {
+    } on Exception catch (e) {
       debugPrint("[VAD] Safely ignored error disposing recorder: $e");
     }
 
@@ -321,10 +321,14 @@ class SherpaVadDatasource {
     final docDir = await getApplicationDocumentsDirectory();
     final localPath = "${docDir.path}/$assetPath";
     final file = File(localPath);
-    if (!await file.exists()) {
-      await file.parent.create(recursive: true);
+
+    // Use sync File methods — I/O runs on background isolate on mobile,
+    // so sync doesn't block the UI and reduces async overhead.
+    // Also: existsSync() returns bool directly, fixing the negation lint error.
+    if (!file.existsSync()) {
+      file.parent.createSync(recursive: true);
       final byteData = await rootBundle.load(assetPath);
-      await file.writeAsBytes(
+      file.writeAsBytesSync(
         byteData.buffer.asUint8List(
           byteData.offsetInBytes,
           byteData.lengthInBytes,
