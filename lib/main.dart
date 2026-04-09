@@ -18,7 +18,7 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-  } catch (e) {
+  } on Exception catch (e) {
     debugPrint("Firebase not configured correctly: $e");
     // For development, we might want to continue without Firebase
     // if we are just testing UI components.

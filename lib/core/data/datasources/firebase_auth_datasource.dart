@@ -62,7 +62,7 @@ class FirebaseAuthDatasource {
       return left(
         AppFailure.authFailure(message: e.message ?? "Authentication failed."),
       );
-    } catch (e) {
+    } on Exception catch (e) {
       return left(AppFailure.authFailure(message: e.toString()));
     }
   }
@@ -73,7 +73,7 @@ class FirebaseAuthDatasource {
       await _ensureInitialized();
       await Future.wait([_auth.signOut(), _googleSignIn.signOut()]);
       return right(null);
-    } catch (e) {
+    } on Exception catch (e) {
       return left(AppFailure.authFailure(message: "Sign out failed: $e"));
     }
   }

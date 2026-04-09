@@ -84,7 +84,7 @@ class GroqLlmDatasource {
               if (token != null && token.isNotEmpty) {
                 yield right(token);
               }
-            } catch (_) {
+            } on Exception catch (_) {
               // Malformed JSON chunk — skip silently
             }
           } else {
@@ -103,7 +103,7 @@ class GroqLlmDatasource {
           ),
         );
       }
-    } catch (e) {
+    } on Exception catch (e) {
       yield left(AppFailure.llmFailure(message: "Groq stream error: $e"));
     }
   }
@@ -160,7 +160,7 @@ class GroqLlmDatasource {
               "Groq report error [${e.response?.statusCode}]: ${e.message}",
         ),
       );
-    } catch (e) {
+    } on Exception catch (e) {
       debugPrint("[Groq] generateReport error: $e");
       return left(
         AppFailure.reportGenerationFailed(message: "Groq report error: $e"),

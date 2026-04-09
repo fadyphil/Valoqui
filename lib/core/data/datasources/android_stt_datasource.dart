@@ -42,7 +42,7 @@ class AndroidSttDatasource {
         },
       );
       return right(_initialized);
-    } catch (e) {
+    } on Exception catch (e) {
       return left(AppFailure.sttFailure(message: 'STT init failed: $e'));
     }
   }
@@ -76,7 +76,7 @@ class AndroidSttDatasource {
         // Setting 'es_ES' breaks English input entirely.
       );
       return right(null);
-    } catch (e) {
+    } on Exception catch (e) {
       return left(
         AppFailure.sttFailure(message: 'Failed to start listening: $e'),
       );
@@ -91,7 +91,7 @@ class AndroidSttDatasource {
         _amplitudeController.add(0.0);
       }
       return right(_stt.lastRecognizedWords);
-    } catch (e) {
+    } on Exception catch (e) {
       return left(
         AppFailure.sttFailure(message: 'Failed to stop listening: $e'),
       );

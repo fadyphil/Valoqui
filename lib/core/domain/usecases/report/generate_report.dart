@@ -56,7 +56,7 @@ class GenerateReport {
 
       final json = jsonDecode(cleaned) as Map<String, dynamic>;
       return right(SessionReport.fromJson(json));
-    } catch (_) {
+    } on Exception catch (_) {
       return left(const AppFailure.reportParsingFailed());
     }
   }

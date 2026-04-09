@@ -97,7 +97,7 @@ class GeminiLlmDatasource {
               if (token != null && token.isNotEmpty) {
                 yield right(token);
               }
-            } catch (_) {
+            } on Exception catch (_) {
               // Malformed chunk — skip
             }
           } else {
@@ -112,7 +112,7 @@ class GeminiLlmDatasource {
               "Gemini stream error [${e.response?.statusCode}]: ${e.message}",
         ),
       );
-    } catch (e) {
+    } on Exception catch (e) {
       yield left(AppFailure.llmFailure(message: "Gemini stream error: $e"));
     }
   }
@@ -168,7 +168,7 @@ class GeminiLlmDatasource {
               "Gemini report error [${e.response?.statusCode}]: ${e.message}",
         ),
       );
-    } catch (e) {
+    } on Exception catch (e) {
       debugPrint("[Gemini] generateReport error: $e");
       return left(
         AppFailure.reportGenerationFailed(message: "Gemini report error: $e"),

@@ -25,7 +25,7 @@ class SecureStorageDatasource {
     try {
       await _storage.write(key: key, value: value);
       return right(null);
-    } catch (e) {
+    } on Exception catch (e) {
       return left(
         AppFailure.storageFailure(message: "Write failed for $key: $e"),
       );
@@ -35,7 +35,7 @@ class SecureStorageDatasource {
   Future<Either<AppFailure, String?>> read(String key) async {
     try {
       return right(await _storage.read(key: key));
-    } catch (e) {
+    } on Exception catch (e) {
       return left(
         AppFailure.storageFailure(message: "Read failed for $key: $e"),
       );
@@ -46,7 +46,7 @@ class SecureStorageDatasource {
     try {
       await _storage.deleteAll();
       return right(null);
-    } catch (e) {
+    } on Exception catch (e) {
       return left(AppFailure.storageFailure(message: "Clear failed: $e"));
     }
   }

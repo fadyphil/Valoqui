@@ -37,7 +37,7 @@ class FirestoreDatasource {
         });
       }
       return right(null);
-    } catch (e) {
+    } on Exception catch (e) {
       return left(
         AppFailure.databaseFailure(message: "Failed to create user: $e"),
       );
@@ -59,7 +59,7 @@ class FirestoreDatasource {
         "currentCefrLevel": level.toUpperCase(),
       }, SetOptions(merge: true));
       return right(null);
-    } catch (e) {
+    } on Exception catch (e) {
       return left(
         AppFailure.databaseFailure(message: "Failed to update level: $e"),
       );
@@ -85,7 +85,7 @@ class FirestoreDatasource {
             .set(data, SetOptions(merge: true));
       }
       return right(null);
-    } catch (e) {
+    } on Exception catch (e) {
       return left(
         AppFailure.databaseFailure(message: "Failed to update key config: $e"),
       );
@@ -112,7 +112,7 @@ class FirestoreDatasource {
           message: "Failed to save XP [${e.code}]: ${e.message}",
         ),
       );
-    } catch (e) {
+    } on Exception catch (e) {
       return left(AppFailure.databaseFailure(message: "Failed to save XP: $e"));
     }
   }
