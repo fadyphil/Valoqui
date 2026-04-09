@@ -48,7 +48,7 @@ void main() {
       final result = await useCase.execute();
 
       // ASSERT
-      expect(result, right(tUser));
+      expect(result, right<AppFailure, AppUser>(tUser));
       verify(() => mockAuthRepository.signInWithGoogle()).called(1);
       verify(
         () => mockUserRepository.createUserIfNotExists(
@@ -70,7 +70,7 @@ void main() {
       final result = await useCase.execute();
 
       // ASSERT
-      expect(result, left(failure));
+      expect(result, left<AppFailure, AppUser>(failure));
       verify(() => mockAuthRepository.signInWithGoogle()).called(1);
       verifyZeroInteractions(mockUserRepository);
     });
@@ -93,7 +93,7 @@ void main() {
       final result = await useCase.execute();
 
       // ASSERT
-      expect(result, left(failure));
+      expect(result, left<AppFailure, AppUser>(failure));
       verify(() => mockAuthRepository.signInWithGoogle()).called(1);
       verify(
         () => mockUserRepository.createUserIfNotExists(
