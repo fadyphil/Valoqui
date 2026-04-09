@@ -48,7 +48,7 @@ class _TimerTick extends SpeakingEvent {
 /// VAD detected voice activity change.
 class _VoiceActivityChanged extends SpeakingEvent {
   final bool isActive;
-  const _VoiceActivityChanged(this.isActive);
+  const _VoiceActivityChanged({required this.isActive});
   @override
   List<Object?> get props => [isActive];
 }

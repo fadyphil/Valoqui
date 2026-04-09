@@ -251,7 +251,7 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
     );
 
     _vadSub = _vad.voiceActivityStream.listen(
-      (isSpeaking) => add(_VoiceActivityChanged(isSpeaking)),
+      (isSpeaking) => add(_VoiceActivityChanged(isActive: isSpeaking)),
     );
 
     _ttsSub = _tts.speakingStateStream.listen((isSpeaking) {
