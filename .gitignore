@@ -52,6 +52,9 @@ ignore/
 GEMINI.md
 AGENTS.md
 .opencode/
+entities.json
+mempalace.yaml
+graphify-out/
 
 # Sensitive files & Secrets
 .env
