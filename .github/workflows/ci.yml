@@ -51,6 +51,29 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Write firebase_options.dart from secret
+        run: |
+          mkdir -p lib
+          cat << 'EOF' > lib/firebase_options.dart
+          ${{ secrets.FIREBASE_OPTIONS_DART }}
+          EOF
+
+                # 🔥 ADD THIS STEP
+      - name: Create placeholder assets for CI
+        run: |
+          # Directories
+          mkdir -p assets/images
+          mkdir -p 'assets/tts/vits-piper-es_ES-sharvard-medium/espeak-ng-data/voices/!v'
+          mkdir -p assets/tts/vits-piper-es_ES-sharvard-medium/espeak-ng-data/lang/{aav,art,azc,bat,bnt,ccs,cel,cus,dra,esx,gmq,gmw,grk,inc,ine,ira,iro,itc,jpx,map,miz,myn,poz,roa,sai,sem,sit,tai,trk,urj,zle,zls,zlw}
+          mkdir -p assets/stt/sherpa_stt_es
+          mkdir -p assets/models
+
+          # Empty files (satisfy flutter analyze)
+          touch assets/tts/vits-piper-es_ES-sharvard-medium/{es_ES-sharvard-medium.onnx,es_ES-sharvard-medium.onnx.json,tokens.txt}
+          touch assets/tts/vits-piper-es_ES-sharvard-medium/espeak-ng-data/lang/{eu,ko,qu}
+          touch assets/stt/sherpa_stt_es/{encoder_model.ort,decoder_model_merged.ort,tokens.txt}
+          touch assets/models/silero_vad.onnx
+
       # STEP 1: Format check.
       # Runs before analyze because it's near-instant.
       # --set-exit-if-changed: exits with code 1 if any file would be
@@ -204,6 +227,28 @@ jobs:
       - name: Run build_runner
         run: dart run build_runner build --delete-conflicting-outputs
 
+      - name: Write firebase_options.dart from secret
+        run: |
+          mkdir -p lib
+          cat << 'EOF' > lib/firebase_options.dart
+          ${{ secrets.FIREBASE_OPTIONS_DART }}
+          EOF
+
+              # 🔥 ADD THIS STEP
+      - name: Create placeholder assets for CI
+        run: |
+          # Directories
+          mkdir -p assets/images
+          mkdir -p 'assets/tts/vits-piper-es_ES-sharvard-medium/espeak-ng-data/voices/!v'
+          mkdir -p assets/tts/vits-piper-es_ES-sharvard-medium/espeak-ng-data/lang/{aav,art,azc,bat,bnt,ccs,cel,cus,dra,esx,gmq,gmw,grk,inc,ine,ira,iro,itc,jpx,map,miz,myn,poz,roa,sai,sem,sit,tai,trk,urj,zle,zls,zlw}
+          mkdir -p assets/stt/sherpa_stt_es
+          mkdir -p assets/models
+
+          # Empty files (satisfy flutter analyze)
+          touch assets/tts/vits-piper-es_ES-sharvard-medium/{es_ES-sharvard-medium.onnx,es_ES-sharvard-medium.onnx.json,tokens.txt}
+          touch assets/tts/vits-piper-es_ES-sharvard-medium/espeak-ng-data/lang/{eu,ko,qu}
+          touch assets/stt/sherpa_stt_es/{encoder_model.ort,decoder_model_merged.ort,tokens.txt}
+          touch assets/models/silero_vad.onnx
       # ⚠️  FIREBASE: google-services.json is required for the Android build.
       # It must NOT be committed to the repo.
       # Setup: repo → Settings → Secrets → Actions → GOOGLE_SERVICES_JSON
