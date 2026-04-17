@@ -26,8 +26,9 @@ void main() {
     mockWatchAuthState = MockWatchAuthState();
 
     // Default mock behavior for auth stream
-    when(() => mockWatchAuthState.execute())
-        .thenAnswer((_) => Stream.value(null));
+    when(
+      () => mockWatchAuthState.execute(),
+    ).thenAnswer((_) => Stream.value(null));
 
     authBloc = AuthBloc(
       signInWithGoogle: mockSignInWithGoogle,
@@ -48,14 +49,13 @@ void main() {
     blocTest<AuthBloc, AuthState>(
       'emits [authenticated] when AuthStarted is added and user is logged in',
       build: () {
-        when(() => mockWatchAuthState.execute())
-            .thenAnswer((_) => Stream.value(tUser));
+        when(
+          () => mockWatchAuthState.execute(),
+        ).thenAnswer((_) => Stream.value(tUser));
         return authBloc;
       },
       act: (bloc) => bloc.add(const AuthStarted()),
-      expect: () => [
-        const AuthState.authenticated(user: tUser),
-      ],
+      expect: () => [const AuthState.authenticated(user: tUser)],
       verify: (_) {
         verify(() => mockWatchAuthState.execute()).called(1);
       },
@@ -64,21 +64,21 @@ void main() {
     blocTest<AuthBloc, AuthState>(
       'emits [unauthenticated] when AuthStarted is added and user is not logged in',
       build: () {
-        when(() => mockWatchAuthState.execute())
-            .thenAnswer((_) => Stream.value(null));
+        when(
+          () => mockWatchAuthState.execute(),
+        ).thenAnswer((_) => Stream.value(null));
         return authBloc;
       },
       act: (bloc) => bloc.add(const AuthStarted()),
-      expect: () => [
-        const AuthState.unauthenticated(),
-      ],
+      expect: () => [const AuthState.unauthenticated()],
     );
 
     blocTest<AuthBloc, AuthState>(
       'emits [loading, authenticated] when AuthSignInWithGoogle succeeds',
       build: () {
-        when(() => mockSignInWithGoogle.execute())
-            .thenAnswer((_) async => const Right(tUser));
+        when(
+          () => mockSignInWithGoogle.execute(),
+        ).thenAnswer((_) async => const Right(tUser));
         return authBloc;
       },
       act: (bloc) => bloc.add(const AuthSignInWithGoogle()),
@@ -94,8 +94,9 @@ void main() {
     blocTest<AuthBloc, AuthState>(
       'emits [loading, unauthenticated] when AuthSignInWithGoogle is cancelled',
       build: () {
-        when(() => mockSignInWithGoogle.execute())
-            .thenAnswer((_) async => const Left(AppFailure.signInCancelled()));
+        when(
+          () => mockSignInWithGoogle.execute(),
+        ).thenAnswer((_) async => const Left(AppFailure.signInCancelled()));
         return authBloc;
       },
       act: (bloc) => bloc.add(const AuthSignInWithGoogle()),
@@ -108,8 +109,9 @@ void main() {
     blocTest<AuthBloc, AuthState>(
       'emits [loading, error] when AuthSignInWithGoogle fails',
       build: () {
-        when(() => mockSignInWithGoogle.execute())
-            .thenAnswer((_) async => const Left(AppFailure.authFailure(message: 'Error')));
+        when(() => mockSignInWithGoogle.execute()).thenAnswer(
+          (_) async => const Left(AppFailure.authFailure(message: 'Error')),
+        );
         return authBloc;
       },
       act: (bloc) => bloc.add(const AuthSignInWithGoogle()),
@@ -122,8 +124,9 @@ void main() {
     blocTest<AuthBloc, AuthState>(
       'emits [loading, error] when AuthSignOutRequested fails',
       build: () {
-        when(() => mockSignOut.execute())
-            .thenAnswer((_) async => const Left(AppFailure.authFailure(message: 'Error')));
+        when(() => mockSignOut.execute()).thenAnswer(
+          (_) async => const Left(AppFailure.authFailure(message: 'Error')),
+        );
         return authBloc;
       },
       act: (bloc) => bloc.add(const AuthSignOutRequested()),
