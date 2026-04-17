@@ -17,7 +17,6 @@
      Be specific enough that someone reading this in 6 months
      understands the change without opening the diff. -->
 
-
 ---
 
 ## Why
@@ -26,7 +25,6 @@
      e.g. "Implements ADR-012. Android SpeechRecognizer hits a hard
      7-second OS ceiling — see ARCH-101 for full root cause." -->
 
-
 ---
 
 ## Tradeoffs and decisions made
@@ -34,13 +32,11 @@
      What alternative approaches were considered?
      This is the most valuable section — don't skip it. -->
 
-
 ---
 
 ## Risk areas
 <!-- What could break? What are the edge cases you're most uncertain about?
      e.g. "TTS file copy on first launch — haven't tested on API 29" -->
-
 
 ---
 
@@ -49,12 +45,12 @@
      UI changes: attach before/after screenshots.
      Not required for chore/docs PRs. -->
 
-
 ---
 
 ## Testing checklist
 
 ### General
+
 - [ ] Builds without errors (`flutter build apk`)
 - [ ] No new lint warnings (`flutter analyze`)
 - [ ] `build_runner` run if any Freezed file was modified
@@ -63,6 +59,7 @@
 - [ ] All error states handled — no unhandled `Left` or bare `catch (e) {}`
 
 ### If voice pipeline touched
+
 - [ ] Tested on physical Android device (not emulator)
 - [ ] Full conversation loop works end-to-end
 - [ ] PTT mode works correctly
@@ -72,19 +69,23 @@
 - [ ] Session ends cleanly — no dangling streams or subscriptions
 
 ### If BLoC touched
+
 - [ ] No `emit()` called outside an event handler
 - [ ] All stream subscriptions cancelled in `close()`
 - [ ] Freezed `when()` exhaustive — no `orElse` hiding unhandled states
 
 ### If Firestore or auth touched
+
 - [ ] Security rules still enforce per-user isolation
 - [ ] No sensitive data written to Firestore (keys stay in Keystore only)
 
 ### If navigation touched
+
 - [ ] Forward and back navigation tested
 - [ ] GoRouter redirect logic does not loop
 
 ### Device matrix (mark which were tested)
+
 - [ ] Android 10 (API 29)
 - [ ] Android 12 (API 31)
 - [ ] Android 14 (API 34)
