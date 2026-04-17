@@ -67,6 +67,7 @@ dev_dependencies:
   json_serializable: ^6.11.2
   bloc_test: ^10.0.0
   mocktail: ^1.0.4
+  permission_handler_platform_interface: ^4.3.0
 
 flutter:
   uses-material-design: true
