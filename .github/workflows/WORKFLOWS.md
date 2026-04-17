@@ -5,7 +5,7 @@
 Three workflows covering the full CI/CD lifecycle:
 
 | File | Trigger | Purpose |
-|---|---|---|
+| --- | --- | --- |
 | `ci.yml` | Every push / PR | Blocks merges on broken code |
 | `release.yml` | Version tag push | Builds release APK + GitHub Release |
 | `dependency-audit.yml` | Weekly (Monday) | Security + staleness check |
@@ -15,6 +15,7 @@ Three workflows covering the full CI/CD lifecycle:
 ## One-Time Setup Steps
 
 ### 1. Pin your Flutter version
+
 In both `ci.yml` and `release.yml`, replace the `subosito/flutter-action` step with your exact version:
 
 ```yaml
@@ -28,6 +29,7 @@ In both `ci.yml` and `release.yml`, replace the `subosito/flutter-action` step w
 Pinning prevents a Flutter SDK update from silently breaking your CI.
 
 ### 2. Add the google-services.json secret
+
 Your Firebase config must NOT be committed. The build will fail without it.
 
 1. Copy the full content of `android/app/google-services.json`
@@ -37,6 +39,7 @@ Your Firebase config must NOT be committed. The build will fail without it.
 5. In `ci.yml` and `release.yml`, uncomment the "Write google-services.json" step
 
 ### 3. Add API key secrets (if dart-define is used)
+
 If Groq/Gemini keys are injected at build time via `--dart-define`, add them as secrets
 and pass them in the build step:
 
@@ -47,7 +50,9 @@ and pass them in the build step:
 ```
 
 ### 4. Enable branch protection rules (makes CI meaningful)
+
 Go to: GitHub repo → Settings → Branches → Add branch ruleset for `main`:
+
 - ✅ Require a pull request before merging
 - ✅ Require status checks to pass: `Code Quality`, `Tests & Coverage`, `Build Debug APK`
 - ✅ Require branches to be up to date before merging
@@ -62,7 +67,7 @@ The threshold in `ci.yml` starts at 20% because you currently have no tests.
 Treat this as a ratchet — only move it up, never down.
 
 | Milestone | Threshold | What should be tested |
-|---|---|---|
+| --- | --- | --- |
 | Now (Sprint 2 bugs fixed) | 20% | Nothing required yet |
 | Sprint 3 complete | 40% | SpeakingBloc event handlers, ReportBloc |
 | Post-MVP | 60% | Datasource dispose/re-init, critical use cases |
@@ -76,7 +81,7 @@ The "Speak Again" integration test from the handoff counts toward this threshold
 The `release.yml` uses `generate_release_notes: true`, which pulls from your commit messages
 between tags. Conventional Commits make this readable automatically:
 
-```
+``` markdown
 feat: add network RTT check on session start
 fix: kill isolate on STT datasource dispose
 refactor: extract LLM+TTS pipeline to ConversationOrchestrator
