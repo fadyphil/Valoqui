@@ -137,6 +137,18 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Create placeholder assets for CI
+        run: |
+          mkdir -p assets/images
+          mkdir -p 'assets/tts/vits-piper-es_ES-sharvard-medium/espeak-ng-data/voices/!v'
+          mkdir -p assets/tts/vits-piper-es_ES-sharvard-medium/espeak-ng-data/lang/{aav,art,azc,bat,bnt,ccs,cel,cus,dra,esx,gmq,gmw,grk,inc,ine,ira,iro,itc,jpx,map,miz,myn,poz,roa,sai,sem,sit,tai,trk,urj,zle,zls,zlw}
+          mkdir -p assets/stt/sherpa_stt_es
+          mkdir -p assets/models
+          touch assets/tts/vits-piper-es_ES-sharvard-medium/{es_ES-sharvard-medium.onnx,es_ES-sharvard-medium.onnx.json,tokens.txt}
+          touch assets/tts/vits-piper-es_ES-sharvard-medium/espeak-ng-data/lang/{eu,ko,qu}
+          touch assets/stt/sherpa_stt_es/{encoder_model.ort,decoder_model_merged.ort,tokens.txt}
+          touch assets/models/silero_vad.onnx
+
       - name: Run build_runner
         run: dart run build_runner build --delete-conflicting-outputs
 
