@@ -142,22 +142,22 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
     on<MicPressed>(_onMicPressed);
     on<MicReleased>(_onMicReleased);
     on<MicModeToggled>(_onMicModeToggled);
-    on<_TimerTick>(_onTimerTick);
-    on<_VoiceActivityChanged>(_onVoiceActivityChanged);
-    on<_TranscriptReceived>(_onTranscriptReceived);
-    on<_LlmTokenReceived>(_onLlmTokenReceived);
-    on<_LlmResponseComplete>(_onLlmResponseComplete);
-    on<_LlmError>(_onLlmError);
-    on<_TtsFinished>(_onTtsFinished);
-    on<_TtsStarted>(_onTtsStarted);
-    on<_AmplitudeChanged>(_onAmplitudeChanged);
+    on<TimerTick>(_onTimerTick);
+    on<VoiceActivityChanged>(_onVoiceActivityChanged);
+    on<TranscriptReceived>(_onTranscriptReceived);
+    on<LlmTokenReceived>(_onLlmTokenReceived);
+    on<LlmResponseComplete>(_onLlmResponseComplete);
+    on<LlmError>(_onLlmError);
+    on<TtsFinished>(_onTtsFinished);
+    on<TtsStarted>(_onTtsStarted);
+    on<AmplitudeChanged>(_onAmplitudeChanged);
 
     // Dispatch amplitude changes as events rather than calling emit() directly.
     // flutter_bloc ^9.x forbids emit() outside an event handler — calling it
     // from a raw stream subscription throws at runtime. Using add() routes
     // every amplitude update through the normal handler pipeline.
     _amplitudeSub = _stt.amplitudeStream.listen((amp) {
-      if (!isClosed) add(_AmplitudeChanged(amp));
+      if (!isClosed) add(AmplitudeChanged(amp));
     });
   }
 
@@ -169,10 +169,10 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
   /// for VU meter visualization. Only emits if the current state is
   /// [SpeakingActive] — amplitude is meaningless in other states.
   ///
-  /// This handler is called via [_AmplitudeChanged] events, not directly
+  /// This handler is called via [AmplitudeChanged] events, not directly
   /// from the stream subscription, to comply with flutter_bloc ^9.x rules.
   void _onAmplitudeChanged(
-    _AmplitudeChanged event,
+    AmplitudeChanged event,
     Emitter<SpeakingState> emit,
   ) {
     final current = state;
@@ -243,24 +243,27 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
 
     _sessionTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       _elapsed += const Duration(seconds: 1);
-      add(_TimerTick(_elapsed));
+      add(TimerTick(_elapsed));
     });
 
     _transcriptSub = _stt.transcriptStream.listen(
-      (text) => add(_TranscriptReceived(text)),
+      (text) => add(TranscriptReceived(text)),
+      onError: (Object error, StackTrace stackTrace) {
+        debugPrint("[STT Stream] Non-fatal error: $error\n$stackTrace");
+      },
     );
 
     _vadSub = _vad.voiceActivityStream.listen(
-      (isSpeaking) => add(_VoiceActivityChanged(isActive: isSpeaking)),
+      (isSpeaking) => add(VoiceActivityChanged(isActive: isSpeaking)),
     );
 
     _ttsSub = _tts.speakingStateStream.listen((isSpeaking) {
       if (isSpeaking) {
         _ttsWasPlaying = true;
-        add(const _TtsStarted());
+        add(const TtsStarted());
       } else if (_ttsWasPlaying) {
         _ttsWasPlaying = false;
-        add(const _TtsFinished());
+        add(const TtsFinished());
       }
     });
 
@@ -292,7 +295,7 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
   ///
   /// In PTT mode, this event is ignored — the user controls the mic manually.
   Future<void> _onTtsStarted(
-    _TtsStarted event,
+    TtsStarted event,
     Emitter<SpeakingState> emit,
   ) async {
     final current = state;
@@ -307,7 +310,7 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
   ///
   /// Updates the [elapsed] duration in the state for the session timer UI.
   /// Only emits if the current state is [SpeakingActive].
-  void _onTimerTick(_TimerTick event, Emitter<SpeakingState> emit) {
+  void _onTimerTick(TimerTick event, Emitter<SpeakingState> emit) {
     final current = state;
     if (current is SpeakingActive) {
       emit(current.copyWith(elapsed: event.elapsed));
@@ -326,7 +329,7 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
   /// Guarded to ignore events in PTT mode — the VAD model never loaded,
   /// so these events shouldn't fire, but the check makes the contract explicit.
   void _onVoiceActivityChanged(
-    _VoiceActivityChanged event,
+    VoiceActivityChanged event,
     Emitter<SpeakingState> emit,
   ) {
     // VAD events are only meaningful in always-on mode.
@@ -364,7 +367,7 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
   /// MVP decision: drop the utterance. Post-MVP: buffer and send after
   /// current response completes to allow user to speak over Lucia.
   void _onTranscriptReceived(
-    _TranscriptReceived event,
+    TranscriptReceived event,
     Emitter<SpeakingState> emit,
   ) {
     final current = state;
@@ -448,16 +451,16 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
         .listen(
           (event) => event.fold(
             // handles business logic errors (left)
-            (failure) => add(_LlmError(failure)),
+            (failure) => add(LlmError(failure)),
             // handles LLM responses (right) success
-            (token) => add(_LlmTokenReceived(token)),
+            (token) => add(LlmTokenReceived(token)),
           ),
-          onDone: () => add(const _LlmResponseComplete()),
+          onDone: () => add(const LlmResponseComplete()),
           //NEW: handles stream exceptions and errors
           onError: (Object error, StackTrace stackTrace) {
             debugPrint("[LLM Stream] Unexpected error: $error\n$stackTrace");
             add(
-              _LlmError(
+              LlmError(
                 AppFailure.llmFailure(message: "Unexpected error: $error"),
               ),
             );
@@ -482,7 +485,7 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
   /// [_ttsSpokenLength] tracks how many characters have been sent to TTS
   /// to avoid re-speaking partial sentences when new tokens arrive.
   void _onLlmTokenReceived(
-    _LlmTokenReceived event,
+    LlmTokenReceived event,
     Emitter<SpeakingState> emit,
   ) {
     final current = state;
@@ -526,7 +529,7 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
   /// to ensure the state machine advances (defensive: TTS stream might
   /// not emit if the sentence was too short to trigger playback).
   void _onLlmResponseComplete(
-    _LlmResponseComplete event,
+    LlmResponseComplete event,
     Emitter<SpeakingState> emit,
   ) {
     final current = state;
@@ -564,7 +567,7 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
         ),
       );
       if (!_tts.isSpeaking && !_ttsWasPlaying) {
-        add(const _TtsFinished());
+        add(const TtsFinished());
       }
     }
   }
@@ -577,7 +580,7 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
   ///   `listening` phase — user can try again
   ///
   /// Resets [_ttsSpokenLength] to avoid partial TTS on retry.
-  void _onLlmError(_LlmError event, Emitter<SpeakingState> emit) {
+  void _onLlmError(LlmError event, Emitter<SpeakingState> emit) {
     final current = state;
     if (current is! SpeakingActive) return;
 
@@ -612,7 +615,7 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
   /// Transitions state to `listening` to await next user utterance.
   /// Guarded to only act if currently in `speaking` phase.
   Future<void> _onTtsFinished(
-    _TtsFinished event,
+    TtsFinished event,
     Emitter<SpeakingState> emit,
   ) async {
     final current = state;
@@ -783,7 +786,7 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
 
   /// Delivers the precanned greeting through the normal LLM→TTS pipeline.
   ///
-  /// Routes the greeting via [_LlmTokenReceived] + [_LlmResponseComplete]
+  /// Routes the greeting via [LlmTokenReceived] + [LlmResponseComplete]
   /// events to ensure it:
   /// * Updates the transcript via [_upsertLuciaMessage]
   /// * Triggers sentence-boundary TTS via [_findFirstSentenceBoundary]
@@ -804,7 +807,7 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
     // in _onSessionStarted. emit() is synchronous in flutter_bloc, so state
     // is guaranteed to be SpeakingActive at this point — no branch is needed.
     //
-    // Routing the greeting through _LlmTokenReceived + _LlmResponseComplete
+    // Routing the greeting through LlmTokenReceived + LlmResponseComplete
     // ensures it goes through the normal pipeline:
     //   • _onLlmTokenReceived: updates transcript via _upsertLuciaMessage and
     //     triggers sentence-boundary TTS via _findFirstSentenceBoundary
@@ -817,8 +820,8 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
     // the condition could never be false given the synchronous emit above.
     const greeting =
         "¡Hola! Me alegra que estés aquí. ¿De qué te gustaría hablar hoy?";
-    add(const _LlmTokenReceived(greeting));
-    add(const _LlmResponseComplete());
+    add(const LlmTokenReceived(greeting));
+    add(const LlmResponseComplete());
   }
 
   /// Finds the index of the first sentence boundary in [text].

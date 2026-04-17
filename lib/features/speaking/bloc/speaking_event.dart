@@ -38,67 +38,67 @@ class MicModeToggled extends SpeakingEvent {
 // ── Internal events (dispatched by the BLoC itself) ────────────────────
 
 /// Drives the session timer — dispatched by Timer.periodic every second.
-class _TimerTick extends SpeakingEvent {
+class TimerTick extends SpeakingEvent {
   final Duration elapsed;
-  const _TimerTick(this.elapsed);
+  const TimerTick(this.elapsed);
   @override
   List<Object?> get props => [elapsed];
 }
 
 /// VAD detected voice activity change.
-class _VoiceActivityChanged extends SpeakingEvent {
+class VoiceActivityChanged extends SpeakingEvent {
   final bool isActive;
-  const _VoiceActivityChanged({required this.isActive});
+  const VoiceActivityChanged({required this.isActive});
   @override
   List<Object?> get props => [isActive];
 }
 
 /// STT emitted a (partial or final) transcript.
-class _TranscriptReceived extends SpeakingEvent {
+class TranscriptReceived extends SpeakingEvent {
   final String text;
-  const _TranscriptReceived(this.text);
+  const TranscriptReceived(this.text);
   @override
   List<Object?> get props => [text];
 }
 
 /// LLM streamed a new token.
-class _LlmTokenReceived extends SpeakingEvent {
+class LlmTokenReceived extends SpeakingEvent {
   final String token;
-  const _LlmTokenReceived(this.token);
+  const LlmTokenReceived(this.token);
   @override
   List<Object?> get props => [token];
 }
 
 /// LLM finished streaming its full response.
-class _LlmResponseComplete extends SpeakingEvent {
-  const _LlmResponseComplete();
+class LlmResponseComplete extends SpeakingEvent {
+  const LlmResponseComplete();
 }
 
 /// LLM encountered an error.
-class _LlmError extends SpeakingEvent {
+class LlmError extends SpeakingEvent {
   final AppFailure failure;
-  const _LlmError(this.failure);
+  const LlmError(this.failure);
   @override
   List<Object?> get props => [failure];
 }
 
 /// TTS finished playing — transition back to listening.
-class _TtsFinished extends SpeakingEvent {
-  const _TtsFinished();
+class TtsFinished extends SpeakingEvent {
+  const TtsFinished();
 }
 
 /// TTS began playing — gate the VAD so TTS audio can't reach Silero.
-class _TtsStarted extends SpeakingEvent {
-  const _TtsStarted();
+class TtsStarted extends SpeakingEvent {
+  const TtsStarted();
 }
 
 /// Mic amplitude updated — dispatched by the amplitude stream subscription.
 /// This is a proper event so emit() is only ever called inside a handler,
 /// satisfying flutter_bloc's constraint that emit must not be called from
 /// outside an event handler.
-class _AmplitudeChanged extends SpeakingEvent {
+class AmplitudeChanged extends SpeakingEvent {
   final double amplitude;
-  const _AmplitudeChanged(this.amplitude);
+  const AmplitudeChanged(this.amplitude);
   @override
   List<Object?> get props => [amplitude];
 }
