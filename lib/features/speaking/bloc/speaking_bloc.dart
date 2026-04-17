@@ -876,9 +876,8 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
     await _transcriptSub?.cancel();
     await _vadSub?.cancel();
     await _ttsSub?.cancel();
-    await _stt.dispose();
-    await _tts.dispose();
-    await _vad.dispose();
+    await _tts.stop();
+    await _vad.stopMonitoring();
     return super.close();
   }
 }
