@@ -43,7 +43,7 @@ const _permissionGranted = 1;
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  const _permissionChannel = MethodChannel(
+  const permissionChannel = MethodChannel(
     'flutter.baseflow.com/permissions/methods',
   );
 
@@ -61,7 +61,7 @@ void main() {
 
     // ✅ Pattern: MethodChannel mock with correct format
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(_permissionChannel, (MethodCall call) async {
+        .setMockMethodCallHandler(permissionChannel, (MethodCall call) async {
           switch (call.method) {
             case 'checkPermissionStatus':
             case 'requestPermissions':
@@ -455,7 +455,7 @@ void main() {
       blocTest<SpeakingBloc, SpeakingState>(
         'LlmError event emitted from stream exception updates state with errorMessage',
         build: () => bloc,
-        seed: () => SpeakingState.active(
+        seed: () => const SpeakingState.active(
           transcript: [],
           phase: ConversationPhase.processing,
           micMode: MicMode.alwaysOn,
