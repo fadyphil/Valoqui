@@ -12,11 +12,17 @@ part of 'speaking_bloc.dart';
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
-mixin _$SpeakingState {
+mixin _$SpeakingState implements DiagnosticableTreeMixin {
 
 
 
 
+@override
+void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+  properties
+    ..add(DiagnosticsProperty('type', 'SpeakingState'))
+    ;
+}
 
 @override
 bool operator ==(Object other) {
@@ -28,7 +34,7 @@ bool operator ==(Object other) {
 int get hashCode => runtimeType.hashCode;
 
 @override
-String toString() {
+String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
   return 'SpeakingState()';
 }
 
@@ -192,7 +198,7 @@ return error(_that.message);case _:
 /// @nodoc
 
 
-class SpeakingInitial implements SpeakingState {
+class SpeakingInitial with DiagnosticableTreeMixin implements SpeakingState {
   const SpeakingInitial();
   
 
@@ -200,6 +206,12 @@ class SpeakingInitial implements SpeakingState {
 
 
 
+@override
+void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+  properties
+    ..add(DiagnosticsProperty('type', 'SpeakingState.initial'))
+    ;
+}
 
 @override
 bool operator ==(Object other) {
@@ -211,7 +223,7 @@ bool operator ==(Object other) {
 int get hashCode => runtimeType.hashCode;
 
 @override
-String toString() {
+String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
   return 'SpeakingState.initial()';
 }
 
@@ -224,7 +236,7 @@ String toString() {
 /// @nodoc
 
 
-class SpeakingInitializing implements SpeakingState {
+class SpeakingInitializing with DiagnosticableTreeMixin implements SpeakingState {
   const SpeakingInitializing();
   
 
@@ -232,6 +244,12 @@ class SpeakingInitializing implements SpeakingState {
 
 
 
+@override
+void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+  properties
+    ..add(DiagnosticsProperty('type', 'SpeakingState.initializing'))
+    ;
+}
 
 @override
 bool operator ==(Object other) {
@@ -243,7 +261,7 @@ bool operator ==(Object other) {
 int get hashCode => runtimeType.hashCode;
 
 @override
-String toString() {
+String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
   return 'SpeakingState.initializing()';
 }
 
@@ -256,7 +274,7 @@ String toString() {
 /// @nodoc
 
 
-class SpeakingActive implements SpeakingState {
+class SpeakingActive with DiagnosticableTreeMixin implements SpeakingState {
   const SpeakingActive({required final  List<ConversationMessage> transcript, required this.phase, required this.micMode, required this.elapsed, required this.activeSpeakingTime, required this.currentLuciaBuffer, this.partialUserTranscript, this.amplitude = 0.0, this.errorMessage}): _transcript = transcript;
   
 
@@ -296,6 +314,12 @@ class SpeakingActive implements SpeakingState {
 $SpeakingActiveCopyWith<SpeakingActive> get copyWith => _$SpeakingActiveCopyWithImpl<SpeakingActive>(this, _$identity);
 
 
+@override
+void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+  properties
+    ..add(DiagnosticsProperty('type', 'SpeakingState.active'))
+    ..add(DiagnosticsProperty('transcript', transcript))..add(DiagnosticsProperty('phase', phase))..add(DiagnosticsProperty('micMode', micMode))..add(DiagnosticsProperty('elapsed', elapsed))..add(DiagnosticsProperty('activeSpeakingTime', activeSpeakingTime))..add(DiagnosticsProperty('currentLuciaBuffer', currentLuciaBuffer))..add(DiagnosticsProperty('partialUserTranscript', partialUserTranscript))..add(DiagnosticsProperty('amplitude', amplitude))..add(DiagnosticsProperty('errorMessage', errorMessage));
+}
 
 @override
 bool operator ==(Object other) {
@@ -307,7 +331,7 @@ bool operator ==(Object other) {
 int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_transcript),phase,micMode,elapsed,activeSpeakingTime,currentLuciaBuffer,partialUserTranscript,amplitude,errorMessage);
 
 @override
-String toString() {
+String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
   return 'SpeakingState.active(transcript: $transcript, phase: $phase, micMode: $micMode, elapsed: $elapsed, activeSpeakingTime: $activeSpeakingTime, currentLuciaBuffer: $currentLuciaBuffer, partialUserTranscript: $partialUserTranscript, amplitude: $amplitude, errorMessage: $errorMessage)';
 }
 
@@ -357,7 +381,7 @@ as String?,
 /// @nodoc
 
 
-class SpeakingEnded implements SpeakingState {
+class SpeakingEnded with DiagnosticableTreeMixin implements SpeakingState {
   const SpeakingEnded({required final  List<ConversationMessage> transcript, required this.totalDuration, required this.activeSpeakingTime, required this.userId, required this.userCefrLevel}): _transcript = transcript;
   
 
@@ -380,6 +404,12 @@ class SpeakingEnded implements SpeakingState {
 $SpeakingEndedCopyWith<SpeakingEnded> get copyWith => _$SpeakingEndedCopyWithImpl<SpeakingEnded>(this, _$identity);
 
 
+@override
+void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+  properties
+    ..add(DiagnosticsProperty('type', 'SpeakingState.ended'))
+    ..add(DiagnosticsProperty('transcript', transcript))..add(DiagnosticsProperty('totalDuration', totalDuration))..add(DiagnosticsProperty('activeSpeakingTime', activeSpeakingTime))..add(DiagnosticsProperty('userId', userId))..add(DiagnosticsProperty('userCefrLevel', userCefrLevel));
+}
 
 @override
 bool operator ==(Object other) {
@@ -391,7 +421,7 @@ bool operator ==(Object other) {
 int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_transcript),totalDuration,activeSpeakingTime,userId,userCefrLevel);
 
 @override
-String toString() {
+String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
   return 'SpeakingState.ended(transcript: $transcript, totalDuration: $totalDuration, activeSpeakingTime: $activeSpeakingTime, userId: $userId, userCefrLevel: $userCefrLevel)';
 }
 
@@ -437,7 +467,7 @@ as String,
 /// @nodoc
 
 
-class SpeakingError implements SpeakingState {
+class SpeakingError with DiagnosticableTreeMixin implements SpeakingState {
   const SpeakingError({required this.message});
   
 
@@ -450,6 +480,12 @@ class SpeakingError implements SpeakingState {
 $SpeakingErrorCopyWith<SpeakingError> get copyWith => _$SpeakingErrorCopyWithImpl<SpeakingError>(this, _$identity);
 
 
+@override
+void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+  properties
+    ..add(DiagnosticsProperty('type', 'SpeakingState.error'))
+    ..add(DiagnosticsProperty('message', message));
+}
 
 @override
 bool operator ==(Object other) {
@@ -461,7 +497,7 @@ bool operator ==(Object other) {
 int get hashCode => Object.hash(runtimeType,message);
 
 @override
-String toString() {
+String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
   return 'SpeakingState.error(message: $message)';
 }
 
