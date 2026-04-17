@@ -58,7 +58,9 @@ jobs:
           ${{ secrets.FIREBASE_OPTIONS_DART }}
           EOF
 
-                # 🔥 ADD THIS STEP
+      - name: Ensure injected Firebase config is formatted
+        run: dart format lib/firebase_options.dart
+
       - name: Create placeholder assets for CI
         run: |
           # Directories
