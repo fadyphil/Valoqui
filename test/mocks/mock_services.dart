@@ -14,6 +14,9 @@ import "package:valoqui/core/domain/usecases/onboarding/check_onboarding_status.
 import "package:valoqui/core/domain/usecases/onboarding/mark_onboarding_complete.dart";
 import "package:valoqui/core/domain/usecases/onboarding/save_gemini_key.dart";
 import "package:valoqui/core/domain/usecases/onboarding/save_groq_key.dart";
+// ── Report UseCase Mocks ───────────────────────────────
+import "package:valoqui/core/domain/usecases/report/generate_report.dart";
+import "package:valoqui/core/domain/usecases/report/save_session_xp.dart";
 import "package:valoqui/core/domain/usecases/user/update_user_level.dart";
 import "package:valoqui/core/domain/usecases/user/watch_user_profile.dart";
 
@@ -54,3 +57,7 @@ class MockSaveGroqKey extends Mock implements SaveGroqKey {}
 class MockUpdateUserLevel extends Mock implements UpdateUserLevel {}
 
 class MockWatchUserProfile extends Mock implements WatchUserProfile {}
+
+class MockGenerateReport extends Mock implements GenerateReport {}
+
+class MockSaveSessionXp extends Mock implements SaveSessionXp {}
