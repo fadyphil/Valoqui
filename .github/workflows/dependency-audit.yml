@@ -1,0 +1,42 @@
+name: Dependency Audit
+
+# Runs every Monday at 9 AM UTC and on manual trigger.
+# A solo project's biggest silent risk is a dependency silently becoming
+# vulnerable or unmaintained. This workflow surfaces that proactively.
+#
+# Does NOT block merges. Creates a GitHub notification to act on when time permits.
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'   # Monday 9 AM UTC
+  workflow_dispatch:
+
+jobs:
+  audit:
+    name: Dependency Health
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.4'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Checks for packages with known security advisories against the OSV database.
+      # If a vulnerability is found, the step fails and you get a notification.
+      - name: Security audit
+        run: dart pub audit
+
+      # Reports packages with newer versions available.
+      # --no-dev-dependencies: only production deps (you care more about
+      # packages that ship with the app than dev tools).
+      # Does NOT fail the pipeline — informational only.
+      - name: Check for outdated packages
+        run: dart pub outdated --no-dev-dependencies
+        continue-on-error: true

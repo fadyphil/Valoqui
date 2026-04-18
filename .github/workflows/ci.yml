@@ -1,0 +1,281 @@
+name: CI — Quality Gate
+
+# Runs on every PR and every push to main/develop.
+# This is the pipeline that BLOCKS merges. It must stay fast.
+# Target: under 5 minutes total.
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+# Cancel in-progress runs for the same branch when a new commit is pushed.
+# Prevents wasting runner minutes on stale commits during rapid iteration.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ─────────────────────────────────────────────
+  # JOB 1: Code Quality
+  # Format → Analyze → Stale Generated Files
+  # These are cheap and fast. Run first. Fail fast on the obvious stuff.
+  # ─────────────────────────────────────────────
+  quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pinned to stable channel. Replace with your exact local version
+      # to guarantee parity: check with `flutter --version` locally.
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.41.4"
+          channel: stable
+          cache: true
+
+      # Cache the pub package cache. This is the biggest time saver.
+      # On cache hit: skips downloading ~50+ packages from pub.dev every run.
+      - name: Cache pub dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+          key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: pub-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Write firebase_options.dart from secret
+        run: |
+          mkdir -p lib
+          cat << 'EOF' > lib/firebase_options.dart
+          ${{ secrets.FIREBASE_OPTIONS_DART }}
+          EOF
+
+      - name: Ensure injected Firebase config is formatted
+        run: dart format lib/firebase_options.dart
+
+      - name: Create placeholder assets for CI
+        run: |
+          # Directories
+          mkdir -p assets/images
+          mkdir -p 'assets/tts/vits-piper-es_ES-sharvard-medium/espeak-ng-data/voices/!v'
+          mkdir -p assets/tts/vits-piper-es_ES-sharvard-medium/espeak-ng-data/lang/{aav,art,azc,bat,bnt,ccs,cel,cus,dra,esx,gmq,gmw,grk,inc,ine,ira,iro,itc,jpx,map,miz,myn,poz,roa,sai,sem,sit,tai,trk,urj,zle,zls,zlw}
+          mkdir -p assets/stt/sherpa_stt_es
+          mkdir -p assets/models
+
+          # Empty files (satisfy flutter analyze)
+          touch assets/tts/vits-piper-es_ES-sharvard-medium/{es_ES-sharvard-medium.onnx,es_ES-sharvard-medium.onnx.json,tokens.txt}
+          touch assets/tts/vits-piper-es_ES-sharvard-medium/espeak-ng-data/lang/{eu,ko,qu}
+          touch assets/stt/sherpa_stt_es/{encoder_model.ort,decoder_model_merged.ort,tokens.txt}
+          touch assets/models/silero_vad.onnx
+
+      # STEP 1: Format check.
+      # Runs before analyze because it's near-instant.
+      # --set-exit-if-changed: exits with code 1 if any file would be
+      # reformatted, meaning the developer didn't run `dart format .` locally.
+      - name: Check formatting
+        run: dart format --set-exit-if-changed .
+
+      # STEP 2: Static analysis driven by analysis_options.yaml.
+      # flutter analyze reads your analysis_options.yaml automatically —
+      # no separate custom_lint plugin needed. All rules configured there
+      # (lints, errors promoted from warnings, etc.) are enforced here.
+      - name: Analyze
+        run: flutter analyze
+
+      # STEP 3: Stale generated files check.
+      # Regenerates Freezed/build_runner output and checks if the result
+      # differs from what's committed. Catches the classic "forgot to run
+      # build_runner" bug before it reaches review.
+      - name: Regenerate build_runner output
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Check for stale generated files
+        run: |
+          if ! git diff --exit-code -- "**/*.g.dart" "**/*.freezed.dart"; then
+            echo ""
+            echo "ERROR: Generated files are stale."
+            echo "Run 'dart run build_runner build --delete-conflicting-outputs' locally and commit the output."
+            exit 1
+          fi
+
+  # ─────────────────────────────────────────────
+  # JOB 2: Tests + Coverage
+  # Runs in parallel with the build job, after quality passes.
+  # Isolated so a test failure is distinguishable from a build failure.
+  # ─────────────────────────────────────────────
+  test:
+    name: Tests & Coverage
+    runs-on: ubuntu-latest
+    needs: quality # Don't waste time running tests if the code doesn't even analyze
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.41.4"
+          channel: stable
+          cache: true
+
+      - name: Cache pub dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+          key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: pub-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Create placeholder assets for CI
+        run: |
+          mkdir -p assets/images
+          mkdir -p 'assets/tts/vits-piper-es_ES-sharvard-medium/espeak-ng-data/voices/!v'
+          mkdir -p assets/tts/vits-piper-es_ES-sharvard-medium/espeak-ng-data/lang/{aav,art,azc,bat,bnt,ccs,cel,cus,dra,esx,gmq,gmw,grk,inc,ine,ira,iro,itc,jpx,map,miz,myn,poz,roa,sai,sem,sit,tai,trk,urj,zle,zls,zlw}
+          mkdir -p assets/stt/sherpa_stt_es
+          mkdir -p assets/models
+          touch assets/tts/vits-piper-es_ES-sharvard-medium/{es_ES-sharvard-medium.onnx,es_ES-sharvard-medium.onnx.json,tokens.txt}
+          touch assets/tts/vits-piper-es_ES-sharvard-medium/espeak-ng-data/lang/{eu,ko,qu}
+          touch assets/stt/sherpa_stt_es/{encoder_model.ort,decoder_model_merged.ort,tokens.txt}
+          touch assets/models/silero_vad.onnx
+
+      - name: Run build_runner
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      # --coverage generates coverage/lcov.info
+      - name: Run tests with coverage
+        run: flutter test --coverage
+
+      # Coverage threshold enforcement.
+      # START LOW (20%) since you're writing tests incrementally.
+      # Suggested milestones: 20% → 40% (Sprint 3) → 60% (post-MVP)
+      # lowered the coverage because tests are done by covering only important files (blocs, for now ) , and they are behaviour focused not for implementation , we will exapand the tests once we settle the tts engine and some quality of life polish
+      - name: Install lcov
+        run: sudo apt-get install -y lcov --quiet
+
+      - name: Enforce coverage threshold
+        run: |
+          if [ ! -f coverage/lcov.info ] || [ ! -s coverage/lcov.info ]; then
+            echo "No coverage data found. Skipping threshold check."
+            exit 0
+          fi
+
+          THRESHOLD=10
+
+          SUMMARY=$(lcov --summary coverage/lcov.info 2>&1)
+          echo "$SUMMARY"
+
+          COVERAGE=$(echo "$SUMMARY" | grep -oP '\d+\.\d+(?=% \()' | head -1)
+
+          if [ -z "$COVERAGE" ]; then
+            echo "Could not parse coverage. Skipping threshold check."
+            exit 0
+          fi
+
+          echo "Line coverage: ${COVERAGE}%"
+
+          python3 -c "
+          coverage = float('${COVERAGE}')
+          threshold = ${THRESHOLD}
+          if coverage < threshold:
+              print(f'FAIL: {coverage:.1f}% is below the {threshold}% threshold.')
+              print('Add tests or lower the threshold in ci.yml with a comment explaining why.')
+              exit(1)
+          else:
+              print(f'PASS: {coverage:.1f}% >= {threshold}%')
+          "
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-${{ github.sha }}
+          path: coverage/lcov.info
+          retention-days: 14
+
+  # ─────────────────────────────────────────────
+  # JOB 3: Debug APK Build
+  # Verifies the code actually compiles on a clean machine.
+  # Runs in parallel with tests, after quality passes.
+  # ─────────────────────────────────────────────
+  build:
+    name: Build Debug APK
+    runs-on: ubuntu-latest
+    needs: quality
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.41.4"
+          channel: stable
+          cache: true
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Cache pub dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+          key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: pub-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run build_runner
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Write firebase_options.dart from secret
+        run: |
+          mkdir -p lib
+          cat << 'EOF' > lib/firebase_options.dart
+          ${{ secrets.FIREBASE_OPTIONS_DART }}
+          EOF
+
+              # 🔥 ADD THIS STEP
+      - name: Create placeholder assets for CI
+        run: |
+          # Directories
+          mkdir -p assets/images
+          mkdir -p 'assets/tts/vits-piper-es_ES-sharvard-medium/espeak-ng-data/voices/!v'
+          mkdir -p assets/tts/vits-piper-es_ES-sharvard-medium/espeak-ng-data/lang/{aav,art,azc,bat,bnt,ccs,cel,cus,dra,esx,gmq,gmw,grk,inc,ine,ira,iro,itc,jpx,map,miz,myn,poz,roa,sai,sem,sit,tai,trk,urj,zle,zls,zlw}
+          mkdir -p assets/stt/sherpa_stt_es
+          mkdir -p assets/models
+
+          # Empty files (satisfy flutter analyze)
+          touch assets/tts/vits-piper-es_ES-sharvard-medium/{es_ES-sharvard-medium.onnx,es_ES-sharvard-medium.onnx.json,tokens.txt}
+          touch assets/tts/vits-piper-es_ES-sharvard-medium/espeak-ng-data/lang/{eu,ko,qu}
+          touch assets/stt/sherpa_stt_es/{encoder_model.ort,decoder_model_merged.ort,tokens.txt}
+          touch assets/models/silero_vad.onnx
+      # ⚠️  FIREBASE: google-services.json is required for the Android build.
+      # It must NOT be committed to the repo.
+      # Setup: repo → Settings → Secrets → Actions → GOOGLE_SERVICES_JSON
+      - name: Write google-services.json
+        run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
+
+      - name: Build debug APK
+        run: flutter build apk --debug --dart-define=GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-apk-${{ github.sha }}
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 7

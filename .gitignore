@@ -43,3 +43,30 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Private Project details
+firebase_options.dart 
+firebase.json
+google-services.json
+ignore/
+GEMINI.md
+AGENTS.md
+.opencode/
+entities.json
+mempalace.yaml
+graphify-out/
+
+# Sensitive files & Secrets
+.env
+local.properties
+key.properties
+**/*.keystore
+**/*.jks
+**/*.p12
+**/*.pem
+secrets.xml
+*.keystream*
+
+# Large Assets / Models
+assets/tts/
+vits-piper-es_ES-sharvard-medium/

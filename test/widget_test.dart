@@ -1,30 +1,47 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+// test/widget_test.dart
 
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
+import "package:bloc_test/bloc_test.dart";
+import "package:flutter_test/flutter_test.dart";
+import "package:mocktail/mocktail.dart";
+import "package:valoqui/app.dart";
+import "package:valoqui/core/di/service_locator.dart";
+import "package:valoqui/features/auth/bloc/auth_bloc.dart";
+import "package:valoqui/features/home/bloc/home_bloc.dart";
+import "package:valoqui/features/onboarding/bloc/onboarding_bloc.dart";
 
-import 'package:valoqui/main.dart';
+class MockAuthBloc extends MockBloc<AuthEvent, AuthState> implements AuthBloc {}
+
+class MockOnboardingBloc extends MockBloc<OnboardingEvent, OnboardingState>
+    implements OnboardingBloc {}
+
+class MockHomeBloc extends MockBloc<HomeEvent, HomeState> implements HomeBloc {}
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  late MockAuthBloc mockAuthBloc;
+  late MockOnboardingBloc mockOnboardingBloc;
+  late MockHomeBloc mockHomeBloc;
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  setUpAll(() {
+    sl.allowReassignment = true;
+    mockAuthBloc = MockAuthBloc();
+    mockOnboardingBloc = MockOnboardingBloc();
+    mockHomeBloc = MockHomeBloc();
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    // Register mocks in sl
+    sl.registerFactory<AuthBloc>(() => mockAuthBloc);
+    sl.registerFactory<OnboardingBloc>(() => mockOnboardingBloc);
+    sl.registerFactory<HomeBloc>(() => mockHomeBloc);
+  });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  testWidgets("App root renders correctly with initial states", (tester) async {
+    when(() => mockAuthBloc.state).thenReturn(const AuthState.initial());
+    when(
+      () => mockOnboardingBloc.state,
+    ).thenReturn(const OnboardingState.initial());
+    when(() => mockHomeBloc.state).thenReturn(const HomeState.initial());
+
+    await tester.pumpWidget(const ValoquiApp());
+
+    expect(find.byType(ValoquiApp), findsOneWidget);
   });
 }
