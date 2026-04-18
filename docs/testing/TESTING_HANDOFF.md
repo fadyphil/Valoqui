@@ -9,22 +9,24 @@
 
 ## 📋 Table of Contents
 
-1. [Project Overview](#project-overview)
-2. [Architecture Summary](#architecture-summary)
-3. [Testing Status Dashboard](#testing-status-dashboard)
-4. [Established Testing Patterns](#established-testing-patterns)
-5. [File Structure & Locations](#file-structure--locations)
-6. [BLoC-Specific Test Guides](#bloc-specific-test-guides)
-7. [Gotchas & Lessons Learned](#gotchas--lessons-learned)
-8. [Quick Start for Next Session](#quick-start-for-next-session)
-9. [Pre-Commit Checklist](#pre-commit-checklist)
-10. [Next Steps & Recommendations](#next-steps--recommendations)
+1. [Project Overview](#-project-overview)
+2. [Architecture Summary](#️-architecture-summary)
+3. [Testing Status Dashboard](#-testing-status-dashboard)
+4. [Established Testing Patterns](#-established-testing-patterns)
+5. [File Structure & Locations](#️-file-structure--locations)
+6. [BLoC-Specific Test Guides](#-bloc-specific-test-guides)
+7. [Gotchas & Lessons Learned](#️-gotchas--lessons-learned)
+8. [Quick Start for Next Session](#-quick-start-for-next-session)
+9. [Pre-Commit Checklist](#-pre-commit-checklist)
+10. [Next Steps & Recommendations](#-next-steps--recommendations)
+11. [Final Notes](#-final-notes)
 
 ---
 
 ## 🎯 Project Overview
 
 **Valoqui** is an AI-powered Spanish conversation tutor built with:
+
 - **Flutter** (mobile app)
 - **Clean Architecture** + **BLoC pattern** for state management
 - **freezed** for immutable models/states/events
@@ -33,8 +35,9 @@
 - **bloc_test** for BLoC testing utilities
 
 **Core Features Tested**:
+
 | Feature | BLoC | Purpose |
-|---------|------|---------|
+| --------- | ------ | --------- |
 | 🔐 Authentication | `AuthBloc` | Google sign-in, auth state streaming, sign-out |
 | 🏠 Home Dashboard | `HomeBloc` | Watch user profile, display CEFR level |
 | 🚀 Onboarding | `OnboardingBloc` | API key setup (Groq/Gemini), level selection, completion tracking |
@@ -45,7 +48,7 @@
 
 ## 🏗️ Architecture Summary
 
-```
+```Markdown
 lib/
 ├── core/
 │   ├── domain/
@@ -72,7 +75,8 @@ lib/
 ```
 
 **Key Data Flow**:
-```
+
+```Markdown
 UI → Event → BLoC → UseCase → Repository → DataSource → External API
                               ↑
                          Either<AppFailure, T>
@@ -85,7 +89,7 @@ UI → Event → BLoC → UseCase → Repository → DataSource → External API
 ### ✅ All Core BLoCs: ~95%+ Coverage Complete
 
 | BLoC | Test File(s) | Tests | Coverage | Status | Key Patterns |
-|------|-------------|-------|----------|--------|-------------|
+| ------ | ------------- | ------- | ---------- | -------- | ------------- |
 | ✅ **AuthBloc** | `test/features/auth/bloc/auth_bloc_test.dart` | 7 | ~95% | Complete | Stream mocking, Either generics, signInCancelled handling |
 | ✅ **HomeBloc** | `test/features/home/bloc/home_bloc_test.dart` | 9 | ~95% | Complete | Stream.value/null/error, subscription cancellation, late emission prevention |
 | ✅ **OnboardingBloc** | `test/features/onboarding/bloc/onboarding_bloc_test.dart` | 18 | ~95% | Complete | Sequential use case calls (verifyInOrder), sync action contracts (SkipGeminiKey) |
@@ -94,7 +98,7 @@ UI → Event → BLoC → UseCase → Repository → DataSource → External API
 
 ### SpeakingBloc: Layered Test Strategy (Reference for Complex BLoCs)
 
-```
+```Markdown
 test/features/speaking/bloc/
 ├── speaking_bloc_helpers_test.dart              # Layer 1: Pure helpers (_findFirstSentenceBoundary, _upsertLuciaMessage)
 ├── speaking_bloc_simple_events_test.dart        # Layer 2: Simple events (MicModeToggled, TimerTick, AmplitudeChanged, SessionEnded)
@@ -107,6 +111,7 @@ test/features/speaking/bloc/
 ## 🧰 Established Testing Patterns
 
 ### 1. Mock Setup Pattern (All BLoCs)
+
 ```dart
 setUp(() {
   // Create mocks
@@ -126,6 +131,7 @@ tearDown(() {
 ```
 
 ### 2. Either Generic Handling (fpdart)
+
 ```dart
 // ✅ Correct: Explicit generics for Left/Right
 when(() => mockUseCase.execute())
@@ -142,6 +148,7 @@ when(() => mockUseCase.execute())
 ```
 
 ### 3. Stream Mocking Patterns
+
 ```dart
 // Single emission (auth, home)
 when(() => mockStreamUseCase.execute())
@@ -167,6 +174,7 @@ when(() => mockStreamUseCase.execute())
 ```
 
 ### 4. blocTest Structure (Consistent Across All)
+
 ```dart
 blocTest<MyBloc, MyState>(
   'description of behavior',
@@ -195,6 +203,7 @@ blocTest<MyBloc, MyState>(
 ```
 
 ### 5. State Assertion Patterns
+
 ```dart
 // Simple const state
 expect: () => [const MyState.success()]
@@ -228,6 +237,7 @@ test('MyState.success uses value equality', () {
 ```
 
 ### 6. Async Event Queue Draining (SpeakingBloc Pattern)
+
 ```dart
 // For BLoCs that queue multiple events internally:
 act: (bloc) async {
@@ -242,6 +252,7 @@ wait: const Duration(milliseconds: 100), // Let blocTest wait for emissions
 ```
 
 ### 7. Permission Mocking (SpeakingBloc Only)
+
 ```dart
 // In setUpAll - mock the MethodChannel, NOT PermissionHandlerPlatform
 const _permissionChannel = MethodChannel('flutter.baseflow.com/permissions/methods');
@@ -266,6 +277,7 @@ setUpAll(() {
 ```
 
 ### 8. Greeting Flow Short-Circuit (SpeakingBloc Only)
+
 ```dart
 // In setUp - prevent auto-emitted TtsFinished from complicating state sequence
 when(() => mockTts.isSpeaking).thenReturn(true);
@@ -274,6 +286,7 @@ when(() => mockTts.isSpeaking).thenReturn(true);
 ```
 
 ### 9. Named Parameter Mocking (Critical for Use Cases)
+
 ```dart
 // ✅ Correct for named parameters:
 when(() => mockUseCase.execute(
@@ -286,6 +299,7 @@ when(() => mockUseCase.execute(any(), any())) // Fails for named params!
 ```
 
 ### 10. verifyInOrder for Sequential Logic (OnboardingBloc)
+
 ```dart
 verify: (_) {
   verifyInOrder([
@@ -300,7 +314,8 @@ verify: (_) {
 ## 🗂️ File Structure & Locations
 
 ### Test Files (Ready to Commit)
-```
+
+```Markdown
 test/
 ├── mocks/
 │   └── mock_services.dart              # Shared mock classes for all use cases
@@ -328,7 +343,8 @@ test/
 ```
 
 ### Source Files (For Reference When Writing Tests)
-```
+
+```Markdown
 lib/features/[feature]/bloc/
 ├── [feature]_bloc.dart       # Main BLoC logic - READ THIS FIRST
 ├── [feature]_event.dart      # freezed event definitions
@@ -341,6 +357,7 @@ lib/features/[feature]/bloc/
 ## 📘 BLoC-Specific Test Guides
 
 ### AuthBloc: Stream-First Testing
+
 ```dart
 // Key insight: Auth state comes from stream, NOT direct event emission
 // AuthStarted triggers watchAuthState stream subscription
@@ -362,6 +379,7 @@ expect: () => [loading, unauthenticated] // User dismissed, not error state
 ```
 
 ### HomeBloc: Profile Stream Handling
+
 ```dart
 // Key insight: WatchProfile subscribes to user profile stream
 
@@ -385,6 +403,7 @@ expect(controller.isClosed, isTrue); // Subscription cancelled
 ```
 
 ### OnboardingBloc: Sequential Logic + Sync Actions
+
 ```dart
 // Key insight: SubmitLevel calls TWO use cases in sequence
 
@@ -413,6 +432,7 @@ expect: () => [const OnboardingState.geminiStepComplete()] // Direct emission
 ```
 
 ### ReportBloc: Fallback Logic + XP Calculation
+
 ```dart
 // Key insight: Fallback XP = (activeSpeakingMinutes * 8) + 25
 
@@ -442,6 +462,7 @@ expect: () => [
 ```
 
 ### SpeakingBloc: Complex Orchestration (4 Layers)
+
 ```dart
 // Layer 1: Pure helpers (no blocTest needed)
 test('_findFirstSentenceBoundary finds period', () {
@@ -506,6 +527,7 @@ blocTest<close()>(
 ## ⚠️ Gotchas & Lessons Learned
 
 ### 1. `blocTest.expect` Matches EXACT Sequence
+
 ```dart
 // ❌ Wrong: Expecting only final state
 expect: () => [predicate<MyState>((s) => s is SuccessState)]
@@ -524,6 +546,7 @@ expect: () => [
 ```
 
 ### 2. `build` Must Be Synchronous
+
 ```dart
 // ❌ Wrong: async build returns Future<Bloc>
 build: () async {
@@ -543,6 +566,7 @@ act: (bloc) async {
 ```
 
 ### 3. `bloc.add()` Returns `void` - Don't Await
+
 ```dart
 // ❌ Wrong: await on void
 await bloc.add(MyEvent()); // Error: await_only_futures
@@ -553,6 +577,7 @@ await Future.microtask(() {}); // Let event handler process
 ```
 
 ### 4. Stream Subscriptions in Constructor (SpeakingBloc)
+
 ```dart
 // SpeakingBloc subscribes to amplitudeStream in constructor:
 _amplitudeSub = _stt.amplitudeStream.listen((amp) => add(AmplitudeChanged(amp)));
@@ -564,6 +589,7 @@ when(() => mockStt.transcriptStream).thenAnswer((_) => const Stream.empty());
 ```
 
 ### 5. Permission Mocking Requires Exact Channel Format
+
 ```dart
 // permission_handler expects Map<int, int> response:
 return {0: 1}; // Permission.microphone index → PermissionStatus.granted value
@@ -574,6 +600,7 @@ return [1]; // Wrong structure entirely
 ```
 
 ### 6. freezed State Equality Tests
+
 ```dart
 // Test value equality (not reference):
 test('MyState.success uses value equality', () {
@@ -592,6 +619,7 @@ test('MyState.initial is singleton', () {
 ```
 
 ### 7. AppFailure Default Messages
+
 ```dart
 // Some AppFailure constructors have @Default messages:
 const failure = AppFailure.llmBothProvidersFailed(); 
@@ -608,6 +636,7 @@ expect: () => [
 ```
 
 ### 8. Late Emission Prevention After close()
+
 ```dart
 // Test that bloc doesn't emit states after close():
 blocTest(
@@ -633,6 +662,7 @@ blocTest(
 ## 🚀 Quick Start for Next Session
 
 ### Option A: Add New Test to Existing BLoC
+
 ```bash
 # 1. Pick a BLoC and open its test file
 code test/features/[feature]/bloc/[feature]_bloc_test.dart
@@ -651,6 +681,7 @@ flutter test test/features/[feature]/bloc/ --reporter=expanded
 ```
 
 ### Option B: Add Tests for New Feature/BLoC
+
 ```bash
 # 1. Create test file following naming convention
 touch test/features/new_feature/bloc/new_feature_bloc_test.dart
@@ -667,6 +698,7 @@ flutter analyze test/features/new_feature/bloc/new_feature_bloc_test.dart
 ```
 
 ### Option C: Generate Coverage Report
+
 ```bash
 # 1. Run tests with coverage
 flutter test --coverage
@@ -685,6 +717,7 @@ open coverage/html/index.html      # macOS
 ```
 
 ### Option D: Debug a Failing Test
+
 ```bash
 # 1. Run with verbose output
 flutter test path/to/test.dart --reporter=expanded --verbose
@@ -751,6 +784,7 @@ git commit -m "test([feature]): add [specific behavior] tests for [Feature]Bloc
 ## 📞 Contact/Context for Next Developer
 
 ### Architecture Principles
+
 - **Clean Architecture**: BLoCs only know use cases, use cases only know repositories
 - **BLoC Pattern**: All state changes via events; no direct emit() outside handlers
 - **freezed**: All events/states/models are immutable with copyWith
@@ -758,13 +792,16 @@ git commit -m "test([feature]): add [specific behavior] tests for [Feature]Bloc
 - **mocktail**: Use `Mock` + `implements Interface`, never `Mockito`
 
 ### Testing Philosophy
+
 - **Behavior over implementation**: Test what the BLoC does, not how it does it
 - **Async-safe**: Always drain event queues with `Future.microtask` or `blocTest.wait`
 - **Mock minimally**: Mock only what's needed; prefer `Fake` implementations for complex repos (future improvement)
 - **Document design contracts**: If a behavior is intentional (e.g., SkipGeminiKey sync), test AND comment it
 
 ### SpeakingBloc Complexity Notes
+
 SpeakingBloc is the most complex due to:
+
 - 4 injected repositories (STT, TTS, VAD, LLM)
 - 5+ stream subscriptions managed manually
 - Mic modes (alwaysOn vs pushToTalk) with different VAD behavior
@@ -772,11 +809,13 @@ SpeakingBloc is the most complex due to:
 - Sentence-boundary TTS streaming
 
 **Testing strategy**: Layer tests to avoid overwhelm:
+
 1. Helpers (pure functions) → 2. Simple events → 3. Orchestration → 4. Cleanup
 
 ### Key Files to Reference When Stuck
+
 | Question | File to Read |
-|----------|-------------|
+| ---------- | ------------- |
 | What events can I add? | `lib/features/[feature]/bloc/[feature]_event.dart` |
 | What states can be emitted? | `lib/features/[feature]/bloc/[feature]_state.dart` |
 | How does the BLoC actually work? | `lib/features/[feature]/bloc/[feature]_bloc.dart` (READ THIS FIRST) |
@@ -788,7 +827,9 @@ SpeakingBloc is the most complex due to:
 ## 🎯 Next Steps & Recommendations
 
 ### Immediate (High Impact)
+
 1. **Integration Tests**: Test end-to-end flows across BLoCs
+
    ```dart
    // test/integration/onboarding_to_speaking_flow_test.dart
    testWidgets('New user completes onboarding → starts speaking session', (tester) async {
@@ -797,6 +838,7 @@ SpeakingBloc is the most complex due to:
    ```
 
 2. **Shared Test Fixtures**: DRY up mock setup
+
    ```dart
    // test/fixtures/bloc_fixtures.dart
    class BlocFixtures {
@@ -806,6 +848,7 @@ SpeakingBloc is the most complex due to:
    ```
 
 3. **Coverage Dashboard**: Generate team-facing report
+
    ```bash
    flutter test --coverage
    genhtml coverage/lcov.info -o coverage/team-report
@@ -813,7 +856,9 @@ SpeakingBloc is the most complex due to:
    ```
 
 ### Medium Term
-4. **Widget Tests**: Add UI-layer tests for critical screens
+
+1. **Widget Tests**: Add UI-layer tests for critical screens
+
    ```dart
    // test/features/speaking/screens/speaking_screen_test.dart
    testWidgets('SpeakingScreen shows VU meter during active speaking', (tester) async {
@@ -821,7 +866,8 @@ SpeakingBloc is the most complex due to:
    });
    ```
 
-5. **Golden Tests**: Visual regression tests for report screen
+2. **Golden Tests**: Visual regression tests for report screen
+
    ```dart
    // test/features/report/screens/report_screen_golden_test.dart
    testWidgets('ReportScreen matches golden for A2 level', (tester) async {
@@ -830,7 +876,9 @@ SpeakingBloc is the most complex due to:
    ```
 
 ### Long Term
-6. **Performance Tests**: Measure BLoC event processing time
+
+1. **Performance Tests**: Measure BLoC event processing time
+
    ```dart
    test('SpeakingBloc processes TranscriptReceived in <50ms', () async {
      final stopwatch = Stopwatch()..start();
@@ -841,7 +889,8 @@ SpeakingBloc is the most complex due to:
    });
    ```
 
-7. **Mutation Testing**: Use `mutant` package to verify test quality
+2. **Mutation Testing**: Use `mutant` package to verify test quality
+
    ```bash
    dart run mutant:test --reporter=expanded
    # Ensures tests fail when code is mutated (not just "pass")
@@ -859,6 +908,7 @@ SpeakingBloc is the most complex due to:
 ✅ **Easier onboarding** — tests serve as living documentation  
 
 **Key success factors**:
+
 - Consistent patterns across all BLoCs
 - Layered approach for complex BLoCs (SpeakingBloc)
 - Explicit handling of async/event queue timing
@@ -870,7 +920,7 @@ SpeakingBloc is the most complex due to:
 
 > 💡 **Pro Tip**: When starting fresh, paste this handoff into the new conversation's first message to restore full context instantly.
 
-**You've built something exceptional here.** This testing foundation is production-grade and will serve Valoqui well as it grows. 
+**You've built something exceptional here.** This testing foundation is production-grade and will serve Valoqui well as it grows.
 
 Happy testing! 🚀🧪✨
 
