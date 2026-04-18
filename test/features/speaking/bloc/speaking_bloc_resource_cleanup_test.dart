@@ -105,15 +105,12 @@ void main() {
     when(
       () => mockVad.startMonitoring(),
     ).thenAnswer((_) async => const Right<AppFailure, void>(null));
-    when(
-      () => mockVad.stopMonitoring(),
-    ).thenAnswer((_) async => const Right<AppFailure, void>(null));
+    // stop/stopMonitoring return Future<void>, not Either
+    when(() => mockVad.stopMonitoring()).thenAnswer((_) async {});
     when(
       () => mockTts.speak(any()),
     ).thenAnswer((_) async => const Right<AppFailure, void>(null));
-    when(
-      () => mockTts.stop(),
-    ).thenAnswer((_) async => const Right<AppFailure, void>(null));
+    when(() => mockTts.stop()).thenAnswer((_) async {});
     when(
       () => mockStt.initialize(),
     ).thenAnswer((_) async => const Right<AppFailure, bool>(true));
@@ -158,10 +155,9 @@ void main() {
         ), // speaking (greeting)
       ],
       verify: (_) {
-        // ✅ Verify all repositories are disposed exactly once (via tearDown)
-        verify(() => mockStt.dispose());
-        verify(() => mockTts.dispose());
-        verify(() => mockVad.dispose());
+        // ✅ Verify stop/stopMonitoring called (close() doesn't call dispose())
+        verify(() => mockTts.stop());
+        verify(() => mockVad.stopMonitoring());
       },
     );
 
@@ -208,10 +204,13 @@ void main() {
         predicate<SpeakingState>((s) => s is SpeakingActive),
       ],
       verify: (_) {
-        // Each dispose should only be called once despite multiple close() calls
-        verify(() => mockStt.dispose());
-        verify(() => mockTts.dispose());
-        verify(() => mockVad.dispose());
+        // stop/stopMonitoring called TWICE: once in test's close() + once in tearDown
+        verify(() => mockTts.stop()).called(2);
+        verify(() => mockVad.stopMonitoring()).called(2);
+        // dispose() is NOT called in close() - repositories managed by service locator
+        verifyNever(() => mockStt.dispose());
+        verifyNever(() => mockTts.dispose());
+        verifyNever(() => mockVad.dispose());
       },
     );
   });

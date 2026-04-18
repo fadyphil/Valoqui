@@ -80,6 +80,10 @@ void main() {
     when(() => mockTts.dispose()).thenAnswer((_) async {});
     when(() => mockVad.dispose()).thenAnswer((_) async {});
 
+    // Stub stop/stopMonitoring (return void, not Either)
+    when(() => mockTts.stop()).thenAnswer((_) async {});
+    when(() => mockVad.stopMonitoring()).thenAnswer((_) async {});
+
     // Stub startMonitoring
     when(
       () => mockVad.startMonitoring(),

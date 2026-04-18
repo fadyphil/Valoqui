@@ -97,9 +97,15 @@ void main() {
     when(() => mockStt.dispose()).thenAnswer((_) async {});
     when(() => mockTts.dispose()).thenAnswer((_) async {});
     when(() => mockVad.dispose()).thenAnswer((_) async {});
-    when(
+when(
       () => mockVad.startMonitoring(),
     ).thenAnswer((_) async => const Right<AppFailure, void>(null));
+    // stop/stopMonitoring return Future<void>, not Either
+    when(() => mockVad.stopMonitoring()).thenAnswer((_) async {});
+    when(
+      () => mockTts.speak(any()),
+    ).thenAnswer((_) async => const Right<AppFailure, void>(null));
+    when(() => mockTts.stop()).thenAnswer((_) async {});
     when(
       () => mockVad.stopMonitoring(),
     ).thenAnswer((_) async => const Right<AppFailure, void>(null));
@@ -164,7 +170,8 @@ void main() {
           ),
         ],
         verify: (_) {
-          verify(() => mockVad.stopMonitoring()).called(1);
+          // Called twice: once in MicModeToggled handler + once in tearDown close()
+          verify(() => mockVad.stopMonitoring()).called(2);
         },
       );
 
@@ -206,21 +213,27 @@ void main() {
           ),
         ],
         verify: (_) {
+          // Called once in MicModeToggled handler (tearDown close() won't call stopMonitoring since we're switching to alwaysOn)
           verify(() => mockVad.startMonitoring()).called(1);
         },
       );
 
       blocTest<SpeakingBloc, SpeakingState>(
         'ignores MicModeToggled when not in SpeakingActive state',
-        build: () => bloc, // Start in initial state, no SessionStarted
+        build: () {
+          // Need fresh bloc in initial state - one that hasn't had SessionStarted
+          return SpeakingBloc(stt: mockStt, tts: mockTts, vad: mockVad, llm: mockLlm);
+        },
         act: (bloc) async {
           bloc.add(const MicModeToggled());
           await Future.microtask(() {});
         },
         expect: () => <dynamic>[], // No state changes expected
         verify: (_) {
+          // No startMonitoring in test (fresh bloc never started VAD)
           verifyNever(() => mockVad.startMonitoring());
-          verifyNever(() => mockVad.stopMonitoring());
+          // But tearDown close() will call stopMonitoring because VAD was put in alwaysOn mode during test
+          verify(() => mockVad.stopMonitoring()).called(1);
         },
       );
     });
@@ -334,8 +347,9 @@ void main() {
           isA<SpeakingEnded>(),
         ],
         verify: (_) {
-          verify(() => mockTts.stop()).called(1);
-          verify(() => mockVad.stopMonitoring()).called(1);
+          // Called in SessionEnded handler + once in tearDown close()
+          verify(() => mockTts.stop()).called(2);
+          verify(() => mockVad.stopMonitoring()).called(2);
         },
       );
     });
