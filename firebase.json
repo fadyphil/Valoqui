@@ -1,1 +1,21 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"valoqui","appId":"1:394707578582:android:ce13e01dfae20208886377","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"valoqui","configurations":{"android":"1:394707578582:android:ce13e01dfae20208886377","ios":"1:394707578582:ios:de44b0dc97628ff9886377"}}}}}}
+{
+    "firestore": {
+        "rules":"firestore.rules"
+    },
+    "flutter":{
+        "platforms":{
+            "android":{
+                "default":{
+                    "projectId":"valoqui","appId":"1:394707578582:android:ce13e01dfae20208886377","fileOutput":"android/app/google-services.json"
+                    }
+                },
+                "dart":{
+                    "lib/firebase_options.dart":{
+                        "projectId":"valoqui","configurations":{
+                            "android":"1:394707578582:android:ce13e01dfae20208886377","ios":"1:394707578582:ios:de44b0dc97628ff9886377"
+                    }
+                }
+            }
+        }
+    }
+}
