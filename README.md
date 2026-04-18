@@ -1,4 +1,8 @@
 <div align="center">
+  <img src="assets/images/valo-dark-modified.png" alt="Valoqui Logo" width="120">
+</div>
+
+<div align="center">
 
 # Valoqui (Lingua) - Real-Time AI Spanish Tutor
 
@@ -12,7 +16,7 @@
 
 Valoqui is a high-performance, real-time AI conversation partner designed for immersive language learning. This MVP focuses on **ultra-low latency** voice interactions, utilizing a hybrid on-device/cloud audio pipeline to provide a seamless, human-like speaking experience.
 
-[**Get Started**](docs/ONBOARDING.md) • [**Architecture**](docs/ARCHITECTURE.md) • [**Setup**](docs/SETUP.md) • [**Testing**](docs/testing/TESTING_HANDOFF.md) • [**Contributing**](CONTRIBUTING.md)
+[**Get Started**](docs/ONBOARDING.md) • [**Screenshots**](docs/Screenshots.md) • [**Architecture**](docs/ARCHITECTURE.md) • [**Setup**](docs/SETUP.md) • [**Testing**](docs/testing/TESTING_HANDOFF.md) • [**Contributing**](CONTRIBUTING.md)
 
 </div>
 
@@ -23,13 +27,14 @@ Valoqui is a high-performance, real-time AI conversation partner designed for im
 Welcome to Valoqui! Whether you're here to use the app, understand its design, or contribute, we've got you covered. Start here:
 
 1. 🚀 **[Zero to Hero (Onboarding)](docs/ONBOARDING.md)**: New to the codebase? Start here for a mental model, codebase tour, and your first steps.
-2. 🛠 **[Developer Setup](docs/SETUP.md)**: A step-by-step guide to setting up your local environment, Firebase, and required models.
-3. 🏛 **[Architecture Deep Dive](docs/ARCHITECTURE.md)**: Understand the Feature-First Clean Architecture, the voice pipeline, and state management.
-4. 🧠 **[Architectural Decision Records (ADRs)](docs/decisions/README.md)**: Learn *why* decisions were made (e.g., choosing BLoC, Groq, Piper).
-5. 📊 **Product Management**: View the [Product Requirements Document (PRD)](docs/planning/PRD.md) and [Sprint Plans](docs/planning/SPRINTS.md) to see how the project is scoped and executed.
-6. 📏 **[Coding Standards](docs/CODING_STANDARDS.md)**: The strict technical conventions required when contributing to this codebase.
-7. 🧪 **[Testing Strategy](docs/testing/TESTING_HANDOFF.md)**: Learn about our ~95% coverage, testing patterns, and how to write tests for BLoCs.
-8. 🤝 **[Contributing](CONTRIBUTING.md)**: Ready to write code? Read our guidelines for PRs, commits, and codebase rules.
+2. 📱 **[App Screenshots](docs/Screenshots.md)**: Explore the interface and features of the app through high-fidelity design screenshots.
+3. 🛠 **[Developer Setup](docs/SETUP.md)**: A step-by-step guide to setting up your local environment, Firebase, and required models.
+4. 🏛 **[Architecture Deep Dive](docs/ARCHITECTURE.md)**: Understand the Feature-First Clean Architecture, the voice pipeline, and state management.
+5. 🧠 **[Architectural Decision Records (ADRs)](docs/decisions/README.md)**: Learn *why* decisions were made (e.g., choosing BLoC, Groq, Piper).
+6. 📊 **Product Management**: View the [Product Requirements Document (PRD)](docs/planning/PRD.md) and [Sprint Plans](docs/planning/SPRINTS.md) to see how the project is scoped and executed.
+7. 📏 **[Coding Standards](docs/CODING_STANDARDS.md)**: The strict technical conventions required when contributing to this codebase.
+8. 🧪 **[Testing Strategy](docs/testing/TESTING_HANDOFF.md)**: Learn about our ~95% coverage, testing patterns, and how to write tests for BLoCs.
+9. 🤝 **[Contributing](CONTRIBUTING.md)**: Ready to write code? Read our guidelines for PRs, commits, and codebase rules.
 
 ---
 
