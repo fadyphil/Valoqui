@@ -97,7 +97,7 @@ void main() {
     when(() => mockStt.dispose()).thenAnswer((_) async {});
     when(() => mockTts.dispose()).thenAnswer((_) async {});
     when(() => mockVad.dispose()).thenAnswer((_) async {});
-when(
+    when(
       () => mockVad.startMonitoring(),
     ).thenAnswer((_) async => const Right<AppFailure, void>(null));
     // stop/stopMonitoring return Future<void>, not Either
@@ -222,7 +222,12 @@ when(
         'ignores MicModeToggled when not in SpeakingActive state',
         build: () {
           // Need fresh bloc in initial state - one that hasn't had SessionStarted
-          return SpeakingBloc(stt: mockStt, tts: mockTts, vad: mockVad, llm: mockLlm);
+          return SpeakingBloc(
+            stt: mockStt,
+            tts: mockTts,
+            vad: mockVad,
+            llm: mockLlm,
+          );
         },
         act: (bloc) async {
           bloc.add(const MicModeToggled());
