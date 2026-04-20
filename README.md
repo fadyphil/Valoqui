@@ -33,7 +33,8 @@ Welcome to Valoqui! Whether you're here to use the app, understand its design, o
 5. 🧠 **[Architectural Decision Records (ADRs)](docs/decisions/README.md)**: Learn *why* decisions were made (e.g., choosing BLoC, Groq, Piper).
 6. 📊 **Product Management**: View the [Product Requirements Document (PRD)](docs/planning/PRD.md) and [Sprint Plans](docs/planning/SPRINTS.md) to see how the project is scoped and executed.
 7. 📏 **[Coding Standards](docs/CODING_STANDARDS.md)**: The strict technical conventions required when contributing to this codebase.
-8. 🧪 **[Testing Strategy](docs/testing/TESTING_HANDOFF.md)**: Learn about our ~95% coverage, testing patterns, and how to write tests for BLoCs.
+8. 🧪 **[Testing Strategy](docs/testing/TESTING_HANDOFF.md)**: Learn about our ~95% coverage, testing patterns, and how to write tests for BLoCs.  
+   ↳ Latest targeted use-case coverage update: **[Use Case Coverage Expansion (April 2026)](docs/testing/USECASE_COVERAGE_EXPANSION_2026-04.md)**.
 9. 🤝 **[Contributing](CONTRIBUTING.md)**: Ready to write code? Read our guidelines for PRs, commits, and codebase rules.
 
 ---
