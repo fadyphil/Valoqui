@@ -16,8 +16,9 @@ void main() {
   });
 
   test("returns onboarding complete status when storage succeeds", () async {
-    when(() => mockKeyStorageRepository.isOnboardingComplete())
-        .thenAnswer((_) async => const Right<AppFailure, bool>(true));
+    when(
+      () => mockKeyStorageRepository.isOnboardingComplete(),
+    ).thenAnswer((_) async => const Right<AppFailure, bool>(true));
 
     final result = await useCase.execute();
 
@@ -26,9 +27,12 @@ void main() {
   });
 
   test("returns storage failure unchanged", () async {
-    const failure = AppFailure.storageFailure(message: "secure storage unavailable");
-    when(() => mockKeyStorageRepository.isOnboardingComplete())
-        .thenAnswer((_) async => const Left<AppFailure, bool>(failure));
+    const failure = AppFailure.storageFailure(
+      message: "secure storage unavailable",
+    );
+    when(
+      () => mockKeyStorageRepository.isOnboardingComplete(),
+    ).thenAnswer((_) async => const Left<AppFailure, bool>(failure));
 
     final result = await useCase.execute();
 

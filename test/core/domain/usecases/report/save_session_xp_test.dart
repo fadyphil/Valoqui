@@ -19,8 +19,9 @@ void main() {
   });
 
   test("writes session XP to repository and returns success", () async {
-    when(() => mockUserRepository.addXp(uid: uid, xp: xp))
-        .thenAnswer((_) async => const Right<AppFailure, void>(null));
+    when(
+      () => mockUserRepository.addXp(uid: uid, xp: xp),
+    ).thenAnswer((_) async => const Right<AppFailure, void>(null));
 
     final result = await useCase.execute(uid: uid, xp: xp);
 
@@ -30,8 +31,9 @@ void main() {
 
   test("returns repository failure unchanged", () async {
     const failure = AppFailure.databaseFailure(message: "xp write failed");
-    when(() => mockUserRepository.addXp(uid: uid, xp: xp))
-        .thenAnswer((_) async => const Left<AppFailure, void>(failure));
+    when(
+      () => mockUserRepository.addXp(uid: uid, xp: xp),
+    ).thenAnswer((_) async => const Left<AppFailure, void>(failure));
 
     final result = await useCase.execute(uid: uid, xp: xp);
 

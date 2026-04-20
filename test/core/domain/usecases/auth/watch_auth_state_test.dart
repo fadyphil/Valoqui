@@ -1,4 +1,5 @@
 import "package:flutter_test/flutter_test.dart";
+import "package:mocktail/mocktail.dart";
 import "package:valoqui/core/domain/models/app_user.dart";
 import "package:valoqui/core/domain/usecases/auth/watch_auth_state.dart";
 
@@ -24,6 +25,9 @@ void main() {
 
     when(() => mockAuthRepository.authStateChanges).thenAnswer((_) => stream);
 
-    await expectLater(useCase.execute(), emitsInOrder([null, tUser, emitsDone]));
+    await expectLater(
+      useCase.execute(),
+      emitsInOrder([null, tUser, emitsDone]),
+    );
   });
 }
