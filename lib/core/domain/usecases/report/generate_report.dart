@@ -29,13 +29,20 @@ class GenerateReport {
         userLevel: userLevel,
       );
 
-      final parsed = result.flatMap(_parse);
+      // LLM failure — return immediately, don't retry
+      if (result.isLeft()) {
+        return result.fold(left, (_) => throw StateError("unreachable"));
+      }
+
+      // Parse the response — retry on parse failure
+      final rawJson = result.getOrElse((_) => throw StateError("unreachable"));
+      final parsed = _parse(rawJson);
 
       if (parsed.isRight()) return parsed;
 
-      // On last attempt return whatever failure we have
+      // On last attempt return parse failure
       if (attempt == 3) {
-        return parsed.fold(left, right);
+        return parsed;
       }
 
       // Exponential back-off before retry (1s, 2s)
