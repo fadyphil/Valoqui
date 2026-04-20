@@ -24,6 +24,6 @@ void main() {
 
     when(() => mockAuthRepository.authStateChanges).thenAnswer((_) => stream);
 
-    expectLater(useCase.execute(), emitsInOrder([null, tUser, emitsDone]));
+    await expectLater(useCase.execute(), emitsInOrder([null, tUser, emitsDone]));
   });
 }
