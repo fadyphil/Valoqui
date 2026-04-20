@@ -35,17 +35,22 @@
 
 ---
 
-## 🏃‍♂️ Sprint 3: Unified Audio Pipeline & Polish
+## 🏃‍♂️ Sprint 3: Performance Overhaul (STT Chunking + Supertonic TTS)
 
-**Status: 🔄 In Progress**
-**Goal:** Remove OS-level bottlenecks and upgrade to a premium voice model.
+**Status: 📋 Planned**
+**Goal:** Eliminate transcription latency through chunked streaming STT and upgrade to natural-sounding Supertonic TTS.
 
 **Key Deliverables:**
 
-- [ ] **ARCH-101 Unified Audio Pipeline:** Deprecate `speech_to_text`. Use `record` for a raw PCM stream, feeding both Silero VAD and Groq Whisper (Multipart HTTP). This removes the Android 7-second listening ceiling.
-- [ ] Upgrade TTS: Replace interim Piper model with F5-TTS ONNX for high-fidelity Castilian Spanish.
+- [ ] **ADR-011: STT Performance Optimization:** Implement chunked streaming with sherpa-onnx (1.5s chunks, 300ms overlap) to show partial transcripts within 1.5s instead of waiting for full utterance. Research Whisper.cpp integration as swappable backend for future accuracy improvement.
+- [ ] **ADR-012: Supertonic TTS Integration:** Replace Piper TTS with Supertonic for near-human voice quality and 50% lower synthesis latency. Implement hybrid approach with Piper fallback. Research phase (Days 1-2) to determine integration method (SDK, local HTTP, or system TTS).
+- [ ] **ARCH-101: Audio Pipeline Concurrency:** Refactor pipeline to use isolate-based compute for STT/TTS operations, stream-based chunk processing, and progressive output strategy. Target <2s perceived latency (60% improvement over Sprint 2).
 - [ ] UI Polish: Add waveform animations and transitions during the `SpeakingScreen` states.
 - [ ] Comprehensive end-to-end widget testing.
+
+**Out of Scope for Sprint 3:**
+- On-device LLM (Qwen 0.8B or similar) — deferred to future sprint
+- Groq Whisper API integration — may be explored in Sprint 4 if Whisper.cpp proves unfeasible
 
 ---
 

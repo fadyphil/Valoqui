@@ -1,7 +1,7 @@
 # ADR-001: STT Provider — Android SpeechRecognizer via speech_to_text
 
 **Date:** 2026-03
-**Status:** Accepted — under re-evaluation (see ADR-012, ARCH-101)
+**Status:** Accepted — under re-evaluation (see ADR-010, ADR-011, ARCH-101)
 **Sprint:** Sprint 2
 **Decider:** Fady
 
@@ -85,4 +85,5 @@ via `SttRepository` interface when Groq Whisper is integrated in Sprint 3.
 - PRD v0.3 § ADL-001 (original Groq Whisper decision)
 - Sprint 2 Guide § 6.1 `android_stt_datasource.dart`
 - GitHub Issue: ARCH-101 — Resolve Audio Pipeline Deadlock & Native STT Cutoffs
-- ADR-012 — Unified Audio Pipeline (supersedes this decision for Sprint 3)
+- ADR-010 — Unified Audio Pipeline (supersedes this decision for Sprint 3)
+- ADR-011 — STT Performance Optimization (chunked streaming approach)
