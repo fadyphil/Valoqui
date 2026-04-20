@@ -25,8 +25,9 @@ void main() {
 
   test("returns failure when secure storage save fails", () async {
     const failure = AppFailure.storageFailure(message: "save failed");
-    when(() => mockKeyStorageRepository.saveGeminiKey(geminiKey))
-        .thenAnswer((_) async => const Left<AppFailure, void>(failure));
+    when(
+      () => mockKeyStorageRepository.saveGeminiKey(geminiKey),
+    ).thenAnswer((_) async => const Left<AppFailure, void>(failure));
 
     final result = await useCase.execute(uid, geminiKey);
 
@@ -38,13 +39,12 @@ void main() {
   test(
     "returns success when storage and firestore flag update succeed",
     () async {
-      when(() => mockKeyStorageRepository.saveGeminiKey(geminiKey))
-          .thenAnswer((_) async => const Right<AppFailure, void>(null));
       when(
-        () => mockUserRepository.updateKeyConfigured(
-          uid,
-          geminiConfigured: true,
-        ),
+        () => mockKeyStorageRepository.saveGeminiKey(geminiKey),
+      ).thenAnswer((_) async => const Right<AppFailure, void>(null));
+      when(
+        () =>
+            mockUserRepository.updateKeyConfigured(uid, geminiConfigured: true),
       ).thenAnswer((_) async => const Right<AppFailure, void>(null));
 
       final result = await useCase.execute(uid, geminiKey);
@@ -52,17 +52,16 @@ void main() {
       expect(result, const Right<AppFailure, void>(null));
       verify(() => mockKeyStorageRepository.saveGeminiKey(geminiKey)).called(1);
       verify(
-        () => mockUserRepository.updateKeyConfigured(
-          uid,
-          geminiConfigured: true,
-        ),
+        () =>
+            mockUserRepository.updateKeyConfigured(uid, geminiConfigured: true),
       ).called(1);
     },
   );
 
   test("still returns success when firestore flag update fails", () async {
-    when(() => mockKeyStorageRepository.saveGeminiKey(geminiKey))
-        .thenAnswer((_) async => const Right<AppFailure, void>(null));
+    when(
+      () => mockKeyStorageRepository.saveGeminiKey(geminiKey),
+    ).thenAnswer((_) async => const Right<AppFailure, void>(null));
     when(
       () => mockUserRepository.updateKeyConfigured(uid, geminiConfigured: true),
     ).thenAnswer(
@@ -76,10 +75,7 @@ void main() {
     expect(result, const Right<AppFailure, void>(null));
     verify(() => mockKeyStorageRepository.saveGeminiKey(geminiKey)).called(1);
     verify(
-      () => mockUserRepository.updateKeyConfigured(
-        uid,
-        geminiConfigured: true,
-      ),
+      () => mockUserRepository.updateKeyConfigured(uid, geminiConfigured: true),
     ).called(1);
   });
 }

@@ -18,8 +18,9 @@ void main() {
   });
 
   test('normalizes "?" to "A1" before writing level', () async {
-    when(() => mockUserRepository.updateLevel(uid, "A1"))
-        .thenAnswer((_) async => const Right<AppFailure, void>(null));
+    when(
+      () => mockUserRepository.updateLevel(uid, "A1"),
+    ).thenAnswer((_) async => const Right<AppFailure, void>(null));
 
     final result = await useCase.execute(uid, "?");
 
@@ -29,8 +30,9 @@ void main() {
   });
 
   test("passes through already valid levels unchanged", () async {
-    when(() => mockUserRepository.updateLevel(uid, "B1"))
-        .thenAnswer((_) async => const Right<AppFailure, void>(null));
+    when(
+      () => mockUserRepository.updateLevel(uid, "B1"),
+    ).thenAnswer((_) async => const Right<AppFailure, void>(null));
 
     final result = await useCase.execute(uid, "B1");
 
@@ -40,8 +42,9 @@ void main() {
 
   test("returns repository failure unchanged", () async {
     const failure = AppFailure.databaseFailure(message: "write failed");
-    when(() => mockUserRepository.updateLevel(uid, "A2"))
-        .thenAnswer((_) async => const Left<AppFailure, void>(failure));
+    when(
+      () => mockUserRepository.updateLevel(uid, "A2"),
+    ).thenAnswer((_) async => const Left<AppFailure, void>(failure));
 
     final result = await useCase.execute(uid, "A2");
 

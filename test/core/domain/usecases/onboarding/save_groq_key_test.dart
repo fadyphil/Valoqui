@@ -33,8 +33,9 @@ void main() {
 
   test("returns save failure when secure storage write fails", () async {
     const failure = AppFailure.storageFailure(message: "save failed");
-    when(() => mockKeyStorageRepository.saveGroqKey(validGroqKey))
-        .thenAnswer((_) async => const Left<AppFailure, void>(failure));
+    when(
+      () => mockKeyStorageRepository.saveGroqKey(validGroqKey),
+    ).thenAnswer((_) async => const Left<AppFailure, void>(failure));
 
     final result = await useCase.execute(uid, validGroqKey);
 
@@ -46,8 +47,9 @@ void main() {
   test(
     "returns success when both storage and firestore flag update succeed",
     () async {
-      when(() => mockKeyStorageRepository.saveGroqKey(validGroqKey))
-          .thenAnswer((_) async => const Right<AppFailure, void>(null));
+      when(
+        () => mockKeyStorageRepository.saveGroqKey(validGroqKey),
+      ).thenAnswer((_) async => const Right<AppFailure, void>(null));
       when(
         () => mockUserRepository.updateKeyConfigured(uid, groqConfigured: true),
       ).thenAnswer((_) async => const Right<AppFailure, void>(null));
@@ -55,19 +57,19 @@ void main() {
       final result = await useCase.execute(uid, validGroqKey);
 
       expect(result, const Right<AppFailure, void>(null));
-      verify(() => mockKeyStorageRepository.saveGroqKey(validGroqKey)).called(1);
       verify(
-        () => mockUserRepository.updateKeyConfigured(
-          uid,
-          groqConfigured: true,
-        ),
+        () => mockKeyStorageRepository.saveGroqKey(validGroqKey),
+      ).called(1);
+      verify(
+        () => mockUserRepository.updateKeyConfigured(uid, groqConfigured: true),
       ).called(1);
     },
   );
 
   test("still returns success when firestore flag update fails", () async {
-    when(() => mockKeyStorageRepository.saveGroqKey(validGroqKey))
-        .thenAnswer((_) async => const Right<AppFailure, void>(null));
+    when(
+      () => mockKeyStorageRepository.saveGroqKey(validGroqKey),
+    ).thenAnswer((_) async => const Right<AppFailure, void>(null));
     when(
       () => mockUserRepository.updateKeyConfigured(uid, groqConfigured: true),
     ).thenAnswer(
@@ -81,10 +83,7 @@ void main() {
     expect(result, const Right<AppFailure, void>(null));
     verify(() => mockKeyStorageRepository.saveGroqKey(validGroqKey)).called(1);
     verify(
-      () => mockUserRepository.updateKeyConfigured(
-        uid,
-        groqConfigured: true,
-      ),
+      () => mockUserRepository.updateKeyConfigured(uid, groqConfigured: true),
     ).called(1);
   });
 }

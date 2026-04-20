@@ -16,8 +16,9 @@ void main() {
   });
 
   test("returns success when repository signOut succeeds", () async {
-    when(() => mockAuthRepository.signOut())
-        .thenAnswer((_) async => const Right<AppFailure, void>(null));
+    when(
+      () => mockAuthRepository.signOut(),
+    ).thenAnswer((_) async => const Right<AppFailure, void>(null));
 
     final result = await useCase.execute();
 
@@ -27,8 +28,9 @@ void main() {
 
   test("returns failure when repository signOut fails", () async {
     const failure = AppFailure.authFailure(message: "Sign out failed");
-    when(() => mockAuthRepository.signOut())
-        .thenAnswer((_) async => const Left<AppFailure, void>(failure));
+    when(
+      () => mockAuthRepository.signOut(),
+    ).thenAnswer((_) async => const Left<AppFailure, void>(failure));
 
     final result = await useCase.execute();
 

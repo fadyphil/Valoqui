@@ -1,4 +1,5 @@
 import "package:flutter_test/flutter_test.dart";
+import "package:mocktail/mocktail.dart";
 import "package:valoqui/core/domain/models/app_user.dart";
 import "package:valoqui/core/domain/usecases/user/watch_user_profile.dart";
 
@@ -21,8 +22,9 @@ void main() {
   });
 
   test("proxies watchUser stream for the requested uid", () async {
-    when(() => mockUserRepository.watchUser(tUid))
-        .thenAnswer((_) => Stream<AppUser?>.fromIterable(const [tUser, null]));
+    when(
+      () => mockUserRepository.watchUser(tUid),
+    ).thenAnswer((_) => Stream<AppUser?>.fromIterable(const [tUser, null]));
 
     await expectLater(
       useCase.execute(tUid),

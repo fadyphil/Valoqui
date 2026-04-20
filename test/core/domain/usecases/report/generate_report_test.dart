@@ -63,10 +63,7 @@ void main() {
         userLevel: userLevel,
       );
 
-      final report = result.fold<SessionReport?>(
-        (_) => null,
-        (r) => r,
-      );
+      final report = result.fold<SessionReport?>((_) => null, (r) => r);
 
       expect(report, isNotNull);
       expect(report!.overallGrade, "B");

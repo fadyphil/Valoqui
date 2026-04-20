@@ -16,8 +16,9 @@ void main() {
   });
 
   test("marks onboarding complete when storage write succeeds", () async {
-    when(() => mockKeyStorageRepository.markOnboardingComplete())
-        .thenAnswer((_) async => const Right<AppFailure, void>(null));
+    when(
+      () => mockKeyStorageRepository.markOnboardingComplete(),
+    ).thenAnswer((_) async => const Right<AppFailure, void>(null));
 
     final result = await useCase.execute();
 
@@ -27,8 +28,9 @@ void main() {
 
   test("returns storage failure when mark write fails", () async {
     const failure = AppFailure.storageFailure(message: "write denied");
-    when(() => mockKeyStorageRepository.markOnboardingComplete())
-        .thenAnswer((_) async => const Left<AppFailure, void>(failure));
+    when(
+      () => mockKeyStorageRepository.markOnboardingComplete(),
+    ).thenAnswer((_) async => const Left<AppFailure, void>(failure));
 
     final result = await useCase.execute();
 
