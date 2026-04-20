@@ -43,33 +43,48 @@ void main() {
     verifyZeroInteractions(mockUserRepository);
   });
 
-  test("returns success when both storage and firestore flag update succeed", () async {
-    when(() => mockKeyStorageRepository.saveGroqKey(validGroqKey))
-        .thenAnswer((_) async => const Right<AppFailure, void>(null));
-    when(() => mockUserRepository.updateKeyConfigured(uid, groqConfigured: true))
-        .thenAnswer((_) async => const Right<AppFailure, void>(null));
+  test(
+    "returns success when both storage and firestore flag update succeed",
+    () async {
+      when(() => mockKeyStorageRepository.saveGroqKey(validGroqKey))
+          .thenAnswer((_) async => const Right<AppFailure, void>(null));
+      when(
+        () => mockUserRepository.updateKeyConfigured(uid, groqConfigured: true),
+      ).thenAnswer((_) async => const Right<AppFailure, void>(null));
 
-    final result = await useCase.execute(uid, validGroqKey);
+      final result = await useCase.execute(uid, validGroqKey);
 
-    expect(result, const Right<AppFailure, void>(null));
-    verify(() => mockKeyStorageRepository.saveGroqKey(validGroqKey)).called(1);
-    verify(() => mockUserRepository.updateKeyConfigured(uid, groqConfigured: true))
-        .called(1);
-  });
+      expect(result, const Right<AppFailure, void>(null));
+      verify(() => mockKeyStorageRepository.saveGroqKey(validGroqKey)).called(1);
+      verify(
+        () => mockUserRepository.updateKeyConfigured(
+          uid,
+          groqConfigured: true,
+        ),
+      ).called(1);
+    },
+  );
 
   test("still returns success when firestore flag update fails", () async {
     when(() => mockKeyStorageRepository.saveGroqKey(validGroqKey))
         .thenAnswer((_) async => const Right<AppFailure, void>(null));
-    when(() => mockUserRepository.updateKeyConfigured(uid, groqConfigured: true))
-        .thenAnswer((_) async => const Left<AppFailure, void>(
-              AppFailure.databaseFailure(message: "firestore down"),
-            ));
+    when(
+      () => mockUserRepository.updateKeyConfigured(uid, groqConfigured: true),
+    ).thenAnswer(
+      (_) async => const Left<AppFailure, void>(
+        AppFailure.databaseFailure(message: "firestore down"),
+      ),
+    );
 
     final result = await useCase.execute(uid, validGroqKey);
 
     expect(result, const Right<AppFailure, void>(null));
     verify(() => mockKeyStorageRepository.saveGroqKey(validGroqKey)).called(1);
-    verify(() => mockUserRepository.updateKeyConfigured(uid, groqConfigured: true))
-        .called(1);
+    verify(
+      () => mockUserRepository.updateKeyConfigured(
+        uid,
+        groqConfigured: true,
+      ),
+    ).called(1);
   });
 }

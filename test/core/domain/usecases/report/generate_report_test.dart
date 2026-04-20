@@ -48,34 +48,37 @@ void main() {
     useCase = GenerateReport(llm: mockLlmRepository);
   });
 
-  test("returns parsed report on first successful valid JSON response", () async {
-    when(
-      () => mockLlmRepository.generateReport(
+  test(
+    "returns parsed report on first successful valid JSON response",
+    () async {
+      when(
+        () => mockLlmRepository.generateReport(
+          transcript: transcript,
+          userLevel: userLevel,
+        ),
+      ).thenAnswer((_) async => const Right<AppFailure, String>(validJson));
+
+      final result = await useCase.execute(
         transcript: transcript,
         userLevel: userLevel,
-      ),
-    ).thenAnswer((_) async => const Right<AppFailure, String>(validJson));
+      );
 
-    final result = await useCase.execute(
-      transcript: transcript,
-      userLevel: userLevel,
-    );
+      final report = result.fold<SessionReport?>(
+        (_) => null,
+        (r) => r,
+      );
 
-    final report = result.fold<SessionReport?>(
-      (_) => null,
-      (r) => r,
-    );
-
-    expect(report, isNotNull);
-    expect(report!.overallGrade, "B");
-    expect(report.xpBreakdown.totalXp, 61);
-    verify(
-      () => mockLlmRepository.generateReport(
-        transcript: transcript,
-        userLevel: userLevel,
-      ),
-    ).called(1);
-  });
+      expect(report, isNotNull);
+      expect(report!.overallGrade, "B");
+      expect(report.xpBreakdown.totalXp, 61);
+      verify(
+        () => mockLlmRepository.generateReport(
+          transcript: transcript,
+          userLevel: userLevel,
+        ),
+      ).called(1);
+    },
+  );
 
   test("strips markdown fences before JSON parsing", () async {
     const fencedJson = "```json\n$validJson\n```";
@@ -100,29 +103,32 @@ void main() {
     ).called(1);
   });
 
-  test("retries parse failures and succeeds on a later valid response", () async {
-    var callCount = 0;
-    when(
-      () => mockLlmRepository.generateReport(
+  test(
+    "retries parse failures and succeeds on a later valid response",
+    () async {
+      var callCount = 0;
+      when(
+        () => mockLlmRepository.generateReport(
+          transcript: transcript,
+          userLevel: userLevel,
+        ),
+      ).thenAnswer((_) async {
+        callCount += 1;
+        if (callCount < 3) {
+          return const Right<AppFailure, String>("{ invalid json }");
+        }
+        return const Right<AppFailure, String>(validJson);
+      });
+
+      final result = await useCase.execute(
         transcript: transcript,
         userLevel: userLevel,
-      ),
-    ).thenAnswer((_) async {
-      callCount += 1;
-      if (callCount < 3) {
-        return const Right<AppFailure, String>("{ invalid json }");
-      }
-      return const Right<AppFailure, String>(validJson);
-    });
+      );
 
-    final result = await useCase.execute(
-      transcript: transcript,
-      userLevel: userLevel,
-    );
-
-    expect(result.isRight(), isTrue);
-    expect(callCount, 3);
-  });
+      expect(result.isRight(), isTrue);
+      expect(callCount, 3);
+    },
+  );
 
   test("returns parsing failure after three invalid JSON attempts", () async {
     when(

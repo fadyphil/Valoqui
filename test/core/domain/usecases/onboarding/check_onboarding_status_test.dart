@@ -26,7 +26,9 @@ void main() {
   });
 
   test("returns storage failure unchanged", () async {
-    const failure = AppFailure.storageFailure(message: "secure storage unavailable");
+    const failure = AppFailure.storageFailure(
+      message: "secure storage unavailable",
+    );
     when(() => mockKeyStorageRepository.isOnboardingComplete())
         .thenAnswer((_) async => const Left<AppFailure, bool>(failure));
 

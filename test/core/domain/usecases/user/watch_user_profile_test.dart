@@ -24,7 +24,10 @@ void main() {
     when(() => mockUserRepository.watchUser(tUid))
         .thenAnswer((_) => Stream<AppUser?>.fromIterable(const [tUser, null]));
 
-    await expectLater(useCase.execute(tUid), emitsInOrder([tUser, null, emitsDone]));
+    await expectLater(
+      useCase.execute(tUid),
+      emitsInOrder([tUser, null, emitsDone]),
+    );
     verify(() => mockUserRepository.watchUser(tUid)).called(1);
   });
 }
