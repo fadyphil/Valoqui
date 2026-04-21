@@ -15,9 +15,9 @@ components were chosen prevents accidentally undoing deliberate tradeoffs.
 | ADR | Title | Status |
 |-----|-------|--------|
 | [ADR-000](ADR-000-template.md) | Template | — |
-| [ADR-001](ADR-001-stt-android-speechrecognizer.md) | STT: Android SpeechRecognizer (interim) | Accepted — under re-evaluation |
+| [ADR-001](ADR-001-stt-android-speechrecognizer.md) | STT: Android SpeechRecognizer (interim) | Accepted — under re-evaluation (see ADR-010, ADR-011) |
 | [ADR-002](ADR-002-llm-groq-with-gemini-fallback.md) | LLM: Groq LLaMA 3.3 70B + Gemini fallback | Accepted |
-| [ADR-003](ADR-003-tts-on-device-piper-to-f5tts.md) | TTS: Piper (interim) → F5-TTS ONNX (target) | Partially superseded |
+| [ADR-003](ADR-003-tts-on-device-piper-to-f5tts.md) | TTS: Piper (interim) → F5-TTS ONNX (target) | Superseded by ADR-012 |
 | [ADR-004](ADR-004-state-management-bloc-freezed-getit.md) | State management: BLoC + Freezed + GetIt + fpdart | Accepted |
 | [ADR-005](ADR-005-clean-architecture-voice-interfaces.md) | Clean architecture swap pattern | Accepted |
 | [ADR-006](ADR-006-api-key-storage-android-keystore.md) | API key storage: Android Keystore | Accepted |
@@ -25,6 +25,8 @@ components were chosen prevents accidentally undoing deliberate tradeoffs.
 | [ADR-008](ADR-008-sentence-boundary-tts-trigger.md) | Sentence-boundary TTS trigger | Accepted |
 | [ADR-009](ADR-009-report-generation-single-llm-call.md) | Report generation: single LLM call, structured JSON | Accepted |
 | [ADR-010](ADR-010-unified-audio-pipeline-groq-whisper.md) | Unified audio pipeline (Sprint 3) | Accepted — planned |
+| [ADR-011](ADR-011-stt-performance-optimization.md) | STT Performance Optimization (Chunked Streaming) | Proposed |
+| [ADR-012](ADR-012-supertonic-tts-integration.md) | Supertonic TTS Integration | Proposed |
 
 ---
 
