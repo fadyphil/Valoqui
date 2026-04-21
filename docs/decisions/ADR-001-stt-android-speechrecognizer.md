@@ -36,6 +36,7 @@ already abstracted behind `SttRepository`.
 ## Alternatives considered
 
 ### Option A — Groq Whisper large-v3-turbo (original PRD spec)
+
 **Why considered:** Handles code-switching accurately. Same API key already
 required for LLM — no additional BYOK friction. Groq STT latency ~175ms.
 **Why rejected for Sprint 2:** Requires recording raw audio, Opus encoding,
@@ -45,11 +46,13 @@ with far less code, allowing the conversation loop to be validated first.
 Deferred to Sprint 3 behind the existing `SttRepository` interface.
 
 ### Option B — On-device Whisper (tiny / base via sherpa-onnx)
+
 **Why considered:** Fully offline, zero network cost.
 **Why rejected:** Documented failure on code-switching in small models. Adding
 a ~74–244MB model to the APK for inferior quality is not acceptable.
 
 ### Option C — Android SpeechRecognizer (chosen)
+
 **Why considered:** Zero implementation cost — `speech_to_text` package
 abstracts the Android API. No model bundled. Works for both Spanish and English
 input without locale configuration (auto-detect).
@@ -61,11 +64,13 @@ via `SttRepository` interface when Groq Whisper is integrated in Sprint 3.
 ## Consequences
 
 ### Positive
+
 - Sprint 2 conversation loop implemented without cloud STT complexity.
 - `SttRepository` interface already written — STT swap in Sprint 3 touches
   exactly one datasource file and one line in `service_locator.dart`.
 
 ### Negative / tradeoffs
+
 - Android SpeechRecognizer has a hard ~7-second OS ceiling on any single
   listening session. This cannot be overridden via the `speech_to_text`
   package. Long user utterances are cut off.
@@ -75,6 +80,7 @@ via `SttRepository` interface when Groq Whisper is integrated in Sprint 3.
 - Code-switching accuracy is lower than Groq Whisper large-v3-turbo.
 
 ### Constraints introduced
+
 - Any fix to the 7-second cutoff must operate at a different architectural
   layer (unified audio pipeline — see ARCH-101) rather than via
   `speech_to_text` configuration.
@@ -82,6 +88,7 @@ via `SttRepository` interface when Groq Whisper is integrated in Sprint 3.
 ---
 
 ## Links
+
 - PRD v0.3 § ADL-001 (original Groq Whisper decision)
 - Sprint 2 Guide § 6.1 `android_stt_datasource.dart`
 - GitHub Issue: ARCH-101 — Resolve Audio Pipeline Deadlock & Native STT Cutoffs

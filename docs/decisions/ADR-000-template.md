@@ -41,10 +41,12 @@ what was ruled out, not just what was chosen.
 -->
 
 ### Option A — [Name]
+
 **Why considered:** ...
 **Why rejected:** ...
 
 ### Option B — [Name]
+
 **Why considered:** ...
 **Why rejected:** ...
 
@@ -60,12 +62,15 @@ What must be true for this decision to remain valid?
 -->
 
 ### Positive
+
 -
 
 ### Negative / tradeoffs
+
 -
 
 ### Constraints introduced
+
 -
 
 ---

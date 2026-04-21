@@ -13,7 +13,7 @@ components were chosen prevents accidentally undoing deliberate tradeoffs.
 ## Index
 
 | ADR | Title | Status |
-|-----|-------|--------|
+| ----- | ------- | -------- |
 | [ADR-000](ADR-000-template.md) | Template | — |
 | [ADR-001](ADR-001-stt-android-speechrecognizer.md) | STT: Android SpeechRecognizer (interim) | Accepted — under re-evaluation (see ADR-010, ADR-011) |
 | [ADR-002](ADR-002-llm-groq-with-gemini-fallback.md) | LLM: Groq LLaMA 3.3 70B + Gemini fallback | Accepted |
@@ -33,7 +33,7 @@ components were chosen prevents accidentally undoing deliberate tradeoffs.
 ## Statuses
 
 | Status | Meaning |
-|--------|---------|
+| -------- | --------- |
 | **Proposed** | Under discussion, not yet implemented |
 | **Accepted** | In effect — implementation matches this decision |
 | **Deprecated** | No longer in effect but not replaced |

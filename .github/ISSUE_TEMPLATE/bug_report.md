@@ -7,12 +7,11 @@ labels: bug
 ## What happened
 <!-- What did you observe? Be specific. -->
 
-
 ## What was expected
 <!-- What should have happened instead? -->
 
-
 ## Steps to reproduce
+
 1.
 2.
 3.
@@ -32,6 +31,7 @@ labels: bug
 - [ ] CI / build
 
 ## Device and environment
+
 - Android version:
 - Device model:
 - Mic mode (always-on / PTT):

@@ -19,6 +19,7 @@ decision affects every layer of the application.
 ## Decision
 
 Valoqui uses:
+
 - `flutter_bloc` for state management
 - `freezed` for sealed union states and data models (compile-time exhaustive
   pattern matching via `when()`)
@@ -32,6 +33,7 @@ Valoqui uses:
 ## Alternatives considered
 
 ### Option A — Riverpod (original Sprint 1 v1.0 spec)
+
 **Why considered:** Excellent DI integration, compile-safe providers, strong
 Flutter community adoption.
 **Why rejected:** Developer has no production experience with Riverpod.
@@ -39,6 +41,7 @@ BLoC + GetIt matches existing production patterns from Osserva, reducing
 cognitive overhead and risk on a solo project.
 
 ### Option B — BLoC + Freezed + GetIt (chosen)
+
 **Why selected:** Production-proven on prior project. BLoC's explicit event →
 state model maps cleanly onto the voice pipeline state machine (listening →
 processing → speaking). Freezed sealed unions enforce exhaustive state
@@ -49,6 +52,7 @@ handling at compile time — critical for a pipeline with many failure modes.
 ## Consequences
 
 ### Positive
+
 - `when()` on Freezed states means unhandled state variants are compile errors,
   not runtime crashes.
 - Clean architecture enforced by convention: datasource → repository →
@@ -56,6 +60,7 @@ handling at compile time — critical for a pipeline with many failure modes.
 - `Either` eliminates silent swallowed exceptions in service methods.
 
 ### Negative / tradeoffs
+
 - Freezed requires `build_runner` code generation. Every `@freezed` class
   change requires: `dart run build_runner build --delete-conflicting-outputs`.
 - More boilerplate than Riverpod for simple state (separate event, state,
@@ -65,6 +70,7 @@ handling at compile time — critical for a pipeline with many failure modes.
   `_PrivateEvent` pattern required for stream-driven state changes.
 
 ### Constraints introduced
+
 - All `*.freezed.dart` and `*.g.dart` files must be regenerated after any
   Freezed source change. This must be part of every PR checklist.
 - Stream subscriptions in BLoC constructors must dispatch internal events
@@ -73,6 +79,7 @@ handling at compile time — critical for a pipeline with many failure modes.
 ---
 
 ## Links
+
 - Sprint 1 Guide v2.0 (complete stack definition)
 - Sprint 1 Guide v2.0 § 8 (Freezed BLoC states)
 - Sprint 1 Guide v2.0 § 4 (failure types)
