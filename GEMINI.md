@@ -102,15 +102,20 @@ When working in this directory, AI agents MUST follow these rules:
 5. **Audio Integrity:** Preserve the `SpeechSegment` flow between VAD and STT. Ensure background isolates are used for heavy decoding tasks.
 6. **Error Type Semantics:** Use `AppFailure.ttsFailure` or `AppFailure.sttFailure` for local errors, NOT `networkFailure`.
 7. **Clean Architecture:** Respect boundaries between Data, Domain, and Presentation layers. Never put business logic in UI widgets.
+8. **Surgical Edits Only:** ALWAYS prefer surgical replacements over rewriting entire files to preserve architectural comments and context.
+9. **ADR Immutability:** Never delete or overwrite the historical context of an Architectural Decision Record (ADR). To update an ADR, change its `Status` and append an "Update" or "Addendum" section at the bottom. Never change the numerical prefix of an existing ADR, and always increment correctly for new ones.
 
 ### 4. Documentation Strategy (The "Linked Brain" v2)
 
 The documentation in `docs/` is self-maintaining using a **Global SSOT Macro System** to ensure 100% integrity across all files (Setup, Onboarding, Architecture, etc.).
 
 - **Single Source of Truth (SSOT):** Decisions (ADRs) are the primary source.
+
 - **Pulse Auditor Macros:** Use the following HTML comments in any `.md` file to auto-inject latest data:
-    - `<!-- PULSE:ADR_INDEX -->`: Injects the full markdown table of ADRs (used in README.md).
-    - `<!-- PULSE:ADR_LIST -->`: Injects a plain-text list of ADR IDs and titles (used in SETUP.md).
-    - `<!-- PULSE:ADR_INLINE:ADR-XXX -->`: Injects a specific ADR's latest title and summary on a single line (used in ARCHITECTURE.md).
+
+  - `<!-- PULSE:ADR_INDEX -->`: Injects the full markdown table of ADRs (used in README.md).
+  - `<!-- PULSE:ADR_LIST -->`: Injects a plain-text list of ADR IDs and titles (used in SETUP.md).
+  - `<!-- PULSE:ADR_INLINE:ADR-XXX -->`: Injects a specific ADR's latest title and summary on a single line (used in ARCHITECTURE.md).
+
 - **Automated Sync (`scripts/pulse_audit.py`):** Scans ALL project markdown files and applies macros. Also performs Asset Integrity, DI Registration, and Architecture Boundary audits.
 - **Git Enforcement:** A `post-commit` hook (in `.git/hooks/post-commit`) runs the full Pulse Audit on every change.

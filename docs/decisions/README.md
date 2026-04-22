@@ -26,9 +26,11 @@ components were chosen prevents accidentally undoing deliberate tradeoffs.
 | [ADR-008](ADR-008-sentence-boundary-tts-trigger.md) | Sentence-Boundary TTS Trigger | Accepted |
 | [ADR-009](ADR-009-report-generation-single-llm-call.md) | Post-Session Report Generation — Single LLM Call, Structured JSON | Accepted |
 | [ADR-010](ADR-010-unified-audio-pipeline-groq-whisper.md) | Unified Audio Pipeline — Deprecate speech_to_text, Single Raw PCM Stream | Accepted — planned Sprint 3 |
-| [ADR-011](ADR-011-stt-performance-optimization.md) | STT Performance Optimization Strategy | Proposed |
+| [ADR-011](ADR-011-stt-performance-optimization.md) | STT Performance Optimization Strategy | Accepted |
 | [ADR-012](ADR-012-supertonic-tts-integration.md) | Supertonic TTS Integration Strategy | Proposed |
 | [ADR-013](ADR-013-tts-warmup-optimization.md) | TTS Warm-Up Optimization | Accepted |
+| [ADR-014](ADR-014-ui-rebuild-optimization.md) | UI Rebuild Optimization (Token Batching) | Accepted |
+| [ADR-015](ADR-015-stt-backpressure-protection.md) | Isolate Backpressure & Buffer Safety | Accepted |
 <!-- /PULSE:ADR_INDEX -->
 ---
 

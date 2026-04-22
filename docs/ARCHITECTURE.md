@@ -86,6 +86,9 @@ The most complex part of the app is the `SpeakingBloc`. It manages a 4-stage pip
 
 ### Performance Optimizations
 
+<!-- PULSE:ADR_INLINE:ADR-011 -->- **STT Performance Optimization Strategy (ADR-011):** No summary provided.<!-- /PULSE:ADR_INLINE:ADR-011 -->
+<!-- PULSE:ADR_INLINE:ADR-014 -->- **UI Rebuild Optimization (Token Batching) (ADR-014):** No summary provided.<!-- /PULSE:ADR_INLINE:ADR-014 -->
+<!-- PULSE:ADR_INLINE:ADR-015 -->- **Isolate Backpressure & Buffer Safety (ADR-015):** No summary provided.<!-- /PULSE:ADR_INLINE:ADR-015 -->
 <!-- PULSE:ADR_INLINE:ADR-013 -->- **TTS Warm-Up Optimization (ADR-013):** No summary provided.<!-- /PULSE:ADR_INLINE:ADR-013 -->
 <!-- PULSE:ADR_INLINE:ADR-008 -->- **Sentence-Boundary TTS Trigger (ADR-008):** No summary provided.<!-- /PULSE:ADR_INLINE:ADR-008 -->
 
