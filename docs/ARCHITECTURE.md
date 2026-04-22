@@ -86,8 +86,8 @@ The most complex part of the app is the `SpeakingBloc`. It manages a 4-stage pip
 
 ### Performance Optimizations
 
-- **TTS Warm-Up (ADR-013):** During LLM token streaming, the TTS engine is warmed up with a silent synthesis pass to overlap initialization with LLM generation, eliminating 500-2000ms cold start latency.
-- **Sentence-Boundary TTS (ADR-008):** To achieve sub-600ms latency, the BLoC does not wait for the LLM to finish. It buffers tokens and triggers TTS immediately upon detecting punctuation (`.`, `?`, `!`).
+- **TTS Warm-Up Optimization (ADR-013):** No summary provided.
+- **Sentence-Boundary TTS Trigger (ADR-008):** No summary provided.
 
 ---
 
