@@ -48,6 +48,7 @@ To eliminate latency, Valoqui leverages a highly optimized audio stack:
 * **VAD (Voice Activity Detection):** Uses on-device **Silero VAD** for accurate segment-based speech detection.
 * **STT (Speech-to-Text):** Utilizes **Groq Whisper** (via unified pipeline) for highly accurate code-switching transcription.
 * **TTS (Text-to-Speech):** Utilizes on-device **VITS/Piper** with a natural Spanish voice (Lucia). Optimized for streaming using a rotating file-cache strategy to prevent stale audio.
+* **TTS Warm-Up:** Pre-initializes the TTS engine during LLM generation to overlap initialization with other processing, eliminating 500-2000ms cold start latency (ADR-013).
 
 ### 2. High-Performance LLM Orchestration
 

@@ -97,6 +97,18 @@ class SherpaTtsDatasource {
   /// This is a synchronous snapshot of `_isDrainingQueue`. For reactive
   /// updates, listen to [speakingStateStream] instead.
 
+  /// Warms up the TTS engine by performing a silent synthesis pass.
+  /// This should be called before first use to eliminate cold start latency.
+  ///
+  /// Call this when entering the speaking state or when LLM generation begins
+  /// to overlap TTS initialization with other processing.
+  Future<void> warmUp() async {
+    if (!_initialized || _tts == null) return;
+    // Pre-synthesize a silent/near-silent sentence
+    // This forces model loading and first-time initialization
+    _tts!.generate(text: " ", sid: 0, speed: 1.0);
+  }
+
   bool get isSpeaking => _isDrainingQueue;
 
   // ── Initialization ────────────────────────────────────

@@ -15,6 +15,9 @@ class SherpaTtsRepository implements TtsRepository {
   Future<Either<AppFailure, void>> initialize() => _datasource.initialize();
 
   @override
+  Future<void> warmUp() => _datasource.warmUp();
+
+  @override
   Future<Either<AppFailure, void>> speak(String text) =>
       _datasource.speak(text);
 

@@ -443,6 +443,9 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
   ///   exceptions, null dereferences, parsing failures that bypass [Either].
   /// * Tier 3 (fatal): Handled by [_onLlmError] — both LLM providers down.
   void _streamLlmResponse() {
+    // Warm up TTS while LLM is generating to overlap initialization
+    unawaited(_tts.warmUp());
+    
     _llm
         .streamResponse(
           messages: List.from(_history),

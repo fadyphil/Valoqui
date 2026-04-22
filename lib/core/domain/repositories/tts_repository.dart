@@ -13,6 +13,10 @@ abstract interface class TtsRepository {
   /// Must be awaited before the first [speak] call.
   Future<Either<AppFailure, void>> initialize();
 
+  /// Warms up the TTS engine by performing a silent synthesis pass.
+  /// This should be called before first use to eliminate cold start latency.
+  Future<void> warmUp();
+
   /// Speaks the given text using the on-device TTS engine.
   /// If the engine is already speaking, stops first then starts the new text.
   Future<Either<AppFailure, void>> speak(String text);
