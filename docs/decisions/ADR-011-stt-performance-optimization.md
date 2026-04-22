@@ -8,7 +8,7 @@
 
 ## Context
 
-The current Sprint 2 implementation uses `SherpaSttDatasource` with on-device sherpa-onnx (Moonshine model) for speech-to-text transcription. User feedback and performance testing have identified critical latency issues:
+The current Sprint 2 implementation uses `SherpaSttDatasource` with on-device sherpa-onnx (Moonshine model) for speech-to-text transcription. User feedback and performance testing have identified critical latency issues (Fixes #7):
 
 - **Transcription delay:** 2-4 seconds from speech end to transcript availability
 - **Sequential processing bottleneck:** Audio recording → VAD → STT decoding → LLM happens sequentially

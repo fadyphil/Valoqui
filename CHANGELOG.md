@@ -21,7 +21,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Implemented STT Performance Optimization (ADR-011)
+- Implemented STT Performance Optimization (ADR-011) to resolve streaming bottlenecks (Fixes #7)
   - Increased STT decode threads to 4 and VAD threads to 2.
   - Implemented throttled accumulating buffer to yield partial transcripts every 1.5s while speaking.
   - Added `partialTranscriptStream` to provide live UI feedback.
