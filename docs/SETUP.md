@@ -316,6 +316,8 @@ docs/decisions/
   ADR-011  STT Performance Optimization Strategy
   ADR-012  Supertonic TTS Integration Strategy
   ADR-013  TTS Warm-Up Optimization
+  ADR-014  UI Rebuild Optimization (Token Batching)
+  ADR-015  Isolate Backpressure & Buffer Safety
 <!-- /PULSE:ADR_LIST -->
 ```
 

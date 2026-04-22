@@ -61,6 +61,13 @@ class TranscriptReceived extends SpeakingEvent {
   List<Object?> get props => [text];
 }
 
+class PartialTranscriptReceived extends SpeakingEvent {
+  final String text;
+  const PartialTranscriptReceived(this.text);
+  @override
+  List<Object?> get props => [text];
+}
+
 /// LLM streamed a new token.
 class LlmTokenReceived extends SpeakingEvent {
   final String token;
@@ -101,4 +108,20 @@ class AmplitudeChanged extends SpeakingEvent {
   const AmplitudeChanged(this.amplitude);
   @override
   List<Object?> get props => [amplitude];
+}
+
+class BufferFillChanged extends SpeakingEvent {
+  final double percent;
+  const BufferFillChanged(this.percent);
+  @override
+  List<Object?> get props => [percent];
+}
+
+/// Internal update event for token batching.
+class _UpdateBatchUi extends SpeakingEvent {
+  final List<ConversationMessage> transcript;
+  final String buffer;
+  const _UpdateBatchUi(this.transcript, this.buffer);
+  @override
+  List<Object?> get props => [transcript, buffer];
 }

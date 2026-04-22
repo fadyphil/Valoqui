@@ -41,7 +41,7 @@ void _sherpaIsolateEntry(List<dynamic> args) {
         ),
         tokens: tokensPath,
         modelType: "",
-        numThreads: 2,
+        numThreads: 4,
         debug: false,
       ),
     );
@@ -104,6 +104,11 @@ void _sherpaIsolateEntry(List<dynamic> args) {
 class _SherpaDecodeIsolate {
   SendPort? _port;
   Isolate? _isolate; // NEW: to hold OS reference so we can kill it
+
+  /// NEW: tracks number of active decode futures awaiting a reply from the
+  /// background isolate. Used for backpressure/bounded queueing.
+  int _activeDecodes = 0;
+  static const int _maxDecodeQueue = 3;
 
   /// Returns `true` if the isolate is ready to accept decode requests.
   bool get isReady => _port != null;
@@ -195,6 +200,16 @@ class _SherpaDecodeIsolate {
   Future<String> decode(Float32List samples) async {
     if (!isReady) return "";
 
+    // Load shedding: if the background isolate is already overwhelmed with
+    // previous segments, drop this one to avoid snowballing latency or OOM.
+    if (_activeDecodes >= _maxDecodeQueue) {
+      debugPrint(
+        "[STT Isolate] Queue full ($_activeDecodes/$_maxDecodeQueue) — dropping segment",
+      );
+      return "";
+    }
+
+    _activeDecodes++;
     final reply = ReceivePort();
     try {
       _port!.send([reply.sendPort, samples]);
@@ -214,6 +229,7 @@ class _SherpaDecodeIsolate {
       debugPrint("[STT Isolate] Decode error: $e");
       return "";
     } finally {
+      _activeDecodes--;
       reply.close();
     }
   }
@@ -281,7 +297,11 @@ class SherpaSttDatasource {
 
   final StreamController<String> _textController =
       StreamController<String>.broadcast();
+  final StreamController<String> _partialTextController =
+      StreamController<String>.broadcast();
   final StreamController<double> _amplitudeController =
+      StreamController<double>.broadcast();
+  final StreamController<double> _bufferFillController =
       StreamController<double>.broadcast();
 
   /// Stream of decoded transcript strings.
@@ -290,11 +310,21 @@ class SherpaSttDatasource {
   /// listen and append to their display buffer. Does not emit empty strings.
   Stream<String> get textStream => _textController.stream;
 
+  /// Stream of intermediate partial transcripts.
+  ///
+  /// Emits while the user is still speaking to provide immediate feedback.
+  Stream<String> get partialTextStream => _partialTextController.stream;
+
   /// Stream of normalized audio amplitude (0.0–1.0).
   ///
   /// Emits continuously while audio bytes are received, regardless of whether
   /// the PTT buffer is capped. Used for VU meter visualization in the UI.
   Stream<double> get amplitudeStream => _amplitudeController.stream;
+
+  /// Stream of normalized buffer fill percentage (0.0–1.0).
+  ///
+  /// Emits while recording in PTT mode to inform the UI of buffer limits.
+  Stream<double> get bufferFillStream => _bufferFillController.stream;
 
   StreamSubscription<bool>? _vadSub;
   StreamSubscription<List<int>>? _audioSub;
@@ -302,6 +332,12 @@ class SherpaSttDatasource {
 
   final BytesBuilder _audioBuffer = BytesBuilder();
   bool _isRecordingUtterance = false;
+
+  /// Tracks the last time a partial decode was triggered to avoid
+  /// overwhelming the CPU.
+  DateTime _lastPartialDecodeAt = DateTime.fromMillisecondsSinceEpoch(0);
+  static const Duration _minPartialDecodeInterval =
+      Duration(milliseconds: 1500);
 
   /// Returns `true` if currently recording a PTT utterance.
   ///
@@ -407,6 +443,7 @@ class SherpaSttDatasource {
   /// until [stopListening()] is called.
   void startListening() {
     _audioBuffer.clear();
+    _bufferFillController.add(0.0);
     _isRecordingUtterance = true;
   }
 
@@ -422,9 +459,12 @@ class SherpaSttDatasource {
     if (!_isRecordingUtterance) return "";
     _isRecordingUtterance = false;
 
-    // Decay amplitude to zero visually when stopping
+    // Decay amplitude and buffer fill to zero visually when stopping
     if (!_amplitudeController.isClosed) {
       _amplitudeController.add(0.0);
+    }
+    if (!_bufferFillController.isClosed) {
+      _bufferFillController.add(0.0);
     }
 
     final bytes = _audioBuffer.takeBytes();
@@ -475,6 +515,21 @@ class SherpaSttDatasource {
       // NEW: condition to bound previously unbounded PTT buffer size
       if (_audioBuffer.length < _maxBufferBytes) {
         _audioBuffer.add(chunk);
+
+        // Emit buffer fill percentage for UI feedback
+        final percent = (_audioBuffer.length / _maxBufferBytes).clamp(0.0, 1.0);
+        _bufferFillController.add(percent);
+
+        // ── Accumulating Partial Decode ─────────────────
+        // To reduce perceived latency, we decode the buffer *while* it grows.
+        // We throttle this to avoid pinning the CPU (min interval + check if isolate is idle).
+        final now = DateTime.now();
+        if (_decodeIsolate.isReady &&
+            _decodeIsolate._activeDecodes == 0 &&
+            now.difference(_lastPartialDecodeAt) > _minPartialDecodeInterval) {
+          _lastPartialDecodeAt = now;
+          _decodeUtterance(_audioBuffer.toBytes(), isPartial: true);
+        }
       }
     }
     // Calculate and emit amplitude continuously whenever audio flows
@@ -528,20 +583,20 @@ class SherpaSttDatasource {
   ///
   /// Converts PCM16 bytes to normalized Float32 samples, then delegates to
   /// [_decodeFloat32()]. Empty buffers are no-ops.
-  Future<void> _decodeUtterance(List<int> pcmBytes) async {
+  Future<void> _decodeUtterance(List<int> pcmBytes, {bool isPartial = false}) async {
     if (pcmBytes.isEmpty) return;
     final bytes = pcmBytes is Uint8List
         ? pcmBytes
         : Uint8List.fromList(pcmBytes);
-    await _decodeFloat32(_pcm16ToFloat32(bytes));
+    await _decodeFloat32(_pcm16ToFloat32(bytes), isPartial: isPartial);
   }
 
   /// Decodes normalized Float32 samples to text.
   ///
   /// Uses the background isolate if available (preferred), otherwise falls
-  /// back to main-thread synchronous decoding. Emits non-empty results via
-  /// [textStream]. Empty results are silently ignored to avoid UI noise.
-  Future<void> _decodeFloat32(Float32List samples) async {
+  /// back to main-thread synchronous decoding. Emits results via [textStream]
+  /// or [partialTextStream] depending on the [isPartial] flag.
+  Future<void> _decodeFloat32(Float32List samples, {bool isPartial = false}) async {
     if (samples.isEmpty) return;
 
     final String text;
@@ -552,8 +607,12 @@ class SherpaSttDatasource {
     }
 
     if (text.isNotEmpty && !_textController.isClosed) {
-      debugPrint("[STT] Transcript: $text");
-      _textController.add(text);
+      if (isPartial) {
+        _partialTextController.add(text);
+      } else {
+        debugPrint("[STT] Final Transcript: $text");
+        _textController.add(text);
+      }
     }
   }
 
@@ -594,7 +653,7 @@ class SherpaSttDatasource {
           ),
           tokens: _tokensPath,
           modelType: "",
-          numThreads: 2,
+          numThreads: 4,
           debug: false,
         ),
       ),
@@ -675,5 +734,6 @@ class SherpaSttDatasource {
     _fallbackRecognizer?.free();
     if (!_textController.isClosed) await _textController.close();
     if (!_amplitudeController.isClosed) await _amplitudeController.close();
+    if (!_bufferFillController.isClosed) await _bufferFillController.close();
   }
 }

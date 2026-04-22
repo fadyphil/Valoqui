@@ -120,7 +120,7 @@ class SherpaVadDatasource {
           windowSize: 512,
         ),
         sampleRate: 16000,
-        numThreads: 1,
+        numThreads: 2,
         debug: false,
         provider: "cpu",
       );

@@ -18,7 +18,13 @@ class AndroidSttRepository implements SttRepository {
   Stream<String> get transcriptStream => _datasource.transcriptStream;
 
   @override
+  Stream<String> get partialTranscriptStream => _datasource.transcriptStream;
+
+  @override
   Stream<double> get amplitudeStream => _datasource.amplitudeStream;
+
+  @override
+  Stream<double> get bufferFillStream => const Stream.empty();
 
   @override
   Future<Either<AppFailure, void>> startListening() =>
