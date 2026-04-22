@@ -94,8 +94,7 @@ class GeminiLlmDatasource {
 
             // Cast the first candidate to Map before accessing nested fields
             final firstCandidate = candidates[0] as Map<String, dynamic>;
-            final content =
-                firstCandidate['content'] as Map<String, dynamic>?;
+            final content = firstCandidate['content'] as Map<String, dynamic>?;
             if (content == null) continue;
 
             final parts = content['parts'] as List<dynamic>?;

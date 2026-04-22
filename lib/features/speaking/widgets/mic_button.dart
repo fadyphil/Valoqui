@@ -135,7 +135,9 @@ class _MicButtonState extends State<MicButton> {
                     ),
                     child: Icon(
                       Icons.mic_rounded,
-                      color: isSpeaking ? AppColors.textSecondary : Colors.white,
+                      color: isSpeaking
+                          ? AppColors.textSecondary
+                          : Colors.white,
                       size: 36,
                     ),
                   ),
@@ -178,16 +180,16 @@ class _PulseRing extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 130,
-      height: 130,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: AppColors.accentPrimary.withValues(alpha: 0.25),
-          width: 2,
-        ),
-      ),
-    )
+          width: 130,
+          height: 130,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: AppColors.accentPrimary.withValues(alpha: 0.25),
+              width: 2,
+            ),
+          ),
+        )
         .animate(onPlay: (c) => c.repeat())
         .scale(
           begin: const Offset(1.0, 1.0),

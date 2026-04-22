@@ -582,10 +582,7 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
     }
   }
 
-  void _onUpdateBatchUi(
-    _UpdateBatchUi event,
-    Emitter<SpeakingState> emit,
-  ) {
+  void _onUpdateBatchUi(_UpdateBatchUi event, Emitter<SpeakingState> emit) {
     final current = state;
     if (current is! SpeakingActive) return;
 

@@ -70,7 +70,9 @@ void main() {
       () => mockStt.partialTranscriptStream,
     ).thenAnswer((_) => const Stream.empty());
     when(() => mockStt.amplitudeStream).thenAnswer((_) => const Stream.empty());
-    when(() => mockStt.bufferFillStream).thenAnswer((_) => const Stream.empty());
+    when(
+      () => mockStt.bufferFillStream,
+    ).thenAnswer((_) => const Stream.empty());
     when(
       () => mockVad.voiceActivityStream,
     ).thenAnswer((_) => const Stream.empty());

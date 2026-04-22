@@ -147,7 +147,9 @@ void main() {
       expect: () => [
         isA<SpeakingInitializing>(),
         predicate<SpeakingState>((s) => s is SpeakingActive), // listening
-        predicate<SpeakingState>((s) => s is SpeakingActive && s.phase == ConversationPhase.speaking), // greeting speaking
+        predicate<SpeakingState>(
+          (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
+        ), // greeting speaking
       ],
       verify: (_) {
         // ✅ Verify stop/stopMonitoring called (close() doesn't call dispose())
@@ -238,7 +240,9 @@ void main() {
       expect: () => [
         isA<SpeakingInitializing>(),
         predicate<SpeakingState>((s) => s is SpeakingActive), // listening
-        predicate<SpeakingState>((s) => s is SpeakingActive && s.phase == ConversationPhase.speaking), // greeting speaking
+        predicate<SpeakingState>(
+          (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
+        ), // greeting speaking
         predicate<SpeakingState>(
           (s) => s is SpeakingActive,
         ), // listening (after TtsFinished)
@@ -276,7 +280,9 @@ void main() {
       expect: () => [
         isA<SpeakingInitializing>(),
         predicate<SpeakingState>((s) => s is SpeakingActive), // listening
-        predicate<SpeakingState>((s) => s is SpeakingActive && s.phase == ConversationPhase.speaking), // greeting speaking
+        predicate<SpeakingState>(
+          (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
+        ), // greeting speaking
       ],
     );
   });
@@ -323,7 +329,9 @@ void main() {
       expect: () => [
         isA<SpeakingInitializing>(),
         predicate<SpeakingState>((s) => s is SpeakingActive), // listening
-        predicate<SpeakingState>((s) => s is SpeakingActive && s.phase == ConversationPhase.speaking), // greeting speaking
+        predicate<SpeakingState>(
+          (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
+        ), // greeting speaking
         predicate<SpeakingState>(
           (s) => s is SpeakingActive,
         ), // listening (after TtsFinished)
@@ -365,7 +373,9 @@ void main() {
       expect: () => [
         isA<SpeakingInitializing>(),
         predicate<SpeakingState>((s) => s is SpeakingActive), // listening
-        predicate<SpeakingState>((s) => s is SpeakingActive && s.phase == ConversationPhase.speaking), // greeting speaking
+        predicate<SpeakingState>(
+          (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
+        ), // greeting speaking
         predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.micMode == MicMode.pushToTalk,
         ),
@@ -407,7 +417,9 @@ void main() {
       expect: () => [
         isA<SpeakingInitializing>(),
         predicate<SpeakingState>((s) => s is SpeakingActive), // listening
-        predicate<SpeakingState>((s) => s is SpeakingActive && s.phase == ConversationPhase.speaking), // greeting speaking
+        predicate<SpeakingState>(
+          (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
+        ), // greeting speaking
         isA<SpeakingEnded>(),
       ],
       verify: (_) {

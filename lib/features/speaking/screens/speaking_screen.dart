@@ -216,10 +216,7 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
             );
           }
 
-          return TranscriptBubble(
-            message: message,
-            isStreaming: false,
-          );
+          return TranscriptBubble(message: message, isStreaming: false);
         }
         if (hasPartial && index == messages.length) {
           return TranscriptBubble(

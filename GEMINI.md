@@ -108,6 +108,7 @@ When working in this directory, AI agents MUST follow these rules:
 ### 4. Definition of Done (The Committer's Checklist)
 
 Before preparing any commit or claiming a task is complete, the AI agent MUST autonomously:
+
 1. **Format Code:** Run `dart format .` to ensure CI compliance.
 2. **Lint Check:** Run `flutter analyze` and ensure zero errors/warnings.
 3. **Update Changelog:** Surgically add implementation notes to `CHANGELOG.md`, ensuring all new features and ADRs (by ID) are mentioned.

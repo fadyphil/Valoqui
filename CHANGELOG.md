@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+
 - Implemented TTS warm-up optimization (ADR-013) to eliminate cold start latency
   - Added `warmUp()` method to `TtsRepository` interface
   - Implemented `SherpaTtsDatasource.warmUp()` with silent synthesis pass
@@ -19,6 +20,7 @@ All notable changes to this project will be documented in this file.
   - Added "Definition of Done" to `GEMINI.md` for AI agent proactive compliance.
 
 ### Changed
+
 - Implemented STT Performance Optimization (ADR-011)
   - Increased STT decode threads to 4 and VAD threads to 2.
   - Implemented throttled accumulating buffer to yield partial transcripts every 1.5s while speaking.

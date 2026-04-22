@@ -336,8 +336,9 @@ class SherpaSttDatasource {
   /// Tracks the last time a partial decode was triggered to avoid
   /// overwhelming the CPU.
   DateTime _lastPartialDecodeAt = DateTime.fromMillisecondsSinceEpoch(0);
-  static const Duration _minPartialDecodeInterval =
-      Duration(milliseconds: 1500);
+  static const Duration _minPartialDecodeInterval = Duration(
+    milliseconds: 1500,
+  );
 
   /// Returns `true` if currently recording a PTT utterance.
   ///
@@ -583,7 +584,10 @@ class SherpaSttDatasource {
   ///
   /// Converts PCM16 bytes to normalized Float32 samples, then delegates to
   /// [_decodeFloat32()]. Empty buffers are no-ops.
-  Future<void> _decodeUtterance(List<int> pcmBytes, {bool isPartial = false}) async {
+  Future<void> _decodeUtterance(
+    List<int> pcmBytes, {
+    bool isPartial = false,
+  }) async {
     if (pcmBytes.isEmpty) return;
     final bytes = pcmBytes is Uint8List
         ? pcmBytes
@@ -596,7 +600,10 @@ class SherpaSttDatasource {
   /// Uses the background isolate if available (preferred), otherwise falls
   /// back to main-thread synchronous decoding. Emits results via [textStream]
   /// or [partialTextStream] depending on the [isPartial] flag.
-  Future<void> _decodeFloat32(Float32List samples, {bool isPartial = false}) async {
+  Future<void> _decodeFloat32(
+    Float32List samples, {
+    bool isPartial = false,
+  }) async {
     if (samples.isEmpty) return;
 
     final String text;

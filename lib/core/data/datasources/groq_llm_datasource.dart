@@ -60,7 +60,7 @@ class GroqLlmDatasource {
         lineBuffer.write(text);
 
         final lines = lineSplitter.convert(lineBuffer.toString());
-        
+
         // If the chunk doesn't end with a newline, the last line is incomplete.
         // We keep it in the buffer and only process complete lines.
         if (!text.endsWith("\n") && lines.isNotEmpty) {
