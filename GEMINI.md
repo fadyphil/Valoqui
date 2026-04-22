@@ -105,7 +105,15 @@ When working in this directory, AI agents MUST follow these rules:
 8. **Surgical Edits Only:** ALWAYS prefer surgical replacements over rewriting entire files to preserve architectural comments and context.
 9. **ADR Immutability:** Never delete or overwrite the historical context of an Architectural Decision Record (ADR). To update an ADR, change its `Status` and append an "Update" or "Addendum" section at the bottom. Never change the numerical prefix of an existing ADR, and always increment correctly for new ones.
 
-### 4. Documentation Strategy (The "Linked Brain" v2)
+### 4. Definition of Done (The Committer's Checklist)
+
+Before preparing any commit or claiming a task is complete, the AI agent MUST autonomously:
+1. **Format Code:** Run `dart format .` to ensure CI compliance.
+2. **Lint Check:** Run `flutter analyze` and ensure zero errors/warnings.
+3. **Update Changelog:** Surgically add implementation notes to `CHANGELOG.md`, ensuring all new features and ADRs (by ID) are mentioned.
+4. **Verify Integrity:** Run `python3 scripts/pulse_audit.py` and ensure a "Pass" message is received.
+
+### 5. Documentation Strategy (The "Linked Brain" v2)
 
 The documentation in `docs/` is self-maintaining using a **Global SSOT Macro System** to ensure 100% integrity across all files (Setup, Onboarding, Architecture, etc.).
 

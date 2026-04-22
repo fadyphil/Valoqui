@@ -10,9 +10,30 @@ All notable changes to this project will be documented in this file.
   - Implemented `SherpaTtsDatasource.warmUp()` with silent synthesis pass
   - Updated `SherpaTtsRepository` to delegate warm-up to datasource
   - Modified `SpeakingBloc._streamLlmResponse()` to call `_tts.warmUp()` when LLM streaming begins
-  - This overlaps TTS initialization with LLM generation, eliminating 500-2000ms TTS cold start delay
-- Proposed STT Performance Optimization Strategy (ADR-011) using chunked streaming
 - Proposed Supertonic TTS Integration Strategy (ADR-012) for higher-quality on-device voice
+- Added PTT buffer limit visualization (ADR-015)
+  - `bufferFillPercentage` added to `SpeakingActive` state.
+  - `MicButton` displays a dynamic circular progress indicator when approaching the 60-second limit.
+- Automated quality gates via Git pre-commit hook
+  - Hook enforces `dart format`, `flutter analyze`, and `pulse_audit.py` before every commit.
+  - Added "Definition of Done" to `GEMINI.md` for AI agent proactive compliance.
+
+### Changed
+- Implemented STT Performance Optimization (ADR-011)
+  - Increased STT decode threads to 4 and VAD threads to 2.
+  - Implemented throttled accumulating buffer to yield partial transcripts every 1.5s while speaking.
+  - Added `partialTranscriptStream` to provide live UI feedback.
+- Implemented UI Rebuild Optimization (ADR-014)
+  - Batched LLM token emissions to 10Hz using `_tokenBatchTimer`.
+  - Scoped active text bubble rebuilds using `BlocSelector` to eliminate UI jank during generation.
+- Implemented Isolate Backpressure & Buffer Safety (ADR-015)
+  - Hard capped the background STT decode queue to 3 concurrent decodes.
+  - Implemented load shedding (dropping segments) to prevent OOM errors and latency spikes.
+- Optimized LLM memory usage and fallbacks
+  - Replaced char-by-char split parsing with `LineSplitter` in Groq and Gemini datasources.
+  - Broadened Groq-to-Gemini fallback to handle server 5xx errors and timeouts.
+  - Cached Gemini API key to reduce secure storage lookups.
+  - Enforced strict `_llmSub` lifecycle management in `SpeakingBloc` to prevent memory leaks.
 
 ## [Sprint 3] - 2026-04-21
 
