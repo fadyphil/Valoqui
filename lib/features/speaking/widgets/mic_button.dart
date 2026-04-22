@@ -9,11 +9,13 @@ import "package:flutter/material.dart";
 import "package:flutter_animate/flutter_animate.dart";
 import "package:valoqui/core/theme/app_colors.dart";
 import "package:valoqui/core/theme/app_spacing.dart";
+import "package:valoqui/core/theme/app_typography.dart";
 import "package:valoqui/features/speaking/bloc/speaking_bloc.dart";
 
 class MicButton extends StatefulWidget {
   final ConversationPhase phase;
   final MicMode micMode;
+  final double bufferFillPercentage;
   final VoidCallback? onPressDown;
   final VoidCallback? onPressUp;
 
@@ -21,6 +23,7 @@ class MicButton extends StatefulWidget {
     super.key,
     required this.phase,
     required this.micMode,
+    this.bufferFillPercentage = 0.0,
     this.onPressDown,
     this.onPressUp,
   });
@@ -89,31 +92,54 @@ class _MicButtonState extends State<MicButton> {
               scale: _isPressed ? 0.93 : 1.0,
               duration: const Duration(milliseconds: 100),
               curve: Curves.easeOut,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: 96,
-                height: 96,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: isSpeaking ? null : AppColors.micButtonGradient,
-                  color: isSpeaking ? AppColors.bgElevated : null,
-                  boxShadow: isListening
-                      ? [
-                          BoxShadow(
-                            color: _isPressed
-                                ? AppColors.micGlow.withValues(alpha: 0.6)
-                                : AppColors.micGlow,
-                            blurRadius: _isPressed ? 56 : 40,
-                            spreadRadius: _isPressed ? 12 : 8,
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Icon(
-                  Icons.mic_rounded,
-                  color: isSpeaking ? AppColors.textSecondary : Colors.white,
-                  size: 36,
-                ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // ── Buffer Limit Indicator (PTT only) ─────────
+                  if (widget.micMode == MicMode.pushToTalk &&
+                      widget.bufferFillPercentage > 0.1)
+                    SizedBox(
+                      width: 108,
+                      height: 108,
+                      child: CircularProgressIndicator(
+                        value: widget.bufferFillPercentage,
+                        strokeWidth: 3,
+                        backgroundColor: Colors.transparent,
+                        color: Color.lerp(
+                          AppColors.accentPrimary,
+                          AppColors.error,
+                          widget.bufferFillPercentage,
+                        ),
+                      ),
+                    ).animate().fadeIn(),
+
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 96,
+                    height: 96,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: isSpeaking ? null : AppColors.micButtonGradient,
+                      color: isSpeaking ? AppColors.bgElevated : null,
+                      boxShadow: isListening
+                          ? [
+                              BoxShadow(
+                                color: _isPressed
+                                    ? AppColors.micGlow.withValues(alpha: 0.6)
+                                    : AppColors.micGlow,
+                                blurRadius: _isPressed ? 56 : 40,
+                                spreadRadius: _isPressed ? 12 : 8,
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Icon(
+                      Icons.mic_rounded,
+                      color: isSpeaking ? AppColors.textSecondary : Colors.white,
+                      size: 36,
+                    ),
+                  ),
+                ],
               ),
             ),
 
@@ -152,28 +178,26 @@ class _PulseRing extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-          width: 140,
-          height: 140,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: AppColors.accentPrimary.withValues(alpha: 0.4),
-              width: 2,
-            ),
-          ),
-        )
-        .animate(onPlay: (controller) => controller.repeat())
+      width: 130,
+      height: 130,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: AppColors.accentPrimary.withValues(alpha: 0.25),
+          width: 2,
+        ),
+      ),
+    )
+        .animate(onPlay: (c) => c.repeat())
         .scale(
-          begin: const Offset(1, 1),
+          begin: const Offset(1.0, 1.0),
           end: const Offset(1.5, 1.5),
-          duration: 1500.ms,
+          duration: 2000.ms,
           curve: Curves.easeOut,
         )
-        .fadeOut(duration: 1500.ms);
+        .fadeOut(duration: 2000.ms);
   }
 }
-
-// ── Mic mode toggle ────────────────────────────────────────────────────
 
 class MicModeToggle extends StatelessWidget {
   final MicMode micMode;
@@ -187,81 +211,34 @@ class MicModeToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _ToggleChip(
-          label: "Push to talk",
-          isActive: micMode == MicMode.pushToTalk,
-          onTap: onToggle,
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        _ToggleChip(
-          label: "Always on",
-          isActive: micMode == MicMode.alwaysOn,
-          onTap: onToggle,
-          showDot: true,
-        ),
-      ],
-    );
-  }
-}
+    final isAlwaysOn = micMode == MicMode.alwaysOn;
 
-class _ToggleChip extends StatelessWidget {
-  final String label;
-  final bool isActive;
-  final bool showDot;
-  final VoidCallback onTap;
-
-  const _ToggleChip({
-    required this.label,
-    required this.isActive,
-    required this.onTap,
-    this.showDot = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: isActive ? null : onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+      onTap: onToggle,
+      child: Container(
         padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.sm,
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.xs,
         ),
         decoration: BoxDecoration(
-          color: isActive
-              ? AppColors.accentPrimary.withValues(alpha: 0.15)
-              : AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(AppSpacing.x3l),
-          border: Border.all(
-            color: isActive ? AppColors.accentPrimary : AppColors.border,
-          ),
+          color: AppColors.bgElevated,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.border),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (showDot && isActive) ...[
-              Container(
-                width: 6,
-                height: 6,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.accentPrimary,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.xs),
-            ],
+            Icon(
+              isAlwaysOn ? Icons.auto_awesome : Icons.back_hand_rounded,
+              size: 14,
+              color: AppColors.textSecondary,
+            ),
+            const SizedBox(width: AppSpacing.xs),
             Text(
-              label,
-              style: TextStyle(
-                fontFamily: "DMSans",
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: isActive
-                    ? AppColors.accentPrimary
-                    : AppColors.textSecondary,
+              isAlwaysOn ? "Always-on" : "Push-to-talk",
+              style: AppTypography.bodyMD.copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],

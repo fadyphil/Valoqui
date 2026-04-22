@@ -56,6 +56,10 @@ sealed class SpeakingState with _$SpeakingState {
     /// The current amplitude of the user's speech.
     @Default(0.0) double amplitude,
 
+    /// Percentage of the STT buffer currently filled (0.0 to 1.0).
+    /// Used for visual feedback in PTT mode.
+    @Default(0.0) double bufferFillPercentage,
+
     /// Non-fatal error message shown as a toast (e.g. network hiccup).
     /// Null when there is no error.
     String? errorMessage,
