@@ -66,7 +66,11 @@ void main() {
     when(
       () => mockStt.transcriptStream,
     ).thenAnswer((_) => const Stream.empty());
+    when(
+      () => mockStt.partialTranscriptStream,
+    ).thenAnswer((_) => const Stream.empty());
     when(() => mockStt.amplitudeStream).thenAnswer((_) => const Stream.empty());
+    when(() => mockStt.bufferFillStream).thenAnswer((_) => const Stream.empty());
     when(
       () => mockVad.voiceActivityStream,
     ).thenAnswer((_) => const Stream.empty());
@@ -82,6 +86,7 @@ void main() {
 
     // Stub stop/stopMonitoring (return void, not Either)
     when(() => mockTts.stop()).thenAnswer((_) async {});
+    when(() => mockTts.warmUp()).thenAnswer((_) async {});
     when(() => mockVad.stopMonitoring()).thenAnswer((_) async {});
 
     // Stub startMonitoring

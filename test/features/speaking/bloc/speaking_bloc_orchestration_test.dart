@@ -88,6 +88,7 @@ void main() {
       () => mockStt.transcriptStream,
     ).thenAnswer((_) => const Stream.empty());
     when(() => mockStt.amplitudeStream).thenAnswer((_) => const Stream.empty());
+    when(() => mockStt.bufferFillStream).thenAnswer((_) => const Stream.empty());
     when(
       () => mockVad.voiceActivityStream,
     ).thenAnswer((_) => const Stream.empty());
@@ -101,6 +102,7 @@ void main() {
     // ✅ Stub lifecycle methods with explicit Either generics
     when(() => mockStt.dispose()).thenAnswer((_) async {});
     when(() => mockTts.dispose()).thenAnswer((_) async {});
+    when(() => mockTts.warmUp()).thenAnswer((_) async {});
     when(() => mockVad.dispose()).thenAnswer((_) async {});
     when(
       () => mockVad.startMonitoring(),
@@ -157,10 +159,6 @@ void main() {
           'SessionStarted reaches active/listening',
         ),
         predicate<SpeakingState>(
-          (s) => s is SpeakingActive && s.phase == ConversationPhase.processing,
-          'greeting triggers processing',
-        ),
-        predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
           'greeting completes, transitions to speaking',
         ),
@@ -195,10 +193,6 @@ void main() {
         predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.listening,
           'SessionStarted reaches active/listening',
-        ),
-        predicate<SpeakingState>(
-          (s) => s is SpeakingActive && s.phase == ConversationPhase.processing,
-          'greeting triggers processing',
         ),
         predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
@@ -241,10 +235,6 @@ void main() {
         predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.listening,
           'SessionStarted reaches active/listening',
-        ),
-        predicate<SpeakingState>(
-          (s) => s is SpeakingActive && s.phase == ConversationPhase.processing,
-          'greeting triggers processing',
         ),
         predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
@@ -291,10 +281,6 @@ void main() {
         predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.listening,
           'SessionStarted reaches active/listening',
-        ),
-        predicate<SpeakingState>(
-          (s) => s is SpeakingActive && s.phase == ConversationPhase.processing,
-          'greeting triggers processing',
         ),
         predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
@@ -357,10 +343,6 @@ void main() {
           'SessionStarted reaches active/listening',
         ),
         predicate<SpeakingState>(
-          (s) => s is SpeakingActive && s.phase == ConversationPhase.processing,
-          'greeting triggers processing',
-        ),
-        predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
           'greeting completes, transitions to speaking',
         ),
@@ -395,10 +377,6 @@ void main() {
         predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.listening,
           'SessionStarted reaches active/listening',
-        ),
-        predicate<SpeakingState>(
-          (s) => s is SpeakingActive && s.phase == ConversationPhase.processing,
-          'greeting triggers processing',
         ),
         predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
@@ -440,10 +418,6 @@ void main() {
         predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.listening,
           'SessionStarted reaches active/listening',
-        ),
-        predicate<SpeakingState>(
-          (s) => s is SpeakingActive && s.phase == ConversationPhase.processing,
-          'greeting triggers processing',
         ),
         predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
@@ -490,10 +464,6 @@ void main() {
           'VAD failure starts session in pushToTalk mode',
         ),
         predicate<SpeakingState>(
-          (s) => s is SpeakingActive && s.phase == ConversationPhase.processing,
-          'greeting triggers processing',
-        ),
-        predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
           'greeting completes, transitions to speaking',
         ),
@@ -537,10 +507,6 @@ void main() {
           'SessionStarted reaches active/listening',
         ),
         predicate<SpeakingState>(
-          (s) => s is SpeakingActive && s.phase == ConversationPhase.processing,
-          'greeting triggers processing',
-        ),
-        predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
           'greeting completes, transitions to speaking',
         ),
@@ -572,10 +538,6 @@ void main() {
         predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.listening,
           'SessionStarted reaches active/listening',
-        ),
-        predicate<SpeakingState>(
-          (s) => s is SpeakingActive && s.phase == ConversationPhase.processing,
-          'greeting triggers processing',
         ),
         predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
@@ -613,10 +575,6 @@ void main() {
               s.micMode == MicMode.pushToTalk &&
               s.phase == ConversationPhase.listening,
           'VAD failure starts session in pushToTalk mode',
-        ),
-        predicate<SpeakingState>(
-          (s) => s is SpeakingActive && s.phase == ConversationPhase.processing,
-          'greeting triggers processing',
         ),
         predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
