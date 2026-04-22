@@ -92,8 +92,12 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
   StreamSubscription<String>? _transcriptSub;
   StreamSubscription<bool>? _vadSub;
   StreamSubscription<bool>? _ttsSub;
-  StreamSubscription<double>? _amplitudeSub; // ← tracked so we can cancel it
+  StreamSubscription<double>? _amplitudeSub;
+  StreamSubscription<double>? _bufferFillSub;
+  StreamSubscription<Either<AppFailure, String>>? _llmSub;
   Timer? _sessionTimer;
+  Timer? _tokenBatchTimer;
+  String _pendingTokenBuffer = "";
 
   Duration _elapsed = Duration.zero;
   Duration _activeSpeaking = Duration.zero;
@@ -145,20 +149,39 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
     on<TimerTick>(_onTimerTick);
     on<VoiceActivityChanged>(_onVoiceActivityChanged);
     on<TranscriptReceived>(_onTranscriptReceived);
+    on<PartialTranscriptReceived>(_onPartialTranscriptReceived);
     on<LlmTokenReceived>(_onLlmTokenReceived);
     on<LlmResponseComplete>(_onLlmResponseComplete);
     on<LlmError>(_onLlmError);
     on<TtsFinished>(_onTtsFinished);
     on<TtsStarted>(_onTtsStarted);
     on<AmplitudeChanged>(_onAmplitudeChanged);
+    on<BufferFillChanged>(_onBufferFillChanged);
+    on<_UpdateBatchUi>(_onUpdateBatchUi);
 
-    // Dispatch amplitude changes as events rather than calling emit() directly.
-    // flutter_bloc ^9.x forbids emit() outside an event handler — calling it
-    // from a raw stream subscription throws at runtime. Using add() routes
-    // every amplitude update through the normal handler pipeline.
+    // Dispatch amplitude and buffer fill changes as events rather than calling
+    // emit() directly. flutter_bloc ^9.x forbids emit() outside an event
+    // handler — calling it from a raw stream subscription throws at runtime.
     _amplitudeSub = _stt.amplitudeStream.listen((amp) {
       if (!isClosed) add(AmplitudeChanged(amp));
     });
+
+    _bufferFillSub = _stt.bufferFillStream.listen((percent) {
+      if (!isClosed) add(BufferFillChanged(percent));
+    });
+  }
+
+  // ── Buffer Fill ──────────────────────────────────────────────────────────
+
+  /// Handles buffer fill updates from the STT datasource (PTT mode).
+  void _onBufferFillChanged(
+    BufferFillChanged event,
+    Emitter<SpeakingState> emit,
+  ) {
+    final current = state;
+    if (current is SpeakingActive) {
+      emit(current.copyWith(bufferFillPercentage: event.percent));
+    }
   }
 
   // ── Amplitude ────────────────────────────────────────────────────────────
@@ -221,7 +244,18 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
       return;
     }
 
-    final ttsResult = await _tts.initialize();
+    // ── Concurrent Initialization ───────────────────────
+    // Initialize TTS, STT, and VAD in parallel to reduce startup latency.
+    final results = await Future.wait([
+      _tts.initialize(),
+      _stt.initialize(),
+      _vad.initialize(),
+    ]);
+
+    final ttsResult = results[0];
+    final sttResult = results[1];
+    final vadResult = results[2];
+
     if (ttsResult.isLeft()) {
       emit(
         SpeakingState.error(message: ttsResult.getLeft().toNullable()!.message),
@@ -229,7 +263,6 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
       return;
     }
 
-    final sttResult = await _stt.initialize();
     if (sttResult.isLeft()) {
       emit(
         SpeakingState.error(message: sttResult.getLeft().toNullable()!.message),
@@ -238,7 +271,6 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
     }
 
     // VAD init failing is non-fatal — it just forces PTT mode.
-    final vadResult = await _vad.initialize();
     final micMode = vadResult.isRight() ? MicMode.alwaysOn : MicMode.pushToTalk;
 
     _sessionTimer = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -251,6 +283,10 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
       onError: (Object error, StackTrace stackTrace) {
         debugPrint("[STT Stream] Non-fatal error: $error\n$stackTrace");
       },
+    );
+
+    _stt.partialTranscriptStream.listen(
+      (text) => add(PartialTranscriptReceived(text)),
     );
 
     _vadSub = _vad.voiceActivityStream.listen(
@@ -395,6 +431,23 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
     _processUserUtterance(text, emit);
   }
 
+  /// Handles intermediate partial transcripts from the STT datasource.
+  ///
+  /// Updates [SpeakingActive.partialUserTranscript] to provide immediate
+  /// visual feedback while the user is still speaking.
+  void _onPartialTranscriptReceived(
+    PartialTranscriptReceived event,
+    Emitter<SpeakingState> emit,
+  ) {
+    final current = state;
+    if (current is! SpeakingActive) return;
+
+    // Only update partials while in listening phase to avoid noise
+    if (current.phase != ConversationPhase.listening) return;
+
+    emit(current.copyWith(partialUserTranscript: event.text.trim()));
+  }
+
   /// Processes a validated user utterance.
   ///
   /// 1. Adds the message to [_fullTranscript] and [_history] (with 8-message cap)
@@ -443,10 +496,16 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
   ///   exceptions, null dereferences, parsing failures that bypass [Either].
   /// * Tier 3 (fatal): Handled by [_onLlmError] — both LLM providers down.
   void _streamLlmResponse() {
+    // Cancel any existing LLM stream before starting a new one
+    // to prevent overlapping responses and memory leaks.
+    _llmSub?.cancel();
+    _tokenBatchTimer?.cancel();
+    _pendingTokenBuffer = "";
+
     // Warm up TTS while LLM is generating to overlap initialization
     unawaited(_tts.warmUp());
-    
-    _llm
+
+    _llmSub = _llm
         .streamResponse(
           messages: List.from(_history),
           systemPrompt: LuciaPrompt.build(_userCefrLevel),
@@ -470,7 +529,6 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
           },
         );
   }
-
   // ── LLM token streaming ───────────────────────────────────────────────────
 
   /// Handles incoming LLM tokens.
@@ -494,20 +552,10 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
     final current = state;
     if (current is! SpeakingActive) return;
 
-    final newBuffer = current.currentLuciaBuffer + event.token;
-    final updatedTranscript = _upsertLuciaMessage(
-      current.transcript,
-      newBuffer,
-    );
+    final newBuffer = _pendingTokenBuffer + event.token;
+    _pendingTokenBuffer = newBuffer;
 
-    emit(
-      current.copyWith(
-        transcript: updatedTranscript,
-        currentLuciaBuffer: newBuffer,
-        phase: ConversationPhase.processing,
-      ),
-    );
-
+    // Trigger TTS immediately on sentence boundary (low latency)
     String unspoken = newBuffer.substring(_ttsSpokenLength);
     int boundary;
     while ((boundary = _findFirstSentenceBoundary(unspoken)) != -1) {
@@ -518,6 +566,36 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
         _tts.speak(sentence);
       }
     }
+
+    // Batch UI updates (10Hz) to reduce rebuild pressure
+    if (_tokenBatchTimer == null || !_tokenBatchTimer!.isActive) {
+      _tokenBatchTimer = Timer(const Duration(milliseconds: 100), () {
+        if (!isClosed && state is SpeakingActive) {
+          final activeState = state as SpeakingActive;
+          final updatedTranscript = _upsertLuciaMessage(
+            activeState.transcript,
+            _pendingTokenBuffer,
+          );
+          add(_UpdateBatchUi(updatedTranscript, _pendingTokenBuffer));
+        }
+      });
+    }
+  }
+
+  void _onUpdateBatchUi(
+    _UpdateBatchUi event,
+    Emitter<SpeakingState> emit,
+  ) {
+    final current = state;
+    if (current is! SpeakingActive) return;
+
+    emit(
+      current.copyWith(
+        transcript: event.transcript,
+        currentLuciaBuffer: event.buffer,
+        phase: ConversationPhase.processing,
+      ),
+    );
   }
 
   /// Handles LLM stream completion.
@@ -535,29 +613,37 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
     LlmResponseComplete event,
     Emitter<SpeakingState> emit,
   ) {
+    _tokenBatchTimer?.cancel();
     final current = state;
     if (current is! SpeakingActive) return;
 
-    final fullResponse = current.currentLuciaBuffer.trim();
+    // Flush any remaining tokens to UI
+    final finalBuffer = _pendingTokenBuffer;
+    final finalTranscript = _upsertLuciaMessage(
+      current.transcript,
+      finalBuffer,
+    );
 
-    if (fullResponse.isNotEmpty) {
-      final message = assistantMessage(fullResponse);
+    if (finalBuffer.isNotEmpty) {
+      final message = assistantMessage(finalBuffer);
       _fullTranscript.add(message);
       _history.add(message);
       if (_history.length > 8) _history.removeAt(0);
 
-      final spokenUpTo = _ttsSpokenLength.clamp(0, fullResponse.length);
-      final remaining = fullResponse.substring(spokenUpTo).trim();
+      final spokenUpTo = _ttsSpokenLength.clamp(0, finalBuffer.length);
+      final remaining = finalBuffer.substring(spokenUpTo).trim();
       if (remaining.isNotEmpty) {
         _tts.speak(remaining);
       }
     }
 
     _ttsSpokenLength = 0;
+    _pendingTokenBuffer = "";
 
-    if (fullResponse.isEmpty) {
+    if (finalBuffer.isEmpty) {
       emit(
         current.copyWith(
+          transcript: finalTranscript,
           currentLuciaBuffer: "",
           phase: ConversationPhase.listening,
         ),
@@ -565,6 +651,7 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
     } else {
       emit(
         current.copyWith(
+          transcript: finalTranscript,
           currentLuciaBuffer: "",
           phase: ConversationPhase.speaking,
         ),
@@ -875,10 +962,13 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
   @override
   Future<void> close() async {
     _sessionTimer?.cancel();
+    _tokenBatchTimer?.cancel();
     await _amplitudeSub?.cancel();
+    await _bufferFillSub?.cancel();
     await _transcriptSub?.cancel();
     await _vadSub?.cancel();
     await _ttsSub?.cancel();
+    await _llmSub?.cancel();
     await _tts.stop();
     await _vad.stopMonitoring();
     return super.close();

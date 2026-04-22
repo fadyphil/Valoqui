@@ -199,9 +199,26 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
           final message = messages[index];
           final isLastLucia =
               index == messages.length - 1 && message.isAssistant;
+
+          if (isLastLucia && isLuciaStreaming) {
+            // ── BlocSelector for Scoped Rebuilds ───────────────────────
+            // We use a BlocSelector to listen strictly to the currentLuciaBuffer.
+            // This ensures that as each tiny token arrives (high frequency),
+            // ONLY this single text bubble rebuilds, not the whole ListView.
+            return BlocSelector<SpeakingBloc, SpeakingState, String>(
+              selector: (state) => (state as SpeakingActive).currentLuciaBuffer,
+              builder: (context, buffer) {
+                return TranscriptBubble(
+                  message: assistantMessage(buffer),
+                  isStreaming: true,
+                );
+              },
+            );
+          }
+
           return TranscriptBubble(
             message: message,
-            isStreaming: isLastLucia && isLuciaStreaming,
+            isStreaming: false,
           );
         }
         if (hasPartial && index == messages.length) {
@@ -234,7 +251,8 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
         if (prev is! SpeakingActive) return true;
         return prev.amplitude != curr.amplitude ||
             prev.phase != curr.phase ||
-            prev.micMode != curr.micMode;
+            prev.micMode != curr.micMode ||
+            prev.bufferFillPercentage != curr.bufferFillPercentage;
       },
       builder: (context, state) {
         // Guard: if state is not SpeakingActive (e.g. brief transition to
@@ -260,6 +278,7 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
                   MicButton(
                     phase: state.phase,
                     micMode: state.micMode,
+                    bufferFillPercentage: state.bufferFillPercentage,
                     onPressDown: () => bloc.add(const MicPressed()),
                     onPressUp: () => bloc.add(const MicReleased()),
                   ),
