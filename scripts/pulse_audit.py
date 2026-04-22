@@ -3,12 +3,11 @@ import re
 import yaml
 from datetime import datetime
 
-# Valoqui Pulse Auditor
+# Valoqui Pulse Auditor v2
 # A centralized tool to ensure structural, documentation, and asset integrity.
+# Uses Macro Injection (SSOT) to keep documentation synchronized across all files.
 
 ADR_DIR = "docs/decisions"
-ADR_README = os.path.join(ADR_DIR, "README.md")
-ARCH_FILE = "docs/ARCHITECTURE.md"
 CHANGELOG = "CHANGELOG.md"
 PUBSPEC = "pubspec.yaml"
 SERVICE_LOCATOR = "lib/core/di/service_locator.dart"
@@ -33,34 +32,69 @@ def get_adrs():
             adrs.append({"id": adr_id, "filename": filename, "title": title, "status": status, "date": date, "summary": summary})
     return adrs
 
-def update_adr_readme(adrs):
-    if not os.path.exists(ADR_README): return
-    with open(ADR_README, "r", encoding="utf-8") as f:
-        content = f.read()
-    table_header = "| ADR | Title | Status |"
-    table_sep = "| ----- | ------- | -------- |"
-    table_body = [f"| [ADR-000](ADR-000-template.md) | Template | — |"]
+def generate_adr_index(adrs):
+    table = "| ADR | Title | Status |\n| ----- | ------- | -------- |\n| [ADR-000](ADR-000-template.md) | Template | — |\n"
     for adr in adrs:
-        table_body.append(f"| [{adr['id']}]({adr['filename']}) | {adr['title']} | {adr['status']} |")
-    new_table = "\n".join([table_header, table_sep] + table_body)
-    index_pattern = r"(## Index\s*)\n(\| ADR \| Title \| Status \|\n\| ----- \| ------- \| -------- \|\n(?:\| .* \|\n)*(\n)*)*"
-    updated_content = re.sub(index_pattern, f"## Index\n\n{new_table}\n", content, flags=re.MULTILINE)
-    with open(ADR_README, "w", encoding="utf-8") as f:
-        f.write(updated_content)
-    print(f"✅ Doc Linker: Updated {ADR_README}")
+        table += f"| [{adr['id']}]({adr['filename']}) | {adr['title']} | {adr['status']} |\n"
+    return table
 
-def update_architecture_md(adrs):
-    if not os.path.exists(ARCH_FILE): return
-    with open(ARCH_FILE, "r", encoding="utf-8") as f:
-        content = f.read()
+def generate_adr_list(adrs):
+    list_text = ""
     for adr in adrs:
-        pattern = rf"\*\*(.*) \({adr['id']}\)\*\*"
-        content = re.sub(pattern, f"**{adr['title']} ({adr['id']})**", content)
-        pattern_desc = rf"- \*\*{adr['title']} \({adr['id']}\):\*\* (.*)"
-        content = re.sub(pattern_desc, f"- **{adr['title']} ({adr['id']}):** {adr['summary']}", content)
-    with open(ARCH_FILE, "w", encoding="utf-8") as f:
-        f.write(content)
-    print(f"✅ Doc Linker: Updated {ARCH_FILE}")
+        list_text += f"  {adr['id']}  {adr['title']}\n"
+    return list_text
+
+def apply_macros(content, adrs):
+    original = content
+    
+    # 1. ADR_INDEX Macro
+    index_pattern = r"<!-- PULSE:ADR_INDEX -->.*?<!-- /PULSE:ADR_INDEX -->"
+    index_replacement = f"<!-- PULSE:ADR_INDEX -->\n{generate_adr_index(adrs)}<!-- /PULSE:ADR_INDEX -->"
+    content = re.sub(index_pattern, index_replacement, content, flags=re.DOTALL)
+    
+    # 2. ADR_LIST Macro
+    list_pattern = r"<!-- PULSE:ADR_LIST -->.*?<!-- /PULSE:ADR_LIST -->"
+    list_replacement = f"<!-- PULSE:ADR_LIST -->\n{generate_adr_list(adrs)}<!-- /PULSE:ADR_LIST -->"
+    content = re.sub(list_pattern, list_replacement, content, flags=re.DOTALL)
+    
+    # 3. ADR_INLINE Macros: <!-- PULSE:ADR_INLINE:ADR-XXX -->
+    inline_pattern = r"<!-- PULSE:ADR_INLINE:(ADR-\d+) -->.*?<!-- /PULSE:ADR_INLINE:\1 -->"
+    
+    def inline_replacer(match):
+        adr_id = match.group(1)
+        adr = next((a for a in adrs if a['id'] == adr_id), None)
+        if adr:
+            return f"<!-- PULSE:ADR_INLINE:{adr_id} -->- **{adr['title']} ({adr['id']}):** {adr['summary']}<!-- /PULSE:ADR_INLINE:{adr_id} -->"
+        return match.group(0) # Keep original if not found
+        
+    content = re.sub(inline_pattern, inline_replacer, content, flags=re.DOTALL)
+    
+    return content, content != original
+
+def audit_documentation(adrs):
+    print("🔍 Auditing Documentation Macros...")
+    updated_files = []
+    for root, _, files in os.walk("."):
+        # Skip noisy directories
+        if any(x in root for x in [".git", ".dart_tool", "build", ".idea", ".vscode"]):
+            continue
+        for file in files:
+            if file.endswith(".md"):
+                path = os.path.join(root, file)
+                with open(path, "r", encoding="utf-8") as f:
+                    content = f.read()
+                
+                new_content, changed = apply_macros(content, adrs)
+                if changed:
+                    with open(path, "w", encoding="utf-8") as f:
+                        f.write(new_content)
+                    updated_files.append(path)
+    
+    if updated_files:
+        for f in updated_files:
+            print(f"✅ Doc Linker: Synchronized macros in {f}")
+    else:
+        print("✨ Doc Integrity Pass: All macros are up to date.")
 
 def audit_changelog(adrs):
     if not os.path.exists(CHANGELOG): return
@@ -141,8 +175,7 @@ def check_architecture_boundaries():
 
 if __name__ == "__main__":
     adrs = get_adrs()
-    update_adr_readme(adrs)
-    update_architecture_md(adrs)
+    audit_documentation(adrs)
     audit_changelog(adrs)
     check_asset_integrity()
     check_di_registrations()

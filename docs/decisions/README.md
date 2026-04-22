@@ -12,6 +12,7 @@ components were chosen prevents accidentally undoing deliberate tradeoffs.
 
 ## Index
 
+<!-- PULSE:ADR_INDEX -->
 | ADR | Title | Status |
 | ----- | ------- | -------- |
 | [ADR-000](ADR-000-template.md) | Template | — |
@@ -28,6 +29,7 @@ components were chosen prevents accidentally undoing deliberate tradeoffs.
 | [ADR-011](ADR-011-stt-performance-optimization.md) | STT Performance Optimization Strategy | Proposed |
 | [ADR-012](ADR-012-supertonic-tts-integration.md) | Supertonic TTS Integration Strategy | Proposed |
 | [ADR-013](ADR-013-tts-warmup-optimization.md) | TTS Warm-Up Optimization | Accepted |
+<!-- /PULSE:ADR_INDEX -->
 ---
 
 ## Statuses

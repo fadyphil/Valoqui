@@ -11,6 +11,8 @@ All notable changes to this project will be documented in this file.
   - Updated `SherpaTtsRepository` to delegate warm-up to datasource
   - Modified `SpeakingBloc._streamLlmResponse()` to call `_tts.warmUp()` when LLM streaming begins
   - This overlaps TTS initialization with LLM generation, eliminating 500-2000ms TTS cold start delay
+- Proposed STT Performance Optimization Strategy (ADR-011) using chunked streaming
+- Proposed Supertonic TTS Integration Strategy (ADR-012) for higher-quality on-device voice
 
 ## [Sprint 3] - 2026-04-21
 

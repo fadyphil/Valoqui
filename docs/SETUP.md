@@ -302,16 +302,21 @@ Read these before making changes to the voice pipeline or switching providers.
 
 ```Markdown
 docs/decisions/
-  ADR-001  STT provider (Android SpeechRecognizer — interim)
-  ADR-002  LLM provider (Groq + Gemini fallback)
-  ADR-003  TTS engine (Piper interim → F5-TTS target)
-  ADR-004  State management (BLoC + Freezed + GetIt + fpdart)
-  ADR-005  Clean architecture swap pattern
-  ADR-006  API key storage (Android Keystore)
-  ADR-007  Conversation history (rolling 8-turn window)
-  ADR-008  Sentence-boundary TTS trigger
-  ADR-009  Report generation (single LLM call, structured JSON)
-  ADR-010  Unified audio pipeline (Sprint 3 — replaces ADR-001)
+<!-- PULSE:ADR_LIST -->
+  ADR-001  STT Provider — Android SpeechRecognizer via speech_to_text
+  ADR-002  LLM Provider — Groq LLaMA 3.3 70B with Gemini 2.5 Flash Fallback
+  ADR-003  TTS Engine — On-Device sherpa-onnx Piper (Interim) → F5-TTS ONNX (Target)
+  ADR-004  State Management — BLoC + Freezed + GetIt + fpdart
+  ADR-005  Clean Architecture Swap Pattern — Domain Interfaces for All Voice Components
+  ADR-006  API Key Storage — Android Keystore via flutter_secure_storage
+  ADR-007  Conversation History — Rolling 8-Turn Window
+  ADR-008  Sentence-Boundary TTS Trigger
+  ADR-009  Post-Session Report Generation — Single LLM Call, Structured JSON
+  ADR-010  Unified Audio Pipeline — Deprecate speech_to_text, Single Raw PCM Stream
+  ADR-011  STT Performance Optimization Strategy
+  ADR-012  Supertonic TTS Integration Strategy
+  ADR-013  TTS Warm-Up Optimization
+<!-- /PULSE:ADR_LIST -->
 ```
 
 ---
