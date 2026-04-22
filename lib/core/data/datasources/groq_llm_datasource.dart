@@ -53,42 +53,50 @@ class GroqLlmDatasource {
       // Incomplete lines accumulate here until a newline is received.
       // This handles the case where a chunk boundary splits an SSE line.
       final lineBuffer = StringBuffer();
+      const lineSplitter = LineSplitter();
 
       await for (final chunk in stream) {
         final text = utf8.decode(chunk);
+        lineBuffer.write(text);
 
-        for (final char in text.split("")) {
-          if (char == "\n") {
-            final line = lineBuffer.toString().trim();
-            lineBuffer.clear();
+        final lines = lineSplitter.convert(lineBuffer.toString());
+        
+        // If the chunk doesn't end with a newline, the last line is incomplete.
+        // We keep it in the buffer and only process complete lines.
+        if (!text.endsWith("\n") && lines.isNotEmpty) {
+          lineBuffer.clear();
+          lineBuffer.write(lines.last);
+          lines.removeLast();
+        } else {
+          lineBuffer.clear();
+        }
 
-            if (!line.startsWith("data: ")) continue;
+        for (final line in lines) {
+          final trimmedLine = line.trim();
+          if (!trimmedLine.startsWith("data: ")) continue;
 
-            final data = line.substring(6).trim();
-            if (data == "[DONE]") return;
-            if (data.isEmpty) continue;
+          final data = trimmedLine.substring(6).trim();
+          if (data == "[DONE]") return;
+          if (data.isEmpty) continue;
 
-            try {
-              final json = jsonDecode(data) as Map<String, dynamic>;
+          try {
+            final json = jsonDecode(data) as Map<String, dynamic>;
 
-              // Cast choices explicitly
-              final choices = json['choices'] as List<dynamic>?;
-              if (choices == null || choices.isEmpty) continue;
+            // Cast choices explicitly
+            final choices = json['choices'] as List<dynamic>?;
+            if (choices == null || choices.isEmpty) continue;
 
-              // Cast first choice to Map before nested access
-              final firstChoice = choices[0] as Map<String, dynamic>;
-              final delta = firstChoice['delta'] as Map<String, dynamic>?;
-              if (delta == null) continue;
+            // Cast first choice to Map before nested access
+            final firstChoice = choices[0] as Map<String, dynamic>;
+            final delta = firstChoice['delta'] as Map<String, dynamic>?;
+            if (delta == null) continue;
 
-              final token = delta['content'] as String?;
-              if (token != null && token.isNotEmpty) {
-                yield right(token);
-              }
-            } on Exception catch (_) {
-              // Malformed JSON chunk — skip silently
+            final token = delta['content'] as String?;
+            if (token != null && token.isNotEmpty) {
+              yield right(token);
             }
-          } else {
-            lineBuffer.write(char);
+          } on Exception catch (_) {
+            // Malformed JSON chunk — skip silently
           }
         }
       }

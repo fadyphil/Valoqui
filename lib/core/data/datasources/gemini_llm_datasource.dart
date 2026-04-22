@@ -9,8 +9,8 @@
 // GroqLlmRepository handles the decision of when to call this.
 // This datasource only knows how to call Gemini.
 
-import "dart:async";
 import "dart:convert";
+import "dart:core";
 import "package:dio/dio.dart";
 import "package:flutter/foundation.dart";
 import "package:fpdart/fpdart.dart";
@@ -61,47 +61,54 @@ class GeminiLlmDatasource {
 
       final stream = response.data!.stream;
       final lineBuffer = StringBuffer();
+      const lineSplitter = LineSplitter();
 
       await for (final chunk in stream) {
         final text = utf8.decode(chunk);
+        lineBuffer.write(text);
 
-        for (final char in text.split("")) {
-          if (char == "\n") {
-            final line = lineBuffer.toString().trim();
-            lineBuffer.clear();
+        final lines = lineSplitter.convert(lineBuffer.toString());
 
-            if (!line.startsWith("data: ")) continue;
+        // If the chunk doesn't end with a newline, the last line is incomplete.
+        if (!text.endsWith("\n") && lines.isNotEmpty) {
+          lineBuffer.clear();
+          lineBuffer.write(lines.last);
+          lines.removeLast();
+        } else {
+          lineBuffer.clear();
+        }
 
-            final data = line.substring(6).trim();
-            if (data.isEmpty || data == "[DONE]") continue;
+        for (final line in lines) {
+          final trimmedLine = line.trim();
+          if (!trimmedLine.startsWith("data: ")) continue;
 
-            try {
-              final json = jsonDecode(data) as Map<String, dynamic>;
+          final data = trimmedLine.substring(6).trim();
+          if (data.isEmpty || data == "[DONE]") continue;
 
-              // Cast candidates explicitly
-              final candidates = json["candidates"] as List<dynamic>?;
-              if (candidates == null || candidates.isEmpty) continue;
+          try {
+            final json = jsonDecode(data) as Map<String, dynamic>;
 
-              // Cast the first candidate to Map before accessing nested fields
-              final firstCandidate = candidates[0] as Map<String, dynamic>;
-              final content =
-                  firstCandidate['content'] as Map<String, dynamic>?;
-              if (content == null) continue;
+            // Cast candidates explicitly
+            final candidates = json["candidates"] as List<dynamic>?;
+            if (candidates == null || candidates.isEmpty) continue;
 
-              final parts = content['parts'] as List<dynamic>?;
-              if (parts == null || parts.isEmpty) continue;
+            // Cast the first candidate to Map before accessing nested fields
+            final firstCandidate = candidates[0] as Map<String, dynamic>;
+            final content =
+                firstCandidate['content'] as Map<String, dynamic>?;
+            if (content == null) continue;
 
-              // Cast the first part to Map before accessing 'text'
-              final firstPart = parts[0] as Map<String, dynamic>;
-              final token = firstPart['text'] as String?;
-              if (token != null && token.isNotEmpty) {
-                yield right(token);
-              }
-            } on Exception catch (_) {
-              // Malformed chunk — skip
+            final parts = content['parts'] as List<dynamic>?;
+            if (parts == null || parts.isEmpty) continue;
+
+            // Cast the first part to Map before accessing 'text'
+            final firstPart = parts[0] as Map<String, dynamic>;
+            final token = firstPart['text'] as String?;
+            if (token != null && token.isNotEmpty) {
+              yield right(token);
             }
-          } else {
-            lineBuffer.write(char);
+          } on Exception catch (_) {
+            // Malformed chunk — skip
           }
         }
       }

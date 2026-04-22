@@ -25,6 +25,7 @@ class GroqLlmRepository implements LlmRepository {
   final GroqLlmDatasource _groq;
   final GeminiLlmDatasource _gemini;
   final KeyStorageRepository _keyStorage;
+  String? _cachedGeminiKey;
 
   GroqLlmRepository({
     required GroqLlmDatasource groq,
@@ -41,7 +42,7 @@ class GroqLlmRepository implements LlmRepository {
     required String systemPrompt,
     int maxTokens = 120,
   }) async* {
-    bool hitRateLimit = false;
+    bool hitFailure = false;
 
     // Attempt Groq first
     await for (final event in _groq.streamResponse(
@@ -49,23 +50,28 @@ class GroqLlmRepository implements LlmRepository {
       systemPrompt: systemPrompt,
       maxTokens: maxTokens,
     )) {
-      final isRateLimit = event.fold(
-        (f) => f.maybeWhen(rateLimitFailure: () => true, orElse: () => false),
+      final shouldFallback = event.fold(
+        (f) => f.maybeWhen(
+          rateLimitFailure: () => true,
+          llmFailure: (_) => true, // Fallback on server errors/timeouts
+          networkFailure: (_) => true, // Fallback on connection issues
+          orElse: () => false,
+        ),
         (_) => false,
       );
 
-      if (isRateLimit) {
-        hitRateLimit = true;
+      if (shouldFallback) {
+        hitFailure = true;
         break; // Exit Groq stream — fall through to Gemini below
       }
 
       yield event;
     }
 
-    if (!hitRateLimit) return; // Groq completed successfully
+    if (!hitFailure) return; // Groq completed successfully
 
-    // ── Groq hit rate limit — try Gemini ─────────────────
-    debugPrint("[LLM] Groq rate limited — checking for Gemini fallback");
+    // ── Groq failed — try Gemini ─────────────────
+    debugPrint("[LLM] Groq failed — checking for Gemini fallback");
 
     final hasGemini = await _hasGeminiKey();
     if (!hasGemini) {
@@ -106,8 +112,11 @@ class GroqLlmRepository implements LlmRepository {
   // ── Helpers ───────────────────────────────────────────
 
   Future<bool> _hasGeminiKey() async {
+    if (_cachedGeminiKey != null && _cachedGeminiKey!.isNotEmpty) return true;
+
     final result = await _keyStorage.getGeminiKey();
-    return result.fold((_) => false, (key) => key != null && key.isNotEmpty);
+    _cachedGeminiKey = result.fold((_) => "", (key) => key ?? "");
+    return _cachedGeminiKey!.isNotEmpty;
   }
 
   String _buildReportPrompt(String transcript, String userLevel) =>
