@@ -318,6 +318,7 @@ docs/decisions/
   ADR-013  TTS Warm-Up Optimization
   ADR-014  UI Rebuild Optimization (Token Batching)
   ADR-015  Isolate Backpressure & Buffer Safety
+  ADR-016  TTS Background Isolate and Pipelining
 <!-- /PULSE:ADR_LIST -->
 ```
 

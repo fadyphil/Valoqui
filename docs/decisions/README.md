@@ -31,6 +31,7 @@ components were chosen prevents accidentally undoing deliberate tradeoffs.
 | [ADR-013](ADR-013-tts-warmup-optimization.md) | TTS Warm-Up Optimization | Accepted |
 | [ADR-014](ADR-014-ui-rebuild-optimization.md) | UI Rebuild Optimization (Token Batching) | Accepted |
 | [ADR-015](ADR-015-stt-backpressure-protection.md) | Isolate Backpressure & Buffer Safety | Accepted |
+| [ADR-016](ADR-016-tts-background-isolate-pipeline.md) | TTS Background Isolate and Pipelining | Accepted |
 <!-- /PULSE:ADR_INDEX -->
 ---
 
