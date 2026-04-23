@@ -112,7 +112,8 @@ Before preparing any commit or claiming a task is complete, the AI agent MUST au
 1. **Format Code:** Run `dart format .` to ensure CI compliance.
 2. **Lint Check:** Run `flutter analyze` and ensure zero errors/warnings.
 3. **Update Changelog:** Surgically add implementation notes to `CHANGELOG.md`, ensuring all new features and ADRs (by ID) are mentioned.
-4. **Verify Integrity:** Run `python3 scripts/pulse_audit.py` and ensure a "Pass" message is received.
+4. **Update Testing/Arch Docs:** Revise `docs/testing/` and `docs/ARCHITECTURE.md` against the codebase to ensure all new behaviors, testing strategies, and structural changes are accurately documented and true to the actual implementation.
+5. **Verify Integrity:** Run `python3 scripts/pulse_audit.py` and ensure a "Pass" message is received.
 
 ### 5. Documentation Strategy (The "Linked Brain" v2)
 
