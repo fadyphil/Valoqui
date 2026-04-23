@@ -92,6 +92,13 @@ The most complex part of the app is the `SpeakingBloc`. It manages a 4-stage pip
 <!-- PULSE:ADR_INLINE:ADR-013 -->- **TTS Warm-Up Optimization (ADR-013):** No summary provided.<!-- /PULSE:ADR_INLINE:ADR-013 -->
 <!-- PULSE:ADR_INLINE:ADR-008 -->- **Sentence-Boundary TTS Trigger (ADR-008):** No summary provided.<!-- /PULSE:ADR_INLINE:ADR-008 -->
 
+### Performance Analysis & Benchmarks
+
+To ensure the audio pipeline remains responsive on low-to-mid-range hardware, we maintain detailed performance logs and mathematical models:
+
+- **[STT Performance Analysis Report](architecture/ARCH-STT-PERFORMANCE-ANALYSIS.md):** A mathematical breakdown of Real-Time Factor (RTF) and physical bottlenecks on Snapdragon 680 hardware.
+- **[Market Report: Future STT Alternatives](architecture/ARCH-STT-FUTURE-ALTERNATIVES.md):** A comparison of bleeding-edge models (SenseVoice, Zipformer, Moonshine v2) for next-generation on-device ASR.
+
 ---
 
 ## 5. Security & BYOK (See ADR-006)

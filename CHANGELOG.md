@@ -22,6 +22,11 @@ All notable changes to this project will be documented in this file.
   - Implemented `SherpaTtsDatasource.warmUp()` with silent synthesis pass
   - Updated `SherpaTtsRepository` to delegate warm-up to datasource
   - Modified `SpeakingBloc._streamLlmResponse()` to call `_tts.warmUp()` when LLM streaming begins
+
+### Documentation & Research
+
+- Added **STT Performance Analysis Report** (docs/architecture/ARCH-STT-PERFORMANCE-ANALYSIS.md) documenting the mathematical proof of physical compute bottlenecks on mid-range hardware (Snapdragon 680).
+- Added **On-Device STT Market Report & Future Alternatives** (docs/architecture/ARCH-STT-FUTURE-ALTERNATIVES.md) comparing bleeding-edge models like SenseVoice Small and Streaming Zipformer for next-gen low-latency UX.
 - Proposed Supertonic TTS Integration Strategy (ADR-012) for higher-quality on-device voice
 - Added PTT buffer limit visualization (ADR-015)
   - `bufferFillPercentage` added to `SpeakingActive` state.

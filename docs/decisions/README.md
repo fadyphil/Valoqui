@@ -36,6 +36,15 @@ components were chosen prevents accidentally undoing deliberate tradeoffs.
 <!-- /PULSE:ADR_INDEX -->
 ---
 
+## Performance & Research Reports
+
+Beyond architectural decisions, we maintain high-fidelity reports on core pipeline performance:
+
+* **[STT Performance Analysis Report](../architecture/ARCH-STT-PERFORMANCE-ANALYSIS.md)** (Snapdragon 680 Math)
+* **[Market Report: Future STT Alternatives](../architecture/ARCH-STT-FUTURE-ALTERNATIVES.md)** (April 2026 Edition)
+
+---
+
 ## Statuses
 
 | Status | Meaning |
