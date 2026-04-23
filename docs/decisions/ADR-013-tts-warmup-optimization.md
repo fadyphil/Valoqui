@@ -5,6 +5,10 @@
 **Sprint:** Sprint 2  
 **Decider:** Fady  
 
+## Summary
+
+Pre-initialize the TTS engine (silent synthesis pass) as soon as the LLM begins streaming tokens to eliminate the 500-2000ms "cold start" delay during the first spoken sentence.
+
 ---
 
 ## Context

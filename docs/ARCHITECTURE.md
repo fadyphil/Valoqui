@@ -86,11 +86,11 @@ The most complex part of the app is the `SpeakingBloc`. It manages a 4-stage pip
 
 ### Performance Optimizations
 
-<!-- PULSE:ADR_INLINE:ADR-011 -->- **STT Performance Optimization Strategy (ADR-011):** No summary provided.<!-- /PULSE:ADR_INLINE:ADR-011 -->
-<!-- PULSE:ADR_INLINE:ADR-014 -->- **UI Rebuild Optimization (Token Batching) (ADR-014):** No summary provided.<!-- /PULSE:ADR_INLINE:ADR-014 -->
-<!-- PULSE:ADR_INLINE:ADR-015 -->- **Isolate Backpressure & Buffer Safety (ADR-015):** No summary provided.<!-- /PULSE:ADR_INLINE:ADR-015 -->
-<!-- PULSE:ADR_INLINE:ADR-013 -->- **TTS Warm-Up Optimization (ADR-013):** No summary provided.<!-- /PULSE:ADR_INLINE:ADR-013 -->
-<!-- PULSE:ADR_INLINE:ADR-008 -->- **Sentence-Boundary TTS Trigger (ADR-008):** No summary provided.<!-- /PULSE:ADR_INLINE:ADR-008 -->
+<!-- PULSE:ADR_INLINE:ADR-011 -->- **STT Performance Optimization Strategy (ADR-011):** Implement chunked streaming (1.5s chunks, 300ms overlap) with sherpa-onnx to show partial transcripts within 1.5s instead of waiting for full utterance. Research Whisper.cpp integration as a swappable backend for future accuracy improvement.<!-- /PULSE:ADR_INLINE:ADR-011 -->
+<!-- PULSE:ADR_INLINE:ADR-014 -->- **UI Rebuild Optimization (Token Batching) (ADR-014):** Implement UI throttling (10Hz) and scoped rebuilds using `BlocSelector` to reduce CPU usage and eliminate jank during high-frequency token streaming from the LLM.<!-- /PULSE:ADR_INLINE:ADR-014 -->
+<!-- PULSE:ADR_INLINE:ADR-015 -->- **Isolate Backpressure & Buffer Safety (ADR-015):** Implement isolate queue bounding and load shedding to prevent memory leaks and OOM crashes during heavy STT decoding.<!-- /PULSE:ADR_INLINE:ADR-015 -->
+<!-- PULSE:ADR_INLINE:ADR-013 -->- **TTS Warm-Up Optimization (ADR-013):** Pre-initialize the TTS engine (silent synthesis pass) as soon as the LLM begins streaming tokens to eliminate the 500-2000ms "cold start" delay during the first spoken sentence.<!-- /PULSE:ADR_INLINE:ADR-013 -->
+<!-- PULSE:ADR_INLINE:ADR-008 -->- **Sentence-Boundary TTS Trigger (ADR-008):** Trigger TTS synthesis and playback as soon as a sentence boundary (`.`, `?`, `!`) is detected in the LLM token stream, rather than waiting for the entire response to complete, reducing perceived latency by 40-60%.<!-- /PULSE:ADR_INLINE:ADR-008 -->
 
 ### Performance Analysis & Benchmarks
 

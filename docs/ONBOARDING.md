@@ -73,7 +73,7 @@ lib/
 The heart of Valoqui is the `SpeakingBloc` (`lib/features/speaking/bloc/speaking_bloc.dart`). This is how a conversation flows:
 
 1. **Listen:** The user speaks. `SherpaVadDatasource` monitors the mic. When silence is detected, it emits the audio buffer.
-2. **Transcribe:** `GroqSttDatasource` takes the audio buffer and sends it to Groq Whisper. It returns a transcribed string.
+2. **Transcribe:** `SherpaSttDatasource` takes the audio buffer and decodes it on-device using the Moonshine model. It returns a transcribed string.
 3. **Think:** `LlmRepository` sends the transcript to Groq LLaMA 3.3. **Crucially**, it streams the response back token by token.
 4. **Speak (Early Trigger):** `SpeakingBloc` buffers the tokens. As soon as it sees a sentence boundary (`.`, `?`, `!`), it sends that sentence to `SherpaTtsDatasource` (VITS/Piper) to speak immediately, while the LLM is still generating the rest!
 
@@ -90,3 +90,4 @@ Ready to write code?
 4. **Run Tests:** `flutter test`
 
 Welcome to the team! You are now a Valoqui hero. 🦸‍♂️🦸‍♀️
+��🦸‍♀️

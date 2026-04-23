@@ -1,5 +1,12 @@
 # Lingua — Product Requirements Document (PRD)
 
+> **⚠️ IMPLEMENTATION STATUS NOTE (April 2026):**
+> While this PRD serves as the foundational planning document, several technical components have been updated during the build phase for better performance and reliability:
+> - **STT:** Migrated from Groq Whisper to on-device **Sherpa-ONNX (Moonshine)** for lower latency and offline capability.
+> - **LLM Fallback:** Using **Gemini 2.0 Flash** (not 2.5).
+> - **State Management:** Events use **Equatable** instead of Freezed for architectural simplicity.
+> - **Interceptors:** Only `api_key` and `logging` interceptors are currently implemented.
+
 **Version:** 0.3 — Architecture Finalized  
 **Status:** Locked for MVP Build  
 **Last Updated:** March 2026  

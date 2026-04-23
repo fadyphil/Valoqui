@@ -6,6 +6,10 @@
 **Author:** Development Team  
 **Replaces:** Partially supersedes ADR-001 (Android SpeechRecognizer) and ADR-010 (Unified Audio Pipeline) in scope of performance optimization
 
+## Summary
+
+Implement chunked streaming (1.5s chunks, 300ms overlap) with sherpa-onnx to show partial transcripts within 1.5s instead of waiting for full utterance. Research Whisper.cpp integration as a swappable backend for future accuracy improvement.
+
 ## Context
 
 The current Sprint 2 implementation uses `SherpaSttDatasource` with on-device sherpa-onnx (Moonshine model) for speech-to-text transcription. User feedback and performance testing have identified critical latency issues (Fixes #7):

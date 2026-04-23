@@ -4,6 +4,10 @@
 **Status:** Accepted  
 **Author:** Development Team  
 
+## Summary
+
+Implement UI throttling (10Hz) and scoped rebuilds using `BlocSelector` to reduce CPU usage and eliminate jank during high-frequency token streaming from the LLM.
+
 ## Context
 
 LLM response tokens stream in at high frequency (50-100Hz). Emitting a new BLoC state for every token caused the entire `SpeakingScreen` to rebuild constantly, leading to UI jank and high CPU usage.

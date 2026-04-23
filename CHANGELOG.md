@@ -25,6 +25,13 @@ All notable changes to this project will be documented in this file.
 
 ### Documentation & Research
 
+- **Documentation Overhaul & Synchronization:**
+  - Reconciled all documentation (README, ONBOARDING, SETUP, PRD) with the current codebase architecture.
+  - Updated tech stack references to accurately reflect the use of **Sherpa-ONNX (Moonshine)** for STT and **Gemini 2.0 Flash** for LLM fallback.
+  - Corrected BLoC architectural descriptions to clarify the use of `Equatable` for events and `Freezed` for states.
+  - Resolved "No summary provided" macro issues in `docs/ARCHITECTURE.md` by adding `## Summary` sections to historical ADRs.
+  - Cleaned up Sprint 3 planning documentation by renaming `SPRINT_3_SUMMARY-2nd-i-guess.md` to `SPRINT_3_SUMMARY.md` and deleting redundant files.
+  - Fixed duplicate "Pre-Pull Request Checklist" in `CONTRIBUTING.md` and updated the formatting command in `docs/CODING_STANDARDS.md`.
 - Added **STT Performance Analysis Report** (docs/architecture/ARCH-STT-PERFORMANCE-ANALYSIS.md) documenting the mathematical proof of physical compute bottlenecks on mid-range hardware (Snapdragon 680).
 - Added **On-Device STT Market Report & Future Alternatives** (docs/architecture/ARCH-STT-FUTURE-ALTERNATIVES.md) comparing bleeding-edge models like SenseVoice Small and Streaming Zipformer for next-gen low-latency UX.
 - Proposed Supertonic TTS Integration Strategy (ADR-012) for higher-quality on-device voice

@@ -75,8 +75,8 @@
 **References:**
 
 - Full sprint plan: `docs/planning/SPRINT_3_SUMMARY.md`
-- ADR-011: `docs/decisions/ADR-011-supertonic-tts-integration.md`
-- ADR-012: `docs/decisions/ADR-012-stt-performance-overhaul.md`
+- ADR-011: `docs/decisions/ADR-011-stt-performance-optimization.md`
+- ADR-012: `docs/decisions/ADR-012-supertonic-tts-integration.md`
 - Architecture: `docs/architecture/ARCH-101-chunked-audio-streaming.md`
 - Issues: `.github/ISSUES/sprint-3-*.md`
 

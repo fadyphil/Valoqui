@@ -3,12 +3,15 @@
 **Date:** 2026-03
 **Status:** Accepted
 **Sprint:** Sprint 2
-**Decider:** Fady
+**Decider:** Fady  
+
+## Summary
+
+Trigger TTS synthesis and playback as soon as a sentence boundary (`.`, `?`, `!`) is detected in the LLM token stream, rather than waiting for the entire response to complete, reducing perceived latency by 40-60%.
 
 ---
 
 ## Context
-
 Waiting for the full LLM response before starting TTS playback means the
 user waits for the entire reply to generate before hearing anything. At Groq's
 ~280 tokens/second, a 3-sentence reply (~60 tokens) takes ~215ms to complete

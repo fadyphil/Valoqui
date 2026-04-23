@@ -4,6 +4,10 @@
 **Status:** Accepted  
 **Author:** Development Team  
 
+## Summary
+
+Implement isolate queue bounding and load shedding to prevent memory leaks and OOM crashes during heavy STT decoding.
+
 ## Context
 
 The STT pipeline uses a background isolate for Moonshine decoding. Unbounded requests could lead to OOM crashes or massive latency spikes if the isolate falls behind real-time speech.

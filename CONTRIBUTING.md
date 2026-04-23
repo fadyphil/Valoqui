@@ -69,18 +69,7 @@ We use [Conventional Commits](https://www.conventionalcommits.org/).
 
 Before submitting a PR, ensure you have done the following:
 
-- [ ] Ran `flutter format lib/ test/`.
-- [ ] Ran `flutter analyze` and resolved all warnings.
-- [ ] Ran `flutter test` and ensured all tests pass.
-- [ ] Regenerated Freezed files if applicable.
-- [ ] Updated Documentation (ADRs, Setup) if your PR changes architecture or setup steps.
-- [ ] Ensured no API Keys, secrets, or `.env` files are tracked in git.
-
----
-
-We look forward to reviewing your PR! 🚀
-[ ] Ran `flutter format lib/ test/`.
-
+- [ ] Ran `dart format .`.
 - [ ] Ran `flutter analyze` and resolved all warnings.
 - [ ] Ran `flutter test` and ensured all tests pass.
 - [ ] Regenerated Freezed files if applicable.

@@ -81,8 +81,12 @@ def audit_documentation(adrs):
         for file in files:
             if file.endswith(".md"):
                 path = os.path.join(root, file)
-                with open(path, "r", encoding="utf-8") as f:
-                    content = f.read()
+                try:
+                    with open(path, "r", encoding="utf-8") as f:
+                        content = f.read()
+                except UnicodeDecodeError:
+                    # Skip files that aren't valid UTF-8 (like binary docs)
+                    continue
                 
                 new_content, changed = apply_macros(content, adrs)
                 if changed:

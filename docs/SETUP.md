@@ -332,3 +332,4 @@ docs/decisions/
 | Sprint 1 | Firebase, auth, BYOK onboarding, design system, navigation | ✅ Complete |
 | Sprint 2 | Voice pipeline, conversation loop, report card, XP | ✅ Complete |
 | Sprint 3 | Unified audio pipeline (ARCH-101), F5-TTS ONNX, polish | 🔄 In progress |
+ress |

@@ -49,7 +49,7 @@ Do not commit broken generated code.
 Before opening a PR, always run:
 
 ```bash
-flutter format lib/ test/
+dart format .
 flutter analyze
 ```
 
