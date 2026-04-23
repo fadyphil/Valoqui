@@ -48,7 +48,7 @@ If we want to swap our Text-to-Speech engine from Piper to F5-TTS, we only write
 We use a highly structured approach to state and errors:
 
 - **BLoC (`flutter_bloc`):** Manages the state machine. Events go in, States come out.
-- **Freezed:** All States, Events, and Models are immutable sealed unions. This forces the UI to handle *every possible state* (Loading, Success, Error) at compile time via `.when()`.
+- **Freezed:** States and Models are immutable sealed unions. This forces the UI to handle *every possible state* (Loading, Success, Error) at compile time via `.when()`. BLoC Events use `Equatable` for architectural simplicity.
 - **fpdart (`Either`):** Exceptions are banned in the Domain/Data layers. Repositories return `Either<AppFailure, Success>`. The BLoC explicitly folds this `Either` to emit a Success or Error state.
 
 ---
