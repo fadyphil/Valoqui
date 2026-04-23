@@ -89,6 +89,8 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
   /// can run for hours (engineering_lessons #3).
   final List<ConversationMessage> _fullTranscript = [];
 
+  final Stopwatch _pipelineStopwatch = Stopwatch();
+
   StreamSubscription<String>? _transcriptSub;
   StreamSubscription<bool>? _vadSub;
   StreamSubscription<bool>? _ttsSub;
@@ -380,6 +382,8 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
       _speechStartTime ??= DateTime.now();
       _stt.startListening();
     } else {
+      _pipelineStopwatch.reset();
+      _pipelineStopwatch.start();
       _accumulateSpeakingTime();
       _stt.stopListening();
     }
@@ -427,6 +431,12 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
 
     final text = event.text.trim();
     if (text.isEmpty) return;
+
+    if (_pipelineStopwatch.isRunning) {
+      debugPrint(
+        "[Pipeline Trace] VAD End -> Transcript Received: ${_pipelineStopwatch.elapsedMilliseconds}ms",
+      );
+    }
 
     _processUserUtterance(text, emit);
   }
@@ -549,6 +559,13 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
     LlmTokenReceived event,
     Emitter<SpeakingState> emit,
   ) {
+    if (_pipelineStopwatch.isRunning) {
+      debugPrint(
+        "[Pipeline Trace] VAD End -> First LLM Token: ${_pipelineStopwatch.elapsedMilliseconds}ms",
+      );
+      _pipelineStopwatch.stop();
+    }
+
     final current = state;
     if (current is! SpeakingActive) return;
 
@@ -821,6 +838,8 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
     MicReleased event,
     Emitter<SpeakingState> emit,
   ) async {
+    _pipelineStopwatch.reset();
+    _pipelineStopwatch.start();
     _accumulateSpeakingTime();
     await _stt.stopListening();
     await _vad.stopMonitoring();

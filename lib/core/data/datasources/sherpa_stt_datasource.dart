@@ -44,13 +44,15 @@ void _sherpaIsolateEntry(List<dynamic> args) {
         ),
         tokens: tokensPath,
         modelType: "",
-        // Restored to 4 threads: XNNPACK scales well across ARM BIG.LITTLE
-        // architectures, utilizing both performance and efficiency cores efficiently.
-        numThreads: 4,
+        // Reduced to 2 threads for NNAPI test: prevents over-saturating the CPU
+        // while the DSP is active.
+        numThreads: 2,
         debug: false,
-        // Optimized for ARM: XNNPACK provides highly optimized operators for
-        // Android CPUs, significantly faster than the default CPU provider.
-        provider: Platform.isIOS ? "coreml" : "xnnpack",
+        // TESTING NNAPI: Snapdragon 680 (Xiaomi Note 11) has a Hexagon 686 DSP.
+        // If the operators map correctly, this should provide massive speedup.
+        provider: Platform.isAndroid
+            ? "nnapi"
+            : (Platform.isIOS ? "coreml" : "cpu"),
       ),
     );
 
