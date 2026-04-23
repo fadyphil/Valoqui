@@ -44,13 +44,13 @@ void _sherpaIsolateEntry(List<dynamic> args) {
         ),
         tokens: tokensPath,
         modelType: "",
-        numThreads: 4,
+        // Reduced to 2 threads: prevents contention on BIG.Little architectures
+        // (4 Gold + 4 Silver) by prioritizing the performance cores.
+        numThreads: 2,
         debug: false,
-        // Hardware acceleration: NNAPI on Android, CoreML on iOS.
-        // Provides up to 50x speedup over CPU on supported chips (e.g. Snapdragon).
-        provider: Platform.isAndroid
-            ? "nnapi"
-            : (Platform.isIOS ? "coreml" : "cpu"),
+        // Reverted to "cpu" on Android: NNAPI on Snapdragon 6xx series often
+        // causes massive overhead due to operator fallback to CPU.
+        provider: Platform.isIOS ? "coreml" : "cpu",
       ),
     );
 
@@ -69,11 +69,24 @@ void _sherpaIsolateEntry(List<dynamic> args) {
       final samples = msg[1] as Float32List;
 
       try {
+        final stopwatch = Stopwatch()..start();
         final stream = recognizer.createStream();
         stream.acceptWaveform(sampleRate: 16000, samples: samples);
+
+        final audioDurationMs = (samples.length / 16000) * 1000;
+
         recognizer.decode(stream);
         final result = recognizer.getResult(stream);
         stream.free();
+        stopwatch.stop();
+
+        final decodeMs = stopwatch.elapsedMilliseconds;
+        final rtf = audioDurationMs > 0 ? decodeMs / audioDurationMs : 0.0;
+
+        debugPrint(
+          "[STT Isolate] Decode completed in ${decodeMs}ms (Audio: ${audioDurationMs.toStringAsFixed(0)}ms, RTF: ${rtf.toStringAsFixed(3)})",
+        );
+
         replyPort.send(result.text);
       } on Exception catch (e) {
         debugPrint("[STT Isolate] Decode error: $e");
@@ -677,11 +690,9 @@ class SherpaSttDatasource {
           ),
           tokens: _tokensPath,
           modelType: "",
-          numThreads: 4,
+          numThreads: 2,
           debug: false,
-          provider: Platform.isAndroid
-              ? "nnapi"
-              : (Platform.isIOS ? "coreml" : "cpu"),
+          provider: Platform.isIOS ? "coreml" : "cpu",
         ),
       ),
     );
