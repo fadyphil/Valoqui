@@ -319,6 +319,7 @@ docs/decisions/
   ADR-014  UI Rebuild Optimization (Token Batching)
   ADR-015  Isolate Backpressure & Buffer Safety
   ADR-016  TTS Background Isolate and Pipelining
+  ADR-017  Hardware-Accelerated Audio Pipeline and Dynamic STT Throttling
 <!-- /PULSE:ADR_LIST -->
 ```
 

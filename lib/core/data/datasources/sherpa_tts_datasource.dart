@@ -68,7 +68,10 @@ void _sherpaTtsIsolateEntry(List<dynamic> args) {
         ),
         numThreads: 2,
         debug: false,
-        provider: "cpu",
+        // Hardware acceleration: NNAPI on Android, CoreML on iOS.
+        provider: Platform.isAndroid
+            ? "nnapi"
+            : (Platform.isIOS ? "coreml" : "cpu"),
       ),
       ruleFsts: "",
       maxNumSenetences: 100,
