@@ -104,6 +104,8 @@ When working in this directory, AI agents MUST follow these rules:
 7. **Clean Architecture:** Respect boundaries between Data, Domain, and Presentation layers. Never put business logic in UI widgets.
 8. **Surgical Edits Only:** ALWAYS prefer surgical replacements over rewriting entire files to preserve architectural comments and context.
 9. **ADR Immutability:** Never delete or overwrite the historical context of an Architectural Decision Record (ADR). To update an ADR, change its `Status` and append an "Update" or "Addendum" section at the bottom. Never change the numerical prefix of an existing ADR, and always increment correctly for new ones.
+10. **Rigorous Verification:** You MUST activate the `verification-before-completion` skill before concluding any task or declaring a fix complete. Evidence (fresh tool output) is mandatory.
+11. **Strategic Delegation:** For complex, batch, or multi-file refactoring tasks, utilize specialized subagents (e.g., `generalist`, `codebase_investigator`) to ensure thorough execution and bypass context limitations.
 
 ### 4. Definition of Done (The Committer's Checklist)
 

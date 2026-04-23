@@ -17,7 +17,7 @@ components were chosen prevents accidentally undoing deliberate tradeoffs.
 | ----- | ------- | -------- |
 | [ADR-000](ADR-000-template.md) | Template | — |
 | [ADR-001](ADR-001-stt-android-speechrecognizer.md) | STT Provider — Android SpeechRecognizer via speech_to_text | Accepted — under re-evaluation (see ADR-010, ADR-011, ARCH-101) |
-| [ADR-002](ADR-002-llm-groq-with-gemini-fallback.md) | LLM Provider — Groq LLaMA 3.3 70B with Gemini 2.5 Flash Fallback | Accepted |
+| [ADR-002](ADR-002-llm-groq-with-gemini-fallback.md) | LLM Provider — Groq LLaMA 3.3 70B with Gemini 2.0 Flash Fallback | Accepted |
 | [ADR-003](ADR-003-tts-on-device-piper-to-f5tts.md) | TTS Engine — On-Device sherpa-onnx Piper (Interim) → F5-TTS ONNX (Target) | Partially superseded — Piper is interim placeholder, F5-TTS ONNX |
 | [ADR-004](ADR-004-state-management-bloc-freezed-getit.md) | State Management — BLoC + Freezed + GetIt + fpdart | Accepted |
 | [ADR-005](ADR-005-clean-architecture-voice-interfaces.md) | Clean Architecture Swap Pattern — Domain Interfaces for All Voice Components | Accepted |

@@ -1,4 +1,4 @@
-# ADR-002: LLM Provider — Groq LLaMA 3.3 70B with Gemini 2.5 Flash Fallback
+# ADR-002: LLM Provider — Groq LLaMA 3.3 70B with Gemini 2.0 Flash Fallback
 
 **Date:** 2026-03
 **Status:** Accepted
@@ -24,7 +24,7 @@ generation. Requirements:
 ## Decision
 
 Valoqui uses Groq LLaMA 3.3 70B Versatile as the primary LLM with streaming
-enabled. Google Gemini 2.5 Flash is the silent fallback on any Groq 429
+enabled. Google Gemini 2.0 Flash is the silent fallback on any Groq 429
 (rate limit) response. Fallback logic lives entirely inside
 `GroqLlmRepository` — the BLoC and all callers see only `LlmRepository`.
 
@@ -51,7 +51,7 @@ JSON report cards reliably. Quality bar not met.
 enough for sentence-boundary streaming TTS. 70B parameter size is sufficient
 for DELE-level evaluation. Free on user's own Groq account (~500k tokens/day).
 
-### Option D — Gemini 2.5 Flash (chosen fallback)
+### Option D — Gemini 2.0 Flash (chosen fallback)
 
 **Why considered as fallback:** Independent provider. Free tier of ~1M
 tokens/day. Google infrastructure has different failure modes than Groq,

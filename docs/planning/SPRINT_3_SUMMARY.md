@@ -484,8 +484,8 @@ dart bin/generate_tts_samples.dart --engine=supertonic --output=samples/
 
 ## References
 
-- ADR-011: Supertonic TTS Integration
-- ADR-012: STT Performance Overhaul
+- ADR-011: STT Performance Overhaul
+- ADR-012: Supertonic TTS Integration
 - ARCH-101: Chunked Audio Streaming Architecture
 - Bug Report: STT latency too high (`.github/ISSUES/stt-latency-too-high-sherpa-onnx.md`)
 - Feature Request: Supertonic TTS (`.github/ISSUES/sprint-3-supertonic-tts.md`)

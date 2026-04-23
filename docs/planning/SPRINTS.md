@@ -44,9 +44,9 @@
 
 **Key Deliverables:**
 
-- [ ] **ADR-011: Supertonic TTS Integration** — Replace Piper TTS with Supertonic system service for natural voice quality (MOS ≥ 4.0). Implement graceful fallback to Piper. Research spike: determine integration method (Intent/SDK). Target: time-to-first-audio < 200ms, APK size reduction ~77MB.
+- [ ] **ADR-011: STT Performance Overhaul** — Implement chunked streaming (500ms chunks, 100ms overlap) to emit partial transcripts within 500ms. Time-boxed Whisper.cpp evaluation (3 days, adopt if ≥30% speedup). Target: end-to-end latency < 1.5s for 3s utterance (currently 3-5s).
 
-- [ ] **ADR-012: STT Performance Overhaul** — Implement chunked streaming (500ms chunks, 100ms overlap) to emit partial transcripts within 500ms. Time-boxed Whisper.cpp evaluation (3 days, adopt if ≥30% speedup). Target: end-to-end latency < 1.5s for 3s utterance (currently 3-5s).
+- [ ] **ADR-012: Supertonic TTS Integration** — Replace Piper TTS with Supertonic system service for natural voice quality (MOS ≥ 4.0). Implement graceful fallback to Piper. Research spike: determine integration method (Intent/SDK). Target: time-to-first-audio < 200ms, APK size reduction ~77MB.
 
 - [ ] **ARCH-101: Chunked Audio Streaming** — Refactor pipeline with `AudioChunker`, `OverlapBlender`, `ContextBuffer` components. Add UI states: `listening` → `partial` → `confirmed`. Maintain >90% accuracy, work on low-end devices (2GB RAM).
 

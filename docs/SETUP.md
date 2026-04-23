@@ -304,7 +304,7 @@ Read these before making changes to the voice pipeline or switching providers.
 docs/decisions/
 <!-- PULSE:ADR_LIST -->
   ADR-001  STT Provider — Android SpeechRecognizer via speech_to_text
-  ADR-002  LLM Provider — Groq LLaMA 3.3 70B with Gemini 2.5 Flash Fallback
+  ADR-002  LLM Provider — Groq LLaMA 3.3 70B with Gemini 2.0 Flash Fallback
   ADR-003  TTS Engine — On-Device sherpa-onnx Piper (Interim) → F5-TTS ONNX (Target)
   ADR-004  State Management — BLoC + Freezed + GetIt + fpdart
   ADR-005  Clean Architecture Swap Pattern — Domain Interfaces for All Voice Components
@@ -332,4 +332,3 @@ docs/decisions/
 | Sprint 1 | Firebase, auth, BYOK onboarding, design system, navigation | ✅ Complete |
 | Sprint 2 | Voice pipeline, conversation loop, report card, XP | ✅ Complete |
 | Sprint 3 | Unified audio pipeline (ARCH-101), F5-TTS ONNX, polish | 🔄 In progress |
-ress |
