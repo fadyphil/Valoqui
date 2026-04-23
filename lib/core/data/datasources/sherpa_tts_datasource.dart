@@ -51,6 +51,9 @@ void _sherpaTtsIsolateEntry(List<dynamic> args) {
   final receivePort = ReceivePort();
 
   try {
+    // Initialize native bindings inside the isolate before using sherpa
+    sherpa.initBindings();
+
     final config = sherpa.OfflineTtsConfig(
       model: sherpa.OfflineTtsModelConfig(
         vits: sherpa.OfflineTtsVitsModelConfig(

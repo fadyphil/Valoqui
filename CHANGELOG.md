@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
   - Implemented pipelined `_drainQueue` that synthesizes sentence $N+1$ while sentence $N$ is playing, reducing inter-sentence gaps.
   - Refactored `SherpaTtsDatasource` to communicate via isolated message passing with safe lifecycle management (`kill()` on dispose).
 - Retained Sherpa-ONNX Moonshine STT based on benchmarks showing 50x speed advantage over Whisper.cpp on Android.
+- Fixed Sherpa-ONNX initialization in background isolates by adding `sherpa.initBindings()` to isolate entry points.
 - Implemented TTS warm-up optimization (ADR-013) to eliminate cold start latency
   - Added `warmUp()` method to `TtsRepository` interface
   - Implemented `SherpaTtsDatasource.warmUp()` with silent synthesis pass

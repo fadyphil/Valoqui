@@ -33,6 +33,9 @@ void _sherpaIsolateEntry(List<dynamic> args) {
   final receivePort = ReceivePort();
 
   try {
+    // Initialize native bindings inside the isolate before using sherpa
+    sherpa.initBindings();
+
     final config = sherpa.OfflineRecognizerConfig(
       model: sherpa.OfflineModelConfig(
         moonshine: sherpa.OfflineMoonshineModelConfig(
