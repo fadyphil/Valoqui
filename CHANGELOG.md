@@ -11,9 +11,10 @@ All notable changes to this project will be documented in this file.
   - Implemented pipelined `_drainQueue` that synthesizes sentence $N+1$ while sentence $N$ is playing, reducing inter-sentence gaps.
   - Refactored `SherpaTtsDatasource` to communicate via isolated message passing with safe lifecycle management (`kill()` on dispose).
 - Optimized STT performance for mid-range Android (ADR-017 Tuning):
+  - Enabled **XNNPACK** hardware acceleration for Android, providing highly optimized neural network operators for ARM CPUs.
   - Added precise RTF (Real-Time Factor) and decode latency logging via `Stopwatch` in the background isolate.
-  - Reverted Android provider to `"cpu"` to bypass NNAPI operator fallback overhead on Snapdragon 6xx series chips.
-  - Reduced `numThreads` to 2 to optimize for BIG.LITTLE architectures and prevent thread contention.
+  - Restored `numThreads` to 4 for STT to leverage XNNPACK's efficient multi-threading on ARM.
+  - Refined dynamic throttling to provide more frequent partial updates as inference speed increases.
 - Retained Sherpa-ONNX Moonshine STT based on benchmarks showing 50x speed advantage over Whisper.cpp on Android.
 - Fixed Sherpa-ONNX initialization in background isolates by adding `sherpa.initBindings()` to isolate entry points.
 - Implemented TTS warm-up optimization (ADR-013) to eliminate cold start latency

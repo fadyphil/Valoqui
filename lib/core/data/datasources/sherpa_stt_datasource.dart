@@ -44,13 +44,13 @@ void _sherpaIsolateEntry(List<dynamic> args) {
         ),
         tokens: tokensPath,
         modelType: "",
-        // Reduced to 2 threads: prevents contention on BIG.Little architectures
-        // (4 Gold + 4 Silver) by prioritizing the performance cores.
-        numThreads: 2,
+        // Restored to 4 threads: XNNPACK scales well across ARM BIG.LITTLE
+        // architectures, utilizing both performance and efficiency cores efficiently.
+        numThreads: 4,
         debug: false,
-        // Reverted to "cpu" on Android: NNAPI on Snapdragon 6xx series often
-        // causes massive overhead due to operator fallback to CPU.
-        provider: Platform.isIOS ? "coreml" : "cpu",
+        // Optimized for ARM: XNNPACK provides highly optimized operators for
+        // Android CPUs, significantly faster than the default CPU provider.
+        provider: Platform.isIOS ? "coreml" : "xnnpack",
       ),
     );
 
@@ -549,10 +549,10 @@ class SherpaSttDatasource {
         // likely to be busy when the user finally stops speaking.
         final now = DateTime.now();
 
-        // Base interval 1.5s + 300ms per second of audio buffered.
+        // Base interval 1.0s + 200ms per second of audio buffered.
         // 16000 samples/sec * 2 bytes/sample = 32000 bytes/sec.
         final dynamicInterval = Duration(
-          milliseconds: 1500 + (_audioBuffer.length ~/ 32000) * 300,
+          milliseconds: 1000 + (_audioBuffer.length ~/ 32000) * 200,
         );
 
         if (_decodeIsolate.isReady &&
@@ -690,9 +690,9 @@ class SherpaSttDatasource {
           ),
           tokens: _tokensPath,
           modelType: "",
-          numThreads: 2,
+          numThreads: 4,
           debug: false,
-          provider: Platform.isIOS ? "coreml" : "cpu",
+          provider: Platform.isIOS ? "coreml" : "xnnpack",
         ),
       ),
     );

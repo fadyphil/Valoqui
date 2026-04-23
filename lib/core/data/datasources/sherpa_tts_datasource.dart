@@ -68,10 +68,11 @@ void _sherpaTtsIsolateEntry(List<dynamic> args) {
         ),
         numThreads: 2,
         debug: false,
-        // Reverted to CPU on Android: NNAPI overhead often exceeds gains on
-        // older Snapdragon chips. CoreML retained for iOS.
-        provider: Platform.isIOS ? "coreml" : "cpu",
+        // Hardware acceleration: NNAPI on Android (often buggy/slow fallback),
+        // XNNPACK (highly optimized for ARM CPU), or CoreML on iOS.
+        provider: Platform.isIOS ? "coreml" : "xnnpack",
       ),
+
       ruleFsts: "",
 
       maxNumSenetences: 100,
