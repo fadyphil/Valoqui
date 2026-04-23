@@ -198,6 +198,17 @@ blocTest<MyBloc, MyState>(
     // Verify side effects (use case calls, etc.)
     verify(() => mockUseCase.execute()).called(1);
     verifyNever(() => otherUseCase.execute());
+  }
+)
+```
+
+### 5. Testing Throttled/Batched Streams (Sprint 3)
+
+When testing UI states that are updated via `Timer` throttling (e.g. `_tokenBatchTimer` in `SpeakingBloc` updating at 10Hz):
+
+- **Skip Transient States**: Do not assert intermediate/transient states (like `processing`) if batching causes the BLoC to skip emitting them before reaching the final state (like `speaking`). In our tests, the 100ms timer consolidation means synchronous mock LLM responses often transition directly from `listening` to `speaking`.
+- **Use the `wait:` Parameter**: Always provide enough time in the `wait:` duration to allow internal timers to flush.
+- **Rely on Predicates**: Use state predicates to verify final steady state rather than step-by-step sequential snapshots for throttled data flows.
   },
 );
 ```
