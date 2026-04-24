@@ -186,6 +186,7 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
     final showTyping =
         state.phase == ConversationPhase.processing &&
         state.currentLuciaBuffer.isEmpty;
+    final showUserTyping = state.isTranscribing;
 
     return ListView.builder(
       controller: _scrollController,
@@ -193,7 +194,11 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
         horizontal: AppSpacing.lg,
         vertical: AppSpacing.lg,
       ),
-      itemCount: messages.length + (hasPartial ? 1 : 0) + (showTyping ? 1 : 0),
+      itemCount:
+          messages.length +
+          (hasPartial ? 1 : 0) +
+          (showTyping ? 1 : 0) +
+          (showUserTyping ? 1 : 0),
       itemBuilder: (context, index) {
         if (index < messages.length) {
           final message = messages[index];
@@ -219,12 +224,25 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
 
           return TranscriptBubble(message: message, isStreaming: false);
         }
-        if (hasPartial && index == messages.length) {
-          return TranscriptBubble(
-            message: userMessage(state.partialUserTranscript!),
-            isStreaming: false,
-          );
+
+        final localIndex = index - messages.length;
+        if (hasPartial) {
+          if (localIndex == 0) {
+            return TranscriptBubble(
+              message: userMessage(state.partialUserTranscript!),
+              isStreaming: false,
+            );
+          }
+          if (showUserTyping && localIndex == 1) {
+            return const _TypingIndicator(isUser: true);
+          }
+          return const _TypingIndicator(); // Lucia typing
         }
+
+        if (showUserTyping && localIndex == 0) {
+          return const _TypingIndicator(isUser: true);
+        }
+
         return const _TypingIndicator();
       },
     );
@@ -277,6 +295,7 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
                     phase: state.phase,
                     micMode: state.micMode,
                     bufferFillPercentage: state.bufferFillPercentage,
+                    isTranscribing: state.isTranscribing,
                     onPressDown: () => bloc.add(const MicPressed()),
                     onPressUp: () => bloc.add(const MicReleased()),
                   ),
@@ -380,18 +399,23 @@ class _TopBar extends StatelessWidget {
 // ── Typing indicator ──────────────────────────────────────────────────────────
 
 class _TypingIndicator extends StatelessWidget {
-  const _TypingIndicator();
+  final bool isUser;
+  const _TypingIndicator({this.isUser = false});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(
-        left: AppSpacing.lg,
-        bottom: AppSpacing.sm,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: List.generate(3, (i) => _Dot(index: i)),
+    return Align(
+      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: isUser ? 0 : AppSpacing.lg,
+          right: isUser ? AppSpacing.lg : 0,
+          bottom: AppSpacing.sm,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(3, (i) => _Dot(index: i, isUser: isUser)),
+        ),
       ),
     );
   }
@@ -399,7 +423,8 @@ class _TypingIndicator extends StatelessWidget {
 
 class _Dot extends StatelessWidget {
   final int index;
-  const _Dot({required this.index});
+  final bool isUser;
+  const _Dot({required this.index, this.isUser = false});
 
   @override
   Widget build(BuildContext context) {
@@ -407,9 +432,9 @@ class _Dot extends StatelessWidget {
           width: 8,
           height: 8,
           margin: const EdgeInsets.symmetric(horizontal: 3),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: AppColors.textSecondary,
+            color: isUser ? AppColors.accentPrimary : AppColors.textSecondary,
           ),
         )
         .animate(

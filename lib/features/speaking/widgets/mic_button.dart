@@ -16,6 +16,7 @@ class MicButton extends StatefulWidget {
   final ConversationPhase phase;
   final MicMode micMode;
   final double bufferFillPercentage;
+  final bool isTranscribing;
   final VoidCallback? onPressDown;
   final VoidCallback? onPressUp;
 
@@ -24,6 +25,7 @@ class MicButton extends StatefulWidget {
     required this.phase,
     required this.micMode,
     this.bufferFillPercentage = 0.0,
+    this.isTranscribing = false,
     this.onPressDown,
     this.onPressUp,
   });
@@ -36,6 +38,7 @@ class _MicButtonState extends State<MicButton> {
   bool _isPressed = false;
 
   void _handleDown() {
+    if (widget.isTranscribing) return;
     setState(() => _isPressed = true);
     if (widget.micMode == MicMode.pushToTalk) {
       widget.onPressDown?.call();
@@ -43,6 +46,7 @@ class _MicButtonState extends State<MicButton> {
   }
 
   void _handleUp() {
+    if (widget.isTranscribing) return;
     setState(() => _isPressed = false);
     if (widget.micMode == MicMode.pushToTalk) {
       widget.onPressUp?.call();
@@ -50,6 +54,7 @@ class _MicButtonState extends State<MicButton> {
   }
 
   void _handleCancel() {
+    if (widget.isTranscribing) return;
     setState(() => _isPressed = false);
     if (widget.micMode == MicMode.pushToTalk) {
       widget.onPressUp?.call();
@@ -60,113 +65,124 @@ class _MicButtonState extends State<MicButton> {
   Widget build(BuildContext context) {
     final isListening = widget.phase == ConversationPhase.listening;
     final isSpeaking = widget.phase == ConversationPhase.speaking;
+    final isDisabled = widget.isTranscribing;
 
     return GestureDetector(
-      onTapDown: (_) => _handleDown(),
-      onTapUp: (_) => _handleUp(),
-      onTapCancel: _handleCancel,
-      child: SizedBox(
-        width: 196,
-        height: 196,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // ── Pulsing outer ring (listening only) ──────
-            if (isListening) const _PulseRing(),
+      onTapDown: isDisabled ? null : (_) => _handleDown(),
+      onTapUp: isDisabled ? null : (_) => _handleUp(),
+      onTapCancel: isDisabled ? null : _handleCancel,
+      child: Opacity(
+        opacity: isDisabled ? 0.6 : 1.0,
+        child: SizedBox(
+          width: 196,
+          height: 196,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // ── Pulsing outer ring (listening only) ──────
+              if (isListening && !isDisabled) const _PulseRing(),
 
-            // ── Halo border ──────────────────────────────
-            Container(
-              width: 188,
-              height: 188,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.accentPrimary.withValues(alpha: 0.18),
-                  width: 1,
+              // ── Halo border ──────────────────────────────
+              Container(
+                width: 188,
+                height: 188,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.accentPrimary.withValues(alpha: 0.18),
+                    width: 1,
+                  ),
                 ),
               ),
-            ),
 
-            // ── Main button circle ────────────────────────
-            AnimatedScale(
-              scale: _isPressed ? 0.93 : 1.0,
-              duration: const Duration(milliseconds: 100),
-              curve: Curves.easeOut,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // ── Buffer Limit Indicator (PTT only) ─────────
-                  if (widget.micMode == MicMode.pushToTalk &&
-                      widget.bufferFillPercentage > 0.1)
-                    SizedBox(
-                      width: 108,
-                      height: 108,
-                      child: CircularProgressIndicator(
-                        value: widget.bufferFillPercentage,
-                        strokeWidth: 3,
-                        backgroundColor: Colors.transparent,
-                        color: Color.lerp(
-                          AppColors.accentPrimary,
-                          AppColors.error,
-                          widget.bufferFillPercentage,
+              // ── Main button circle ────────────────────────
+              AnimatedScale(
+                scale: _isPressed ? 0.93 : 1.0,
+                duration: const Duration(milliseconds: 100),
+                curve: Curves.easeOut,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // ── Buffer Limit Indicator (PTT only) ─────────
+                    if (widget.micMode == MicMode.pushToTalk &&
+                        widget.bufferFillPercentage > 0.1 &&
+                        !isDisabled)
+                      SizedBox(
+                        width: 108,
+                        height: 108,
+                        child: CircularProgressIndicator(
+                          value: widget.bufferFillPercentage,
+                          strokeWidth: 3,
+                          backgroundColor: Colors.transparent,
+                          color: Color.lerp(
+                            AppColors.accentPrimary,
+                            AppColors.error,
+                            widget.bufferFillPercentage,
+                          ),
                         ),
+                      ).animate().fadeIn(),
+
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 96,
+                      height: 96,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: (isSpeaking || isDisabled)
+                            ? null
+                            : AppColors.micButtonGradient,
+                        color: (isSpeaking || isDisabled)
+                            ? AppColors.bgElevated
+                            : null,
+                        boxShadow: isListening && !isDisabled
+                            ? [
+                                BoxShadow(
+                                  color: _isPressed
+                                      ? AppColors.micGlow.withValues(alpha: 0.6)
+                                      : AppColors.micGlow,
+                                  blurRadius: _isPressed ? 56 : 40,
+                                  spreadRadius: _isPressed ? 12 : 8,
+                                ),
+                              ]
+                            : null,
                       ),
-                    ).animate().fadeIn(),
-
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    width: 96,
-                    height: 96,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: isSpeaking ? null : AppColors.micButtonGradient,
-                      color: isSpeaking ? AppColors.bgElevated : null,
-                      boxShadow: isListening
-                          ? [
-                              BoxShadow(
-                                color: _isPressed
-                                    ? AppColors.micGlow.withValues(alpha: 0.6)
-                                    : AppColors.micGlow,
-                                blurRadius: _isPressed ? 56 : 40,
-                                spreadRadius: _isPressed ? 12 : 8,
-                              ),
-                            ]
-                          : null,
+                      child: Icon(
+                        isDisabled
+                            ? Icons.hourglass_empty_rounded
+                            : Icons.mic_rounded,
+                        color: (isSpeaking || isDisabled)
+                            ? AppColors.textSecondary
+                            : Colors.white,
+                        size: 36,
+                      ),
                     ),
-                    child: Icon(
-                      Icons.mic_rounded,
-                      color: isSpeaking
-                          ? AppColors.textSecondary
-                          : Colors.white,
-                      size: 36,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
 
-            // ── PTT label overlay ─────────────────────────
-            if (widget.micMode == MicMode.pushToTalk)
-              Positioned(
-                bottom: 12,
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 150),
-                  opacity: _isPressed ? 1.0 : 0.5,
-                  child: Text(
-                    _isPressed ? "RECORDING" : "HOLD TO SPEAK",
-                    style: TextStyle(
-                      fontFamily: "DMSans",
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: _isPressed
-                          ? AppColors.accentPrimary
-                          : AppColors.textSecondary,
-                      letterSpacing: 1.2,
+              // ── PTT label overlay ─────────────────────────
+              if (widget.micMode == MicMode.pushToTalk)
+                Positioned(
+                  bottom: 12,
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 150),
+                    opacity: isDisabled ? 0.0 : (_isPressed ? 1.0 : 0.5),
+                    child: Text(
+                      _isPressed ? "RECORDING" : "HOLD TO SPEAK",
+                      style: TextStyle(
+                        fontFamily: "DMSans",
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: _isPressed
+                            ? AppColors.accentPrimary
+                            : AppColors.textSecondary,
+                        letterSpacing: 1.2,
+                      ),
                     ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

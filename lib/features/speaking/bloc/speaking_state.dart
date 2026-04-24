@@ -60,6 +60,9 @@ sealed class SpeakingState with _$SpeakingState {
     /// Used for visual feedback in PTT mode.
     @Default(0.0) double bufferFillPercentage,
 
+    /// True when STT is actively decoding a segment (user is waiting).
+    @Default(false) bool isTranscribing,
+
     /// Non-fatal error message shown as a toast (e.g. network hiccup).
     /// Null when there is no error.
     String? errorMessage,

@@ -71,6 +71,8 @@ All notable changes to this project will be documented in this file.
 - Fixed audio pipeline stability and mid-session UX:
   - Resolved **PTT Chunking** where silence would incorrectly chop manual recordings into multiple fragments.
   - Implemented **Mode Toggle Protection**: switching to Always On while Lucia is speaking now waits for TTS to finish before opening the mic, preventing audio focus theft and voice cutoffs.
+  - Resolved **PTT "Hung" State**: fixed a bug where manual transcriptions were dropped if the UI transitioned to "processing" too early.
+  - Improved **PTT UI Feedback**: added a dedicated `isTranscribing` state and right-aligned user typing indicator (dots) to provide immediate feedback on your side of the screen.
   - Fixed **UI Type Cast Crash** in `SpeakingScreen` when transitioning from active session to report generation.
   - Patched **Memory Leak & State Pollution** in `SpeakingBloc` by ensuring all stream subscriptions are tracked and cancelled, and clearing batch UI timers during phase transitions.
   - Corrected **"Ghost" Lucia Messages** caused by race conditions between the 100ms batching timer and new user utterances.

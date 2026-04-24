@@ -554,6 +554,10 @@ void main() {
           (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
           'greeting completes, transitions to speaking',
         ),
+        predicate<SpeakingState>(
+          (s) => s is SpeakingActive && s.isTranscribing == true,
+          'isActive=false sets isTranscribing to true',
+        ),
       ],
       verify: (_) {
         verify(() => mockStt.stopListening()).called(1);

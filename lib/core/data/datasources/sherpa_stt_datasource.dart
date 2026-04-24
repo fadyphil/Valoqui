@@ -44,14 +44,11 @@ void _sherpaIsolateEntry(List<dynamic> args) {
         ),
         tokens: tokensPath,
         modelType: "",
-        // Reduced to 2 threads for NNAPI test: prevents over-saturating the CPU
-        // while the DSP is active.
-        numThreads: 2,
+        // Reliable xnnpack with 4 threads for better performance on mobile hardware
+        numThreads: 4,
         debug: false,
-        // TESTING NNAPI: Snapdragon 680 (Xiaomi Note 11) has a Hexagon 686 DSP.
-        // If the operators map correctly, this should provide massive speedup.
         provider: Platform.isAndroid
-            ? "nnapi"
+            ? "xnnpack"
             : (Platform.isIOS ? "coreml" : "cpu"),
       ),
     );
@@ -238,7 +235,9 @@ class _SherpaDecodeIsolate {
       _port!.send([reply.sendPort, samples]);
       final text =
           await reply.first.timeout(
-                const Duration(seconds: 10),
+                const Duration(
+                  seconds: 60,
+                ), // Increased from 10s to match PTT buffer limit
                 onTimeout: () {
                   debugPrint(
                     "[STT Isolate] Decode timeout - falling back gracefully ",
@@ -487,7 +486,7 @@ class SherpaSttDatasource {
     }
 
     final bytes = _audioBuffer.takeBytes();
-    await _decodeUtterance(bytes);
+    unawaited(_decodeUtterance(bytes));
 
     // Final text arrives via textStream, returning empty here aligns with contract
     return "";

@@ -387,6 +387,7 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
       _pipelineStopwatch.start();
       _accumulateSpeakingTime();
       _stt.stopListening();
+      emit(current.copyWith(isTranscribing: true));
     }
   }
 
@@ -414,24 +415,22 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
     final current = state;
     if (current is! SpeakingActive) return;
 
+    // Reset transcribing state regardless of whether we drop the transcript
+    final newState = current.copyWith(isTranscribing: false);
+
     // Intentional drop: discard STT output while Lucia is speaking or while
     // the previous LLM request is still streaming.
-    //
-    // Why: in always-on mode the VAD datasource is stopped during TTS
-    // playback (_onTtsStarted) and restarted after (_onTtsFinished), but
-    // there is a small window between VAD restart and the new mic session
-    // where a stale partial transcript can arrive. In the processing phase,
-    // accepting a new utterance would fire two back-to-back LLM requests
-    // with conflicting history. MVP decision: last-speaker wins.
-    // Post-MVP consideration: buffer the utterance and send it after the
-    // current response completes so the user can speak over Lucia.
-    if (current.phase == ConversationPhase.speaking ||
-        current.phase == ConversationPhase.processing) {
+    if (newState.phase == ConversationPhase.speaking ||
+        newState.phase == ConversationPhase.processing) {
+      emit(newState);
       return;
     }
 
     final text = event.text.trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty) {
+      emit(newState);
+      return;
+    }
 
     if (_pipelineStopwatch.isRunning) {
       debugPrint(
@@ -439,7 +438,7 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
       );
     }
 
-    _processUserUtterance(text, emit);
+    _processUserUtterance(text, emit, newState);
   }
 
   /// Handles intermediate partial transcripts from the STT datasource.
@@ -470,10 +469,13 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
   /// * State is [SpeakingActive]
   /// * Transcript is non-empty
   /// * Not in `speaking` or `processing` phase
-  void _processUserUtterance(String text, Emitter<SpeakingState> emit) {
+  void _processUserUtterance(
+    String text,
+    Emitter<SpeakingState> emit, [
+    SpeakingActive? baseState,
+  ]) {
     _tokenBatchTimer?.cancel();
-    final current = state;
-    if (current is! SpeakingActive) return;
+    final current = baseState ?? (state as SpeakingActive);
 
     final message = userMessage(text);
     _fullTranscript.add(message);
@@ -856,6 +858,14 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
     _pipelineStopwatch.reset();
     _pipelineStopwatch.start();
     _accumulateSpeakingTime();
+
+    // Emit transcribing immediately to show the user-side loading indicator
+    // while we wait for the STT isolate to decode the PTT buffer.
+    final current = state;
+    if (current is SpeakingActive) {
+      emit(current.copyWith(isTranscribing: true));
+    }
+
     await _stt.stopListening();
     await _vad.stopMonitoring();
   }
