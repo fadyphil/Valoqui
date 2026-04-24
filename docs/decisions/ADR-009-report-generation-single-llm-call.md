@@ -30,11 +30,13 @@ fallback to a basic completion screen showing only client-calculated XP.
 ## Alternatives considered
 
 ### Option A — Real-time per-turn grading during session
+
 **Why considered:** Immediate feedback after each exchange.
 **Why rejected:** Cognitively intrusive. Adds an API call and latency to every
 exchange. Disrupts conversation flow. Deferred to post-MVP.
 
 ### Option B — Single post-session call (chosen)
+
 **Why selected:** User focuses on conversation, not grade. One API call is
 cheaper and simpler. Full transcript context produces better evaluation than
 per-turn analysis.
@@ -44,16 +46,19 @@ per-turn analysis.
 ## Consequences
 
 ### Positive
+
 - Report generation does not affect conversation latency.
 - Full transcript context gives the LLM maximum information for accurate DELE
   evaluation.
 
 ### Negative / tradeoffs
+
 - LLMs occasionally return malformed JSON despite explicit instructions.
   Retry logic and markdown fence stripping are required in `_parseReport`.
 - Report appears 3–10 seconds after session end. Loading state required.
 
 ### Constraints introduced
+
 - `temperature: 0.3` for report generation (vs. `0.8` for conversation) to
   improve JSON structure reliability.
 - `max_tokens: 2000` for report calls (vs. `120` for conversation).
@@ -62,5 +67,6 @@ per-turn analysis.
 ---
 
 ## Links
+
 - PRD v0.3 § ADL-010, § 10 (report card spec), § 11 (XP system)
 - Sprint 2 Guide § 10 (ReportBloc), § 7 (SessionReport model)

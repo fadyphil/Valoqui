@@ -14,7 +14,7 @@ Valoqui strictly follows a **Feature-First Modular Clean Architecture**.
 
 ## 2. State Management (BLoC + Freezed)
 
-* **Immutability:** All BLoC States, Events, and Data Models MUST use `@freezed`. No mutable state (`var` or `Map`) is allowed in BLoC states.
+* **Immutability:** All BLoC States and Data Models MUST use `@freezed`. BLoC Events use `Equatable`. No mutable state (`var` or `Map`) is allowed in BLoC states.
 * **Exhaustive Matching:** Always use `.when()` or `.maybeWhen()` in the UI to handle Freezed union states. This prevents unhandled loading/error states.
 * **No Direct Emit from Streams:** If a BLoC subscribes to a stream in its constructor, it must dispatch an internal event (e.g., `add(_OnStreamDataReceived(data))`) rather than calling `emit()` directly.
 
@@ -49,7 +49,7 @@ Do not commit broken generated code.
 Before opening a PR, always run:
 
 ```bash
-flutter format lib/ test/
+dart format .
 flutter analyze
 ```
 

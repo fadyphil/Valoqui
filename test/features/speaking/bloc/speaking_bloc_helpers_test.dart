@@ -66,7 +66,13 @@ void main() {
     when(
       () => mockStt.transcriptStream,
     ).thenAnswer((_) => const Stream.empty());
+    when(
+      () => mockStt.partialTranscriptStream,
+    ).thenAnswer((_) => const Stream.empty());
     when(() => mockStt.amplitudeStream).thenAnswer((_) => const Stream.empty());
+    when(
+      () => mockStt.bufferFillStream,
+    ).thenAnswer((_) => const Stream.empty());
     when(
       () => mockVad.voiceActivityStream,
     ).thenAnswer((_) => const Stream.empty());
@@ -82,15 +88,25 @@ void main() {
 
     // Stub stop/stopMonitoring (return void, not Either)
     when(() => mockTts.stop()).thenAnswer((_) async {});
+    when(() => mockTts.warmUp()).thenAnswer((_) async {});
     when(() => mockVad.stopMonitoring()).thenAnswer((_) async {});
 
     // Stub startMonitoring
     when(
-      () => mockVad.startMonitoring(),
+      () => mockVad.startMonitoring(enableVad: any(named: 'enableVad')),
     ).thenAnswer((_) async => const Right(null));
 
     // Stub speak
     when(() => mockTts.speak(any())).thenAnswer((_) async => const Right(null));
+
+    // Stub STT lifecycle
+    when(() => mockStt.initialize()).thenAnswer((_) async => const Right(true));
+    when(
+      () => mockStt.startListening(),
+    ).thenAnswer((_) async => const Right(null));
+    when(
+      () => mockStt.stopListening(),
+    ).thenAnswer((_) async => const Right("final transcript"));
 
     speakingBloc = SpeakingBloc(
       stt: mockStt,

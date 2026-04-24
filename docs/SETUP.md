@@ -8,7 +8,7 @@ Follow every step in order. Do not skip sections.
 ## Prerequisites
 
 | Tool | Required version | Notes |
-|------|-----------------|-------|
+| ------ | ----------------- | ------- |
 | Flutter SDK | 3.22.0+ (stable channel) | `flutter channel stable && flutter upgrade` |
 | Dart SDK | Bundled with Flutter | Do not install separately |
 | Android Studio | Hedgehog 2023.1.1+ | Required for Gradle and device tools |
@@ -43,7 +43,7 @@ project for local development.
 
 ### 2.1 Create a Firebase project
 
-1. Go to https://console.firebase.google.com
+1. Go to <https://console.firebase.google.com>
 2. Create project — name it `valoqui-dev` (keep prod and dev separate)
 3. Disable Google Analytics
 
@@ -83,7 +83,7 @@ Firebase Console → Firestore Database → Create database → **Production mod
 
 Apply these security rules (Rules tab):
 
-```
+```rules
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -141,7 +141,7 @@ class. If you see stale generated files causing errors, this is always the fix.
 Three fonts are required. Download from Google Fonts and place in the exact
 paths shown.
 
-```
+```Markdown
 assets/fonts/
   Fraunces/
     Fraunces-Regular.ttf
@@ -157,9 +157,10 @@ assets/fonts/
 ```
 
 Download links:
-- Fraunces: https://fonts.google.com/specimen/Fraunces
-- DM Sans: https://fonts.google.com/specimen/DM+Sans
-- JetBrains Mono: https://fonts.google.com/specimen/JetBrains+Mono
+
+- Fraunces: <https://fonts.google.com/specimen/Fraunces>
+- DM Sans: <https://fonts.google.com/specimen/DM+Sans>
+- JetBrains Mono: <https://fonts.google.com/specimen/JetBrains+Mono>
 
 ---
 
@@ -168,11 +169,11 @@ Download links:
 The Piper TTS model (Sprint 2 interim) is not in the repository due to size
 (76.7 MB). Download from HuggingFace:
 
-**Source:** https://huggingface.co/csukuangfj/vits-piper-es_ES-sharvard-medium/tree/main
+**Source:** <https://huggingface.co/csukuangfj/vits-piper-es_ES-sharvard-medium/tree/main>
 
 Download and place at:
 
-```
+```Markdown
 assets/tts/vits-piper-es_ES-sharvard-medium/
   es_ES-sharvard-medium.onnx         (76.7 MB)
   es_ES-sharvard-medium.onnx.json    (4.9 kB)
@@ -200,8 +201,8 @@ Android Keystore via `flutter_secure_storage`.
 For development, run the app on a physical device, complete the onboarding
 flow, and enter your own keys:
 
-- **Groq API key**: https://console.groq.com — free account, starts with `gsk_`
-- **Gemini API key** (optional): https://aistudio.google.com — free account
+- **Groq API key**: <https://console.groq.com> — free account, starts with `gsk_`
+- **Gemini API key** (optional): <https://aistudio.google.com> — free account
 
 > Keys entered during development are stored in the device's secure storage.
 > They persist across hot restarts but are cleared when you uninstall the app
@@ -241,7 +242,7 @@ These files must never be committed to a public repository. Each must be
 provided by the developer locally.
 
 | File | Why excluded | How to get it |
-|------|-------------|---------------|
+| ------ | ------------- | --------------- |
 | `android/app/google-services.json` | Firebase project credentials | Firebase Console → Project Settings → Download |
 | `lib/firebase_options.dart` | Generated from google-services.json | Run `flutterfire configure` |
 | `android/local.properties` | Local SDK paths | Generated automatically by Android Studio |
@@ -253,7 +254,7 @@ provided by the developer locally.
 ## Common errors and fixes
 
 | Error | Fix |
-|-------|-----|
+| ------- | ----- |
 | `google-services.json not found` | Place file at `android/app/google-services.json` (see Section 2.2) |
 | `firebase_options.dart not found` | Run `flutterfire configure` (see Section 2.5) |
 | Fonts render as system default | Check `pubspec.yaml` font paths exactly. YAML is whitespace-sensitive. |
@@ -269,7 +270,7 @@ provided by the developer locally.
 
 ## Architecture quick reference
 
-```
+```Markdown
 lib/
   core/
     di/           → GetIt service locator (all singletons and factories)
@@ -287,6 +288,7 @@ lib/
 ```
 
 Voice pipeline swap points (see ADR-005):
+
 - STT: change one line in `service_locator.dart`
 - TTS: change one line in `service_locator.dart`
 - LLM: fallback handled internally in `GroqLlmRepository`
@@ -298,18 +300,28 @@ Voice pipeline swap points (see ADR-005):
 All significant technical decisions are documented in `docs/decisions/`.
 Read these before making changes to the voice pipeline or switching providers.
 
-```
+```Markdown
 docs/decisions/
-  ADR-001  STT provider (Android SpeechRecognizer — interim)
-  ADR-002  LLM provider (Groq + Gemini fallback)
-  ADR-003  TTS engine (Piper interim → F5-TTS target)
-  ADR-004  State management (BLoC + Freezed + GetIt + fpdart)
-  ADR-005  Clean architecture swap pattern
-  ADR-006  API key storage (Android Keystore)
-  ADR-007  Conversation history (rolling 8-turn window)
-  ADR-008  Sentence-boundary TTS trigger
-  ADR-009  Report generation (single LLM call, structured JSON)
-  ADR-010  Unified audio pipeline (Sprint 3 — replaces ADR-001)
+<!-- PULSE:ADR_LIST -->
+  ADR-001  STT Provider — Android SpeechRecognizer via speech_to_text
+  ADR-002  LLM Provider — Groq LLaMA 3.3 70B with Gemini 2.0 Flash Fallback
+  ADR-003  TTS Engine — On-Device sherpa-onnx Piper (Interim) → F5-TTS ONNX (Target)
+  ADR-004  State Management — BLoC + Freezed + GetIt + fpdart
+  ADR-005  Clean Architecture Swap Pattern — Domain Interfaces for All Voice Components
+  ADR-006  API Key Storage — Android Keystore via flutter_secure_storage
+  ADR-007  Conversation History — Rolling 8-Turn Window
+  ADR-008  Sentence-Boundary TTS Trigger
+  ADR-009  Post-Session Report Generation — Single LLM Call, Structured JSON
+  ADR-010  Unified Audio Pipeline — Deprecate speech_to_text, Single Raw PCM Stream
+  ADR-011  STT Performance Optimization Strategy
+  ADR-012  Supertonic TTS Integration Strategy
+  ADR-013  TTS Warm-Up Optimization
+  ADR-014  UI Rebuild Optimization (Token Batching)
+  ADR-015  Isolate Backpressure & Buffer Safety
+  ADR-016  TTS Background Isolate and Pipelining
+  ADR-017  Hardware-Accelerated Audio Pipeline and Dynamic STT Throttling
+  ADR-018  Strict Turn-Taking and Audio Pipeline Resilience
+<!-- /PULSE:ADR_LIST -->
 ```
 
 ---
@@ -317,7 +329,7 @@ docs/decisions/
 ## Sprint status
 
 | Sprint | Scope | Status |
-|--------|-------|--------|
+| -------- | ------- | -------- |
 | Sprint 1 | Firebase, auth, BYOK onboarding, design system, navigation | ✅ Complete |
 | Sprint 2 | Voice pipeline, conversation loop, report card, XP | ✅ Complete |
-| Sprint 3 | Unified audio pipeline (ARCH-101), F5-TTS ONNX, polish | 🔄 In progress |
+| Sprint 3 | Unified audio pipeline (ARCH-101), F5-TTS ONNX, polish | ✅ Complete |

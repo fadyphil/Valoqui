@@ -21,6 +21,7 @@
 
 import "dart:async";
 import "dart:io";
+import "dart:isolate";
 import "package:flutter/foundation.dart";
 import "package:flutter/services.dart";
 import "package:fpdart/fpdart.dart";
@@ -28,6 +29,168 @@ import "package:just_audio/just_audio.dart";
 import "package:path_provider/path_provider.dart";
 import "package:sherpa_onnx/sherpa_onnx.dart" as sherpa;
 import "package:valoqui/core/domain/models/app_failure.dart";
+
+// ── Background isolate entry point ─────────────────────────────────────────
+
+/// Entry point for the background TTS isolate.
+///
+/// Receives model directory via arguments, initializes a sherpa-onnx
+/// [sherpa.OfflineTts], then listens for synthesis requests via [ReceivePort].
+/// Each request contains a [SendPort] for the reply, the text to speak,
+/// and the target [wavPath].
+///
+/// On receiving `null`, closes the port — polite shutdown signal.
+/// All errors are caught and logged; failures return false.
+void _sherpaTtsIsolateEntry(List<dynamic> args) {
+  final mainPort = args[0] as SendPort;
+  final modelDir = args[1] as String;
+  final modelFile = args[2] as String;
+  final tokensFile = args[3] as String;
+  final espeakDir = args[4] as String;
+
+  final receivePort = ReceivePort();
+
+  try {
+    // Initialize native bindings inside the isolate before using sherpa
+    sherpa.initBindings();
+
+    final config = sherpa.OfflineTtsConfig(
+      model: sherpa.OfflineTtsModelConfig(
+        vits: sherpa.OfflineTtsVitsModelConfig(
+          model: "$modelDir/$modelFile",
+          lexicon: "",
+          tokens: "$modelDir/$tokensFile",
+          dataDir: "$modelDir/$espeakDir",
+          dictDir: "",
+          noiseScale: 0.667,
+          noiseScaleW: 0.8,
+          lengthScale: 1.0,
+        ),
+        numThreads: 2,
+        debug: false,
+        // Hardware acceleration: NNAPI on Android (often buggy/slow fallback),
+        // XNNPACK (highly optimized for ARM CPU), or CoreML on iOS.
+        provider: Platform.isIOS ? "coreml" : "xnnpack",
+      ),
+
+      ruleFsts: "",
+
+      maxNumSenetences: 100,
+    );
+
+    final tts = sherpa.OfflineTts(config);
+    mainPort.send(receivePort.sendPort);
+
+    receivePort.listen((msg) {
+      if (msg == null) {
+        receivePort.close();
+        return;
+      }
+      if (msg is! List || msg.length != 3) return;
+
+      final replyPort = msg[0] as SendPort;
+      final text = msg[1] as String;
+      final wavPath = msg[2] as String;
+
+      try {
+        final audio = tts.generate(text: text, sid: 1, speed: 1.0);
+        if (audio.samples.isNotEmpty) {
+          sherpa.writeWave(
+            filename: wavPath,
+            samples: audio.samples,
+            sampleRate: audio.sampleRate,
+          );
+          replyPort.send(true);
+        } else {
+          replyPort.send(false);
+        }
+      } on Exception catch (e) {
+        debugPrint("[TTS Isolate] Synthesis error: $e");
+        replyPort.send(false);
+      }
+    });
+  } on Exception catch (e) {
+    mainPort.send("error: $e");
+  }
+}
+
+// ── Background isolate wrapper ─────────────────────────────────────────────
+
+/// Wrapper for the background TTS isolate with safe lifecycle management.
+class _SherpaTtsIsolate {
+  SendPort? _port;
+  Isolate? _isolate;
+
+  /// Returns `true` if the isolate is ready to accept synthesis requests.
+  bool get isReady => _port != null;
+
+  /// Spawns the background isolate and waits for handshake completion.
+  Future<bool> initialize(
+    String modelDir,
+    String modelFile,
+    String tokensFile,
+    String espeakDir,
+  ) async {
+    final handshake = ReceivePort();
+    try {
+      _isolate = await Isolate.spawn(_sherpaTtsIsolateEntry, [
+        handshake.sendPort,
+        modelDir,
+        modelFile,
+        tokensFile,
+        espeakDir,
+      ], debugName: 'SherpaTtsIsolate');
+
+      final reply = await handshake.first;
+      if (reply is SendPort) {
+        _port = reply;
+        return true;
+      }
+      debugPrint("[TTS Isolate] Init reply was not a SendPort: $reply");
+      return false;
+    } on Exception catch (e) {
+      debugPrint("[TTS Isolate] Spawn failed: $e");
+      return false;
+    } finally {
+      handshake.close();
+    }
+  }
+
+  /// Synthesizes text to a WAV file via the background isolate.
+  Future<bool> generateAndSave(String text, String wavPath) async {
+    if (!isReady) return false;
+
+    final reply = ReceivePort();
+    try {
+      _port!.send([reply.sendPort, text, wavPath]);
+      final ok =
+          await reply.first.timeout(
+                const Duration(seconds: 30),
+                onTimeout: () {
+                  debugPrint("[TTS Isolate] Synthesis timeout");
+                  return false;
+                },
+              )
+              as bool;
+      return ok;
+    } on Exception catch (e) {
+      debugPrint("[TTS Isolate] Synthesis error: $e");
+      return false;
+    } finally {
+      reply.close();
+    }
+  }
+
+  /// Terminates the background isolate and releases all resources.
+  void dispose() {
+    _port?.send(null);
+    _isolate?.kill(priority: Isolate.immediate);
+    _isolate = null;
+    _port = null;
+  }
+}
+
+// ── Main datasource ────────────────────────────────────────────────────────
 
 /// Text-to-Speech datasource using sherpa-onnx VITS-Piper engine.
 ///
@@ -65,7 +228,7 @@ class SherpaTtsDatasource {
   static const String _tokensFile = "tokens.txt";
   static const String _espeakDir = "espeak-ng-data";
 
-  sherpa.OfflineTts? _tts;
+  final _SherpaTtsIsolate _ttsIsolate = _SherpaTtsIsolate();
   final AudioPlayer _player = AudioPlayer();
   final StreamController<bool> _speakingController =
       StreamController<bool>.broadcast();
@@ -97,6 +260,20 @@ class SherpaTtsDatasource {
   /// This is a synchronous snapshot of `_isDrainingQueue`. For reactive
   /// updates, listen to [speakingStateStream] instead.
 
+  /// Warms up the TTS engine by performing a silent synthesis pass.
+  /// This should be called before first use to eliminate cold start latency.
+  ///
+  /// Call this when entering the speaking state or when LLM generation begins
+  /// to overlap TTS initialization with other processing.
+  Future<void> warmUp() async {
+    if (!_initialized || !_ttsIsolate.isReady) return;
+    // Pre-synthesize a silent/near-silent sentence
+    // This forces model loading and first-time initialization in the isolate
+    final tmpDir = await getTemporaryDirectory();
+    final wavPath = "${tmpDir.path}/warmup.wav";
+    await _ttsIsolate.generateAndSave(" ", wavPath);
+  }
+
   bool get isSpeaking => _isDrainingQueue;
 
   // ── Initialization ────────────────────────────────────
@@ -105,11 +282,11 @@ class SherpaTtsDatasource {
   ///
   /// Copies the ONNX model, config, tokens, and espeak-ng data from assets
   /// to the application documents directory if not already present. Then
-  /// instantiates the sherpa-onnx [sherpa.OfflineTts] engine.
+  /// spawns the background TTS isolate.
   ///
   /// Returns [right] on success, or [left] with an [AppFailure] if:
   /// * Model file copy fails
-  /// * Native TTS initialization fails (e.g., OOM, incompatible device)
+  /// * Isolate spawn fails (e.g., OOM, incompatible device)
   ///
   /// Safe to call multiple times — re-initialization is idempotent.
 
@@ -120,31 +297,21 @@ class SherpaTtsDatasource {
 
       await _copyModelFiles(modelDir);
 
-      final config = sherpa.OfflineTtsConfig(
-        model: sherpa.OfflineTtsModelConfig(
-          vits: sherpa.OfflineTtsVitsModelConfig(
-            model: "$modelDir/$_modelFile",
-            lexicon: "",
-            tokens: "$modelDir/$_tokensFile",
-            dataDir: "$modelDir/$_espeakDir",
-            dictDir: "",
-            noiseScale: 0.667,
-            noiseScaleW: 0.8,
-            lengthScale: 1.0,
-          ),
-          numThreads: 2,
-          debug: false,
-          provider: "cpu",
-        ),
-        ruleFsts: "",
-        // Fix 1: was 1, which caused the VITS engine to truncate at the
-        // first internal sentence boundary (e.g. a comma) and discard the rest.
-        maxNumSenetences: 100,
+      final isolateOk = await _ttsIsolate.initialize(
+        modelDir,
+        _modelFile,
+        _tokensFile,
+        _espeakDir,
       );
 
-      _tts = sherpa.OfflineTts(config);
-      _initialized = true;
-      return right(null);
+      if (isolateOk) {
+        _initialized = true;
+        return right(null);
+      } else {
+        return left(
+          const AppFailure.ttsFailure(message: "TTS Isolate init failed"),
+        );
+      }
     } on Exception catch (e) {
       return left(AppFailure.ttsFailure(message: "TTS init failed: $e"));
     }
@@ -166,7 +333,7 @@ class SherpaTtsDatasource {
   /// [speakingStateStream] to react to start/complete events.
 
   Future<Either<AppFailure, void>> speak(String text) async {
-    if (!_initialized || _tts == null) {
+    if (!_initialized || !_ttsIsolate.isReady) {
       return left(const AppFailure.ttsNotInitialized());
     }
     _speechQueue.add(text);
@@ -174,7 +341,7 @@ class SherpaTtsDatasource {
       // NEW: no await between check and set to avoid multiple instances of the _drainqueue and to avoid race condtions
       _isDrainingQueue = true;
       // fire-and-forget is now safe (no await)
-      // Explicitly document intentional fire and forget (note: honestly i don't get why we are doing any of thins)
+      // Explicitly document intentional fire and forget
       unawaited(_drainQueue());
     }
     return right(null);
@@ -182,74 +349,69 @@ class SherpaTtsDatasource {
 
   // ── Internal queue drain ───────────────────────────────
 
-  /// Drains the speech queue, synthesizing and playing one sentence at a time.
+  /// Drains the speech queue using a pipelined synthesis/playback architecture.
   ///
-  /// Emits `true` on [speakingStateStream] when starting, `false` when done.
-  /// Checks `_isDrainingQueue` at each iteration to allow [stop()] to halt
-  /// playback cleanly mid-queue.
-  ///
-  /// This method is intentionally fire-and-forget from [speak()]. The
-  /// re-entrancy guard ensures only one instance runs at a time.
-
+  /// While sentence N is playing, the background isolate synthesizes sentence N+1.
+  /// This eliminates the gap between sentences and keeps the UI responsive by
+  /// offloading all heavy work to the isolate.
   Future<void> _drainQueue() async {
-    // NEW: guard condition to exist if stop() is called
     if (!_isDrainingQueue) return;
-
-    // _isDrainingQueue = true;
     if (!_speakingController.isClosed) _speakingController.add(true);
 
-    while (_speechQueue.isNotEmpty) {
-      if (!_isDrainingQueue) break; // exist cleanly if stop() was called
-      final text = _speechQueue.removeAt(0);
-      await _playSingleSentence(text);
+    Future<bool>? nextSynthesisFuture;
+    String? currentWavPath;
+
+    final tmpDir = await getTemporaryDirectory();
+
+    while (_speechQueue.isNotEmpty || nextSynthesisFuture != null) {
+      if (!_isDrainingQueue) break;
+
+      // 1. Get the next synthesis result (either from previous loop or start new one)
+      bool wavReady;
+      if (nextSynthesisFuture != null) {
+        wavReady = await nextSynthesisFuture;
+        nextSynthesisFuture = null;
+        // currentWavPath was already set in the previous iteration
+      } else {
+        final text = _speechQueue.removeAt(0);
+        currentWavPath = "${tmpDir.path}/lucia_speech_${_wavIndex % 2}.wav";
+        _wavIndex++;
+        wavReady = await _ttsIsolate.generateAndSave(text, currentWavPath);
+      }
+
+      if (wavReady && _isDrainingQueue) {
+        // 2. Start playback of the synthesized WAV
+        try {
+          await _player.stop();
+          await _player.setFilePath(currentWavPath!);
+          await _player.seek(Duration.zero);
+          final playFuture = _player.play();
+
+          // 3. Pre-synthesize the NEXT sentence while the current one is playing!
+          if (_speechQueue.isNotEmpty) {
+            final nextText = _speechQueue.removeAt(0);
+            final nextWavPath =
+                "${tmpDir.path}/lucia_speech_${_wavIndex % 2}.wav";
+            _wavIndex++;
+            nextSynthesisFuture = _ttsIsolate.generateAndSave(
+              nextText,
+              nextWavPath,
+            );
+            // Store currentWavPath for the next iteration's playback
+            currentWavPath = nextWavPath;
+          }
+
+          // 4. Await playback completion before continuing the loop
+          await playFuture;
+        } on Exception catch (e) {
+          debugPrint("[TTS] Playback error: $e");
+        }
+      }
     }
 
     if (_isDrainingQueue) {
       _isDrainingQueue = false;
       if (!_speakingController.isClosed) _speakingController.add(false);
-    }
-  }
-
-  /// Synthesizes [text] to WAV and plays it via just_audio.
-  ///
-  /// Uses rotating filenames (`lucia_speech_0.wav` / `lucia_speech_1.wav`)
-  /// to avoid just_audio serving a cached audio source when the URI hasn't
-  /// changed. Before each play, explicitly resets the player with `stop()`
-  /// and `seek(0)` to ensure a clean state.
-  ///
-  /// Errors during synthesis or playback are logged but do not propagate —
-  /// the queue continues to the next sentence. This is intentional: a single
-  /// failed sentence should not halt the entire conversation flow.
-
-  Future<void> _playSingleSentence(String text) async {
-    if (!_isDrainingQueue) return; // stop() was called mid-queue
-    try {
-      final tmpDir = await getTemporaryDirectory();
-
-      // Fix 2: rotate between two filenames so just_audio sees a new URI
-      // for every sentence and cannot serve a cached audio source.
-      // Since we await play() before calling this method for the next
-      // sentence, the "other" file slot is always free when we write to it.
-      final wavPath = "${tmpDir.path}/lucia_speech_${_wavIndex % 2}.wav";
-      _wavIndex++;
-
-      final audio = _tts!.generate(text: text, sid: 0, speed: 1.0);
-      if (audio.samples.isEmpty) return;
-
-      sherpa.writeWave(
-        filename: wavPath,
-        samples: audio.samples,
-        sampleRate: audio.sampleRate,
-      );
-
-      // Fix 3: explicitly reset the player before each sentence so it is
-      // never in a completed/error state when we call play().
-      await _player.stop();
-      await _player.setFilePath(wavPath);
-      await _player.seek(Duration.zero);
-      await _player.play(); // resolves when this sentence finishes
-    } on Exception catch (e) {
-      debugPrint("[TTS] Error playing sentence: $e");
     }
   }
 
@@ -273,9 +435,8 @@ class SherpaTtsDatasource {
   /// Releases all resources held by this datasource.
   ///
   /// Stops playback, clears the queue, disposes the [AudioPlayer], and closes
-  /// the speaking state stream controller. The native sherpa-onnx TTS engine
-  /// is freed automatically when the Dart wrapper is garbage collected — no
-  /// explicit `.free()` is required for this particular FFI binding.
+  /// the speaking state stream controller. The background isolate is killed
+  /// explicitly to prevent memory leaks.
   ///
   /// Safe to call multiple times. All cleanup operations are guarded against
   /// already-disposed state.
@@ -283,6 +444,7 @@ class SherpaTtsDatasource {
   Future<void> dispose() async {
     _isDrainingQueue = false;
     _speechQueue.clear();
+    _ttsIsolate.dispose();
     await _player.dispose();
     await _speakingController.close();
   }

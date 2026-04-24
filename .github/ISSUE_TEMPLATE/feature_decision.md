@@ -8,16 +8,13 @@ labels: feature
 <!-- What is being proposed? What problem does it solve or what goal does it serve?
      Reference the PRD, sprint guide, or North Star metric where relevant. -->
 
-
 ## Proposed approach
 <!-- How would this be implemented? Which architectural layer does it touch?
      Which existing interface or component does it extend or replace? -->
 
-
 ## Alternatives considered
 <!-- What other approaches were thought about?
      Why is this approach preferred? -->
-
 
 ## ADR required?
 <!-- Does this decision need to be recorded in docs/decisions/?

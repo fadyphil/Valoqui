@@ -1,5 +1,13 @@
 # Lingua — Product Requirements Document (PRD)
 
+> **⚠️ IMPLEMENTATION STATUS NOTE (April 2026):**
+> While this PRD serves as the foundational planning document, several technical components have been updated during the build phase for better performance and reliability:
+>
+> - **STT:** Migrated from Groq Whisper to on-device **Sherpa-ONNX (Moonshine)** for lower latency and offline capability.
+> - **LLM Fallback:** Using **Gemini 2.0 Flash** (not 2.5).
+> - **State Management:** Events use **Equatable** instead of Freezed for architectural simplicity.
+> - **Interceptors:** Only `api_key` and `logging` interceptors are currently implemented.
+
 **Version:** 0.3 — Architecture Finalized  
 **Status:** Locked for MVP Build  
 **Last Updated:** March 2026  
@@ -11,7 +19,7 @@
 
 > - v0.1 — Initial PRD, OpenAI Realtime API architecture
 > - v0.2 — Switched to BYOK hybrid, on-device Whisper STT
-> - v0.3 — Final architecture: Groq Whisper API (cloud STT for code-switching), Kokoro-82M on-device TTS, WebRTC VAD, Opus compression, Gemini fallback, dual-key BYOK, streaming sentence-boundary TTS trick, quota math confirmed
+> - v0.3 — Final architecture: Groq Whisper API (cloud STT for code-switching), Kokoro-82M on-device TTS, WebRTC VAD, Opus compression, Gemini 2.0 Flash fallback, dual-key BYOK, streaming sentence-boundary TTS trick, quota math confirmed
 
 ---
 
@@ -230,7 +238,7 @@ STT is the exception: it uses Groq's cloud Whisper API rather than on-device Whi
 │                                                             │
 │  ┌──────────────────────────────────────────────────┐       │
 │  │  FALLBACK: If Groq returns 429 (rate limit)      │       │
-│  │  → Silently retry via Google Gemini 2.5 Flash    │       │
+│  │  → Silently retry via Google Gemini 2.0 Flash    │       │
 │  │  → User notices nothing                          │       │
 │  └──────────────────────────────────────────────────┘       │
 │                                                             │
@@ -277,7 +285,7 @@ Cloud API free tiers are scoped to the account, not the user. A single developer
 | Provider | Free Tier | Sufficient For |
 | --- | --- | --- |
 | Groq (primary) | ~500,000 tokens/day + ~7,200 sec audio/day | 1+ hours of speaking per day |
-| Gemini 2.5 Flash (fallback) | ~1,000,000 tokens/day | Additional 2–3 hours if needed |
+| Gemini 2.0 Flash (fallback) | ~1,000,000 tokens/day | Additional 2–3 hours if needed |
 
 **Quota math for a 1-hour session (Groq):**
 
@@ -368,10 +376,10 @@ Every major technical decision is recorded here with its rationale and the alter
 
 ### ADL-007: Fallback Provider
 
-**Decision:** Google Gemini 2.5 Flash as secondary LLM provider
+**Decision:** Google Gemini 2.0 Flash as secondary LLM provider
 **Rejected:** No fallback (single point of failure), paid fallback providers
 
-**Reason:** Groq is the single point of failure in the architecture. If Groq has downtime, returns 429s, or changes their free tier, the entire app stops working. Gemini 2.5 Flash offers a free tier with 1,000,000 tokens/day and is an independent cloud provider. The app stores both keys at onboarding (Groq required, Gemini optional but strongly encouraged). On any Groq 429, the app retries via Gemini transparently.
+**Reason:** Groq is the single point of failure in the architecture. If Groq has downtime, returns 429s, or changes their free tier, the entire app stops working. Gemini 2.0 Flash offers a free tier with 1,000,000 tokens/day and is an independent cloud provider. The app stores both keys at onboarding (Groq required, Gemini optional but strongly encouraged). On any Groq 429, the app retries via Gemini transparently.
 
 **User experience:** The user never sees an error unless both providers fail simultaneously.
 
@@ -968,7 +976,7 @@ Instituto Cervantes documents define topic coverage per level. In post-MVP, the 
 | **Database** | Firebase Firestore | User profiles, XP, session history |
 | **STT** | Groq Whisper large-v3-turbo | Code-switching STT, user's own key |
 | **LLM** | Groq LLaMA 3.3 70B (streaming) | AI conversation + report generation |
-| **LLM Fallback** | Google Gemini 2.5 Flash | Backup on Groq 429 or downtime |
+| **LLM Fallback** | Google Gemini 2.0 Flash | Backup on Groq 429 or downtime |
 | **TTS** | Kokoro-82M (on-device) | Natural voice output, zero network cost |
 | **VAD** | WebRTC VAD (on-device) | Turn detection in always-on mode |
 | **Audio Compression** | Opus encoder | 80% audio size reduction before upload |

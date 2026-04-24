@@ -19,7 +19,8 @@ abstract interface class VadRepository {
   Future<Either<AppFailure, void>> initialize();
 
   /// Begins monitoring the microphone for voice activity.
-  Future<Either<AppFailure, void>> startMonitoring();
+  /// If [enableVad] is false, audio will be streamed but VAD segments will not be emitted.
+  Future<Either<AppFailure, void>> startMonitoring({bool enableVad = true});
 
   /// Stops monitoring.
   Future<void> stopMonitoring();

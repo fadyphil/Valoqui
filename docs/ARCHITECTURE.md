@@ -13,7 +13,7 @@ Valoqui strictly adheres to a Domain-Driven, Feature-First Clean Architecture. T
 1. **Domain Layer (The Rules):**
    - Pure Dart. No Flutter dependencies. No external packages (except pure Dart ones like `fpdart`).
    - Contains **Entities**, **Repository Interfaces**, and **Use Cases**.
-   - Example Interface (`lib/core/domain/repositories/llm_repository.dart`):
+   - Example Interface ([`lib/core/domain/repositories/llm_repository.dart`](../lib/core/domain/repositories/llm_repository.dart)):
 
      ```dart
      abstract interface class LlmRepository {
@@ -32,10 +32,16 @@ Valoqui strictly adheres to a Domain-Driven, Feature-First Clean Architecture. T
 2. **Data Layer (The Implementation):**
    - Implements the Domain interfaces.
    - Contains **Datasources** (APIs, local databases, ONNX model integrations) and **Repositories** (which coordinate datasources and handle errors).
+   - Primary Implementations:
+     - [**`SherpaSttDatasource`**](../lib/core/data/datasources/sherpa_stt_datasource.dart) (Speech-to-Text)
+     - [**`SherpaTtsDatasource`**](../lib/core/data/datasources/sherpa_tts_datasource.dart) (Text-to-Speech)
+     - [**`SherpaVadDatasource`**](../lib/core/data/datasources/sherpa_vad_datasource.dart) (Voice Activity Detection)
+     - [**`GroqLlmRepository`**](../lib/core/data/repositories/groq_llm_repository.dart) (LLM with Gemini fallback)
 
 3. **Presentation Layer (The UI & State):**
    - Contains Flutter **Widgets** and **BLoCs**.
    - Reacts to state changes and dispatches events.
+   - Core Orchestrator: [**`SpeakingBloc`**](../lib/features/speaking/bloc/speaking_bloc.dart)
 
 ### Why this approach? (See ADR-005)
 
@@ -48,7 +54,7 @@ If we want to swap our Text-to-Speech engine from Piper to F5-TTS, we only write
 We use a highly structured approach to state and errors:
 
 - **BLoC (`flutter_bloc`):** Manages the state machine. Events go in, States come out.
-- **Freezed:** All States, Events, and Models are immutable sealed unions. This forces the UI to handle *every possible state* (Loading, Success, Error) at compile time via `.when()`.
+- **Freezed:** States and Models are immutable sealed unions. This forces the UI to handle *every possible state* (Loading, Success, Error) at compile time via `.when()`. BLoC Events use `Equatable` for architectural simplicity.
 - **fpdart (`Either`):** Exceptions are banned in the Domain/Data layers. Repositories return `Either<AppFailure, Success>`. The BLoC explicitly folds this `Either` to emit a Success or Error state.
 
 ---
@@ -77,16 +83,28 @@ We register dependencies in a strict order so that interfaces are resolved seaml
 
 ## 4. The Voice Pipeline Orchestration
 
-The most complex part of the app is the `SpeakingBloc`. It manages a 4-stage pipeline:
+The most complex part of the app is the [**`SpeakingBloc`**](../lib/features/speaking/bloc/speaking_bloc.dart). It manages a 4-stage pipeline:
 
 1. **Listening (`active(listening)`):** VAD is monitoring the mic.
 2. **Processing (`active(processing)`):** Audio is sent to STT. Transcript is sent to LLM.
 3. **Speaking (`active(speaking)`):** LLM streams tokens. BLoC detects sentence boundaries and triggers TTS.
 4. **Push-To-Talk Fallback (`active(pushToTalk)`):** If VAD fails, the system safely falls back to manual control.
 
-### The "Sentence-Boundary" Trick (See ADR-008)
+### Performance Optimizations
 
-To achieve sub-600ms latency, the BLoC does not wait for the LLM to finish. It buffers tokens and triggers TTS immediately upon detecting punctuation (`.`, `?`, `!`).
+<!-- PULSE:ADR_INLINE:ADR-011 -->- **STT Performance Optimization Strategy (ADR-011):** Implement chunked streaming (1.5s chunks, 300ms overlap) with sherpa-onnx to show partial transcripts within 1.5s instead of waiting for full utterance. Research Whisper.cpp integration as a swappable backend for future accuracy improvement.<!-- /PULSE:ADR_INLINE:ADR-011 -->
+<!-- PULSE:ADR_INLINE:ADR-014 -->- **UI Rebuild Optimization (Token Batching) (ADR-014):** Implement UI throttling (10Hz) and scoped rebuilds using `BlocSelector` to reduce CPU usage and eliminate jank during high-frequency token streaming from the LLM.<!-- /PULSE:ADR_INLINE:ADR-014 -->
+<!-- PULSE:ADR_INLINE:ADR-015 -->- **Isolate Backpressure & Buffer Safety (ADR-015):** Implement isolate queue bounding and load shedding to prevent memory leaks and OOM crashes during heavy STT decoding.<!-- /PULSE:ADR_INLINE:ADR-015 -->
+<!-- PULSE:ADR_INLINE:ADR-013 -->- **TTS Warm-Up Optimization (ADR-013):** Pre-initialize the TTS engine (silent synthesis pass) as soon as the LLM begins streaming tokens to eliminate the 500-2000ms "cold start" delay during the first spoken sentence.<!-- /PULSE:ADR_INLINE:ADR-013 -->
+<!-- PULSE:ADR_INLINE:ADR-008 -->- **Sentence-Boundary TTS Trigger (ADR-008):** Trigger TTS synthesis and playback as soon as a sentence boundary (`.`, `?`, `!`) is detected in the LLM token stream, rather than waiting for the entire response to complete, reducing perceived latency by 40-60%.<!-- /PULSE:ADR_INLINE:ADR-008 -->
+<!-- PULSE:ADR_INLINE:ADR-018 -->- **Strict Turn-Taking and Audio Pipeline Resilience (ADR-018):** No summary provided.<!-- /PULSE:ADR_INLINE:ADR-018 -->
+
+### Performance Analysis & Benchmarks
+
+To ensure the audio pipeline remains responsive on low-to-mid-range hardware, we maintain detailed performance logs and mathematical models:
+
+- **[STT Performance Analysis Report](architecture/ARCH-STT-PERFORMANCE-ANALYSIS.md):** A mathematical breakdown of Real-Time Factor (RTF) and physical bottlenecks on Snapdragon 680 hardware.
+- **[Market Report: Future STT Alternatives](architecture/ARCH-STT-FUTURE-ALTERNATIVES.md):** A comparison of bleeding-edge models (SenseVoice, Zipformer, Moonshine v2) for next-generation on-device ASR.
 
 ---
 

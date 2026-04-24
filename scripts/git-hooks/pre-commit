@@ -1,0 +1,31 @@
+#!/bin/bash
+# Valoqui Pre-commit Quality Gate
+
+echo "🔍 Running pre-commit quality gates..."
+
+# 1. Format Check
+echo "🎨 Checking formatting..."
+dart format --set-exit-if-changed .
+if [ $? -ne 0 ]; then
+  echo "❌ Error: Code not formatted correctly. Run 'dart format .' and try again."
+  exit 1
+fi
+
+# 2. Linter Check
+echo "🛡️ Running flutter analyze..."
+flutter analyze
+if [ $? -ne 0 ]; then
+  echo "❌ Error: Linter/Analyzer warnings found. Fix them before committing."
+  exit 1
+fi
+
+# 3. Pulse Audit (Docs & Changelog Integrity)
+echo "📑 Running Pulse Audit..."
+python3 scripts/pulse_audit.py
+if [ $? -ne 0 ]; then
+  echo "❌ Error: Pulse Audit failed. Check CHANGELOG.md and ADR references."
+  exit 1
+fi
+
+echo "✅ All quality gates passed!"
+exit 0

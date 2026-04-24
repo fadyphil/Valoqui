@@ -1,19 +1,20 @@
 // lib/features/speaking/widgets/mic_button.dart
 //
-// Fix: converted to StatefulWidget with _isPressed state.
-// Previously in always-on mode the button had zero gesture handlers
-// (onTap was null, onTapDown/Up were gated to PTT only) so touching
-// it did nothing. Now press feedback works in every mode.
+// Vanguard_UI_Architect Refinement: Premium "Double-Bezel" Architecture
+// Implements haptic depth, cinematic spatial rhythm, and fluid motion.
 
 import "package:flutter/material.dart";
 import "package:flutter_animate/flutter_animate.dart";
 import "package:valoqui/core/theme/app_colors.dart";
 import "package:valoqui/core/theme/app_spacing.dart";
+import "package:valoqui/core/theme/app_typography.dart";
 import "package:valoqui/features/speaking/bloc/speaking_bloc.dart";
 
 class MicButton extends StatefulWidget {
   final ConversationPhase phase;
   final MicMode micMode;
+  final double bufferFillPercentage;
+  final bool isTranscribing;
   final VoidCallback? onPressDown;
   final VoidCallback? onPressUp;
 
@@ -21,6 +22,8 @@ class MicButton extends StatefulWidget {
     super.key,
     required this.phase,
     required this.micMode,
+    this.bufferFillPercentage = 0.0,
+    this.isTranscribing = false,
     this.onPressDown,
     this.onPressUp,
   });
@@ -33,6 +36,7 @@ class _MicButtonState extends State<MicButton> {
   bool _isPressed = false;
 
   void _handleDown() {
+    if (widget.isTranscribing) return;
     setState(() => _isPressed = true);
     if (widget.micMode == MicMode.pushToTalk) {
       widget.onPressDown?.call();
@@ -40,6 +44,7 @@ class _MicButtonState extends State<MicButton> {
   }
 
   void _handleUp() {
+    if (widget.isTranscribing) return;
     setState(() => _isPressed = false);
     if (widget.micMode == MicMode.pushToTalk) {
       widget.onPressUp?.call();
@@ -47,6 +52,7 @@ class _MicButtonState extends State<MicButton> {
   }
 
   void _handleCancel() {
+    if (widget.isTranscribing) return;
     setState(() => _isPressed = false);
     if (widget.micMode == MicMode.pushToTalk) {
       widget.onPressUp?.call();
@@ -57,97 +63,179 @@ class _MicButtonState extends State<MicButton> {
   Widget build(BuildContext context) {
     final isListening = widget.phase == ConversationPhase.listening;
     final isSpeaking = widget.phase == ConversationPhase.speaking;
+    final isDisabled =
+        widget.isTranscribing || widget.phase != ConversationPhase.listening;
 
     return GestureDetector(
-      onTapDown: (_) => _handleDown(),
-      onTapUp: (_) => _handleUp(),
-      onTapCancel: _handleCancel,
-      child: SizedBox(
-        width: 196,
-        height: 196,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // ── Pulsing outer ring (listening only) ──────
-            if (isListening) const _PulseRing(),
+      onTapDown: isDisabled ? null : (_) => _handleDown(),
+      onTapUp: isDisabled ? null : (_) => _handleUp(),
+      onTapCancel: isDisabled ? null : _handleCancel,
+      child: Opacity(
+        opacity: isDisabled ? 0.6 : 1.0,
+        child: SizedBox(
+          width: 220,
+          height: 220,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // ── Ethereal Pulse Rings (Raindrop Effect) ──
+              if (isListening && !isDisabled) ...[
+                const _PulseRing(delay: 0),
+                const _PulseRing(delay: 600),
+                const _PulseRing(delay: 1200),
+              ],
 
-            // ── Halo border ──────────────────────────────
-            Container(
-              width: 188,
-              height: 188,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.accentPrimary.withValues(alpha: 0.18),
-                  width: 1,
-                ),
-              ),
-            ),
-
-            // ── Main button circle ────────────────────────
-            AnimatedScale(
-              scale: _isPressed ? 0.93 : 1.0,
-              duration: const Duration(milliseconds: 100),
-              curve: Curves.easeOut,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: 96,
-                height: 96,
+              // ── Outer "Machined" Bezel ──────────────────
+              Container(
+                width: 196,
+                height: 196,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: isSpeaking ? null : AppColors.micButtonGradient,
-                  color: isSpeaking ? AppColors.bgElevated : null,
-                  boxShadow: isListening
-                      ? [
-                          BoxShadow(
-                            color: _isPressed
-                                ? AppColors.micGlow.withValues(alpha: 0.6)
-                                : AppColors.micGlow,
-                            blurRadius: _isPressed ? 56 : 40,
-                            spreadRadius: _isPressed ? 12 : 8,
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Icon(
-                  Icons.mic_rounded,
-                  color: isSpeaking ? AppColors.textSecondary : Colors.white,
-                  size: 36,
-                ),
-              ),
-            ),
-
-            // ── PTT label overlay ─────────────────────────
-            if (widget.micMode == MicMode.pushToTalk)
-              Positioned(
-                bottom: 12,
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 150),
-                  opacity: _isPressed ? 1.0 : 0.5,
-                  child: Text(
-                    _isPressed ? "RECORDING" : "HOLD TO SPEAK",
-                    style: TextStyle(
-                      fontFamily: "DMSans",
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: _isPressed
-                          ? AppColors.accentPrimary
-                          : AppColors.textSecondary,
-                      letterSpacing: 1.2,
-                    ),
+                  border: Border.all(
+                    color: AppColors.accentPrimary.withValues(alpha: 0.12),
+                    width: 1,
                   ),
                 ),
               ),
-          ],
+
+              // ── Inset "Tray" (Depth Layer) ──────────────
+              Container(
+                width: 170,
+                height: 170,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.bgPrimary.withValues(alpha: 0.4),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                      spreadRadius: -2,
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Main button core ────────────────────────
+              AnimatedScale(
+                scale: _isPressed ? 0.92 : 1.0,
+                duration: const Duration(milliseconds: 300),
+                curve: const Cubic(0.32, 0.72, 0, 1),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // ── Buffer Limit Ring (High Precision) ─────
+                    if (widget.micMode == MicMode.pushToTalk &&
+                        widget.bufferFillPercentage > 0.01 &&
+                        !isDisabled)
+                      SizedBox(
+                        width: 116,
+                        height: 116,
+                        child: CircularProgressIndicator(
+                          value: widget.bufferFillPercentage,
+                          strokeWidth: 2.5,
+                          strokeCap: StrokeCap.round,
+                          backgroundColor: Colors.white.withValues(alpha: 0.05),
+                          color: Color.lerp(
+                            AppColors.accentPrimary,
+                            AppColors.error,
+                            widget.bufferFillPercentage,
+                          ),
+                        ),
+                      ).animate().fadeIn(duration: 400.ms),
+
+                    // ── The Interactive Island ────────────────
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 400),
+                      curve: const Cubic(0.32, 0.72, 0, 1),
+                      width: 104,
+                      height: 104,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: (isSpeaking || isDisabled)
+                            ? null
+                            : AppColors.micButtonGradient,
+                        color: (isSpeaking || isDisabled)
+                            ? AppColors.bgElevated
+                            : null,
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.1),
+                          width: 0.5,
+                        ),
+                        boxShadow: (isListening && !isDisabled)
+                            ? [
+                                BoxShadow(
+                                  color: AppColors.accentPrimary.withValues(
+                                    alpha: _isPressed ? 0.5 : 0.35,
+                                  ),
+                                  blurRadius: _isPressed ? 64 : 48,
+                                  spreadRadius: _isPressed ? 8 : 4,
+                                ),
+                                BoxShadow(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  blurRadius: 0,
+                                  offset: const Offset(0, -1),
+                                  spreadRadius: 0,
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child:
+                          Icon(
+                                isDisabled
+                                    ? Icons.hourglass_empty_rounded
+                                    : (isListening
+                                          ? Icons.mic_rounded
+                                          : Icons.graphic_eq_rounded),
+                                color: (isSpeaking || isDisabled)
+                                    ? AppColors.textSecondary
+                                    : Colors.white,
+                                size: 38,
+                              )
+                              .animate(target: _isPressed ? 1 : 0)
+                              .scale(
+                                begin: const Offset(1, 1),
+                                end: const Offset(0.9, 0.9),
+                                duration: 200.ms,
+                              ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Dynamic Label ───────────────────────────
+              if (widget.micMode == MicMode.pushToTalk)
+                Positioned(
+                  bottom: 16,
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 250),
+                    opacity: isDisabled ? 0.0 : (_isPressed ? 1.0 : 0.4),
+                    child: Text(
+                      _isPressed ? "RECORDING" : "HOLD TO SPEAK",
+                      style: TextStyle(
+                        fontFamily: "DMSans",
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: _isPressed
+                            ? AppColors.accentPrimary
+                            : AppColors.textSecondary,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-/// Expanding ring that fades out — runs on a 1.5s loop.
+/// Ethereal expanding ring that fades out.
 class _PulseRing extends StatelessWidget {
-  const _PulseRing();
+  final int delay;
+  const _PulseRing({required this.delay});
 
   @override
   Widget build(BuildContext context) {
@@ -157,23 +245,22 @@ class _PulseRing extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(
-              color: AppColors.accentPrimary.withValues(alpha: 0.4),
-              width: 2,
+              color: AppColors.accentPrimary.withValues(alpha: 0.15),
+              width: 1.5,
             ),
           ),
         )
-        .animate(onPlay: (controller) => controller.repeat())
+        .animate(onPlay: (c) => c.repeat())
         .scale(
-          begin: const Offset(1, 1),
-          end: const Offset(1.5, 1.5),
-          duration: 1500.ms,
-          curve: Curves.easeOut,
+          begin: const Offset(1.0, 1.0),
+          end: const Offset(1.6, 1.6),
+          duration: 2400.ms,
+          curve: const Cubic(0.2, 0.4, 0, 1),
+          delay: delay.ms,
         )
-        .fadeOut(duration: 1500.ms);
+        .fadeOut(duration: 2400.ms, delay: delay.ms);
   }
 }
-
-// ── Mic mode toggle ────────────────────────────────────────────────────
 
 class MicModeToggle extends StatelessWidget {
   final MicMode micMode;
@@ -187,81 +274,55 @@ class MicModeToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _ToggleChip(
-          label: "Push to talk",
-          isActive: micMode == MicMode.pushToTalk,
-          onTap: onToggle,
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        _ToggleChip(
-          label: "Always on",
-          isActive: micMode == MicMode.alwaysOn,
-          onTap: onToggle,
-          showDot: true,
-        ),
-      ],
-    );
-  }
-}
+    final isAlwaysOn = micMode == MicMode.alwaysOn;
 
-class _ToggleChip extends StatelessWidget {
-  final String label;
-  final bool isActive;
-  final bool showDot;
-  final VoidCallback onTap;
-
-  const _ToggleChip({
-    required this.label,
-    required this.isActive,
-    required this.onTap,
-    this.showDot = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: isActive ? null : onTap,
+      onTap: onToggle,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: 300.ms,
+        curve: Curves.easeOut,
         padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.sm,
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.xs,
         ),
         decoration: BoxDecoration(
-          color: isActive
-              ? AppColors.accentPrimary.withValues(alpha: 0.15)
-              : AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(AppSpacing.x3l),
+          color: AppColors.bgElevated,
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: isActive ? AppColors.accentPrimary : AppColors.border,
+            color: isAlwaysOn
+                ? AppColors.accentPrimary.withValues(alpha: 0.3)
+                : AppColors.border,
           ),
+          boxShadow: isAlwaysOn
+              ? [
+                  BoxShadow(
+                    color: AppColors.accentPrimary.withValues(alpha: 0.1),
+                    blurRadius: 8,
+                    spreadRadius: 2,
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (showDot && isActive) ...[
-              Container(
-                width: 6,
-                height: 6,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.accentPrimary,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.xs),
-            ],
+            Icon(
+              isAlwaysOn ? Icons.auto_awesome : Icons.back_hand_rounded,
+              size: 14,
+              color: isAlwaysOn
+                  ? AppColors.accentPrimary
+                  : AppColors.textSecondary,
+            ),
+            const SizedBox(width: AppSpacing.xs),
             Text(
-              label,
-              style: TextStyle(
-                fontFamily: "DMSans",
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: isActive
-                    ? AppColors.accentPrimary
+              isAlwaysOn ? "Always-on" : "Push-to-talk",
+              style: AppTypography.bodyMD.copyWith(
+                color: isAlwaysOn
+                    ? AppColors.textPrimary
                     : AppColors.textSecondary,
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
+                letterSpacing: 0.5,
               ),
             ),
           ],

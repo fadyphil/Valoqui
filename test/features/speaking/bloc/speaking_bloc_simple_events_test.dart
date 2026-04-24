@@ -81,7 +81,13 @@ void main() {
     when(
       () => mockStt.transcriptStream,
     ).thenAnswer((_) => const Stream.empty());
+    when(
+      () => mockStt.partialTranscriptStream,
+    ).thenAnswer((_) => const Stream.empty());
     when(() => mockStt.amplitudeStream).thenAnswer((_) => const Stream.empty());
+    when(
+      () => mockStt.bufferFillStream,
+    ).thenAnswer((_) => const Stream.empty());
     when(
       () => mockVad.voiceActivityStream,
     ).thenAnswer((_) => const Stream.empty());
@@ -96,9 +102,10 @@ void main() {
     // Stub lifecycle methods with explicit Either generics
     when(() => mockStt.dispose()).thenAnswer((_) async {});
     when(() => mockTts.dispose()).thenAnswer((_) async {});
+    when(() => mockTts.warmUp()).thenAnswer((_) async {});
     when(() => mockVad.dispose()).thenAnswer((_) async {});
     when(
-      () => mockVad.startMonitoring(),
+      () => mockVad.startMonitoring(enableVad: any(named: 'enableVad')),
     ).thenAnswer((_) async => const Right<AppFailure, void>(null));
     // stop/stopMonitoring return Future<void>, not Either
     when(() => mockVad.stopMonitoring()).thenAnswer((_) async {});
@@ -120,6 +127,12 @@ void main() {
     when(
       () => mockStt.initialize(),
     ).thenAnswer((_) async => const Right<AppFailure, bool>(true));
+    when(
+      () => mockStt.startListening(),
+    ).thenAnswer((_) async => const Right<AppFailure, void>(null));
+    when(
+      () => mockStt.stopListening(),
+    ).thenAnswer((_) async => const Right<AppFailure, String>(""));
     when(
       () => mockTts.initialize(),
     ).thenAnswer((_) async => const Right<AppFailure, void>(null));
@@ -155,9 +168,6 @@ void main() {
         expect: () => [
           isA<SpeakingInitializing>(),
           predicate<SpeakingState>((s) => s is SpeakingActive), // listening
-          predicate<SpeakingState>(
-            (s) => s is SpeakingActive,
-          ), // processing (greeting)
           predicate<SpeakingState>(
             (s) => s is SpeakingActive,
           ), // speaking (greeting)
@@ -200,9 +210,6 @@ void main() {
           ), // listening (PTT)
           predicate<SpeakingState>(
             (s) => s is SpeakingActive,
-          ), // processing (greeting)
-          predicate<SpeakingState>(
-            (s) => s is SpeakingActive,
           ), // speaking (greeting)
           predicate<SpeakingState>(
             (s) =>
@@ -213,8 +220,12 @@ void main() {
           ),
         ],
         verify: (_) {
-          // Called once in MicModeToggled handler (tearDown close() won't call stopMonitoring since we're switching to alwaysOn)
-          verify(() => mockVad.startMonitoring()).called(1);
+          // VAD monitoring is SKIPPED during MicModeToggled because the
+          // phase is 'speaking' (greeting flow). It will be started
+          // automatically by _onTtsFinished once Lucia stops talking.
+          verifyNever(
+            () => mockVad.startMonitoring(enableVad: any(named: 'enableVad')),
+          );
         },
       );
 
@@ -236,7 +247,9 @@ void main() {
         expect: () => <dynamic>[], // No state changes expected
         verify: (_) {
           // No startMonitoring in test (fresh bloc never started VAD)
-          verifyNever(() => mockVad.startMonitoring());
+          verifyNever(
+            () => mockVad.startMonitoring(enableVad: any(named: 'enableVad')),
+          );
           // But tearDown close() will call stopMonitoring because VAD was put in alwaysOn mode during test
           verify(() => mockVad.stopMonitoring()).called(1);
         },
@@ -262,9 +275,6 @@ void main() {
         expect: () => [
           isA<SpeakingInitializing>(),
           predicate<SpeakingState>((s) => s is SpeakingActive), // listening
-          predicate<SpeakingState>(
-            (s) => s is SpeakingActive,
-          ), // processing (greeting)
           predicate<SpeakingState>(
             (s) => s is SpeakingActive,
           ), // speaking (greeting)
@@ -297,9 +307,6 @@ void main() {
         expect: () => [
           isA<SpeakingInitializing>(),
           predicate<SpeakingState>((s) => s is SpeakingActive), // listening
-          predicate<SpeakingState>(
-            (s) => s is SpeakingActive,
-          ), // processing (greeting)
           predicate<SpeakingState>(
             (s) => s is SpeakingActive,
           ), // speaking (greeting)
@@ -343,9 +350,6 @@ void main() {
         expect: () => [
           isA<SpeakingInitializing>(),
           predicate<SpeakingState>((s) => s is SpeakingActive), // listening
-          predicate<SpeakingState>(
-            (s) => s is SpeakingActive,
-          ), // processing (greeting)
           predicate<SpeakingState>(
             (s) => s is SpeakingActive,
           ), // speaking (greeting)

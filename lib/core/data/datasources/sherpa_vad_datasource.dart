@@ -120,11 +120,12 @@ class SherpaVadDatasource {
           windowSize: 512,
         ),
         sampleRate: 16000,
-        numThreads: 1,
+        numThreads: 2,
         debug: false,
-        provider: "cpu",
+        // Hardware acceleration: NNAPI on Android (often buggy/slow fallback),
+        // XNNPACK (highly optimized for ARM CPU), or CoreML on iOS.
+        provider: Platform.isIOS ? "coreml" : "xnnpack",
       );
-
       _vad = sherpa.VoiceActivityDetector(
         config: vadConfig,
         bufferSizeInSeconds: 30,
@@ -152,10 +153,12 @@ class SherpaVadDatasource {
   /// The microphone stream includes an [onError] handler to catch unexpected
   /// platform-level audio errors without crashing the BLoC.
 
-  Future<Either<AppFailure, void>> startMonitoring() async {
+  Future<Either<AppFailure, void>> startMonitoring({
+    bool enableVad = true,
+  }) async {
     // We do NOT gate on VAD model availability here.
     // PTT needs the mic open regardless of whether the VAD model loaded.
-    // VAD segment processing below is skipped when _vad == null.
+    // VAD segment processing below is skipped when _vad == null or enableVad is false.
 
     try {
       final hasPermission = await _recorder.hasPermission();
@@ -182,8 +185,9 @@ class SherpaVadDatasource {
             _audioStreamController.add(chunk);
           }
 
-          // Always-on VAD processing — skipped when _vad is null (PTT fallback).
-          if (_vad == null) return;
+          // Always-on VAD processing — skipped when _vad is null (PTT fallback)
+          // or explicitly disabled (PTT active session).
+          if (_vad == null || !enableVad) return;
           _vad!.acceptWaveform(_convertPcm16ToFloat32(chunk));
 
           // sherpa-onnx VAD is segment-based:

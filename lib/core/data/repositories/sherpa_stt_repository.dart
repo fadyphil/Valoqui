@@ -21,7 +21,13 @@ class SherpaSttRepository implements SttRepository {
   Stream<String> get transcriptStream => _datasource.textStream;
 
   @override
+  Stream<String> get partialTranscriptStream => _datasource.partialTextStream;
+
+  @override
   Stream<double> get amplitudeStream => _datasource.amplitudeStream;
+
+  @override
+  Stream<double> get bufferFillStream => _datasource.bufferFillStream;
 
   @override
   bool get isListening => _datasource.isListening;

@@ -9,17 +9,19 @@
 
 The current Sprint 2 audio pipeline processes audio sequentially:
 
-```
+```Markdown
 [Microphone] → [VAD Detection] → [Full Buffer Recording] → [STT Decode] → [LLM Request] → [TTS Synthesis] → [Speaker]
 ```
 
 This sequential model creates significant latency bottlenecks:
+
 - **STT blocking:** Full utterance must be recorded before decoding begins
 - **Single-threaded decode:** Main isolate blocked during STT/TTS computation
 - **No pipelining:** Each stage waits for previous stage completion
 - **Perceived lag:** Users wait 3-5 seconds from speech end to hearing response
 
 Sprint 3 introduces concurrent processing to reduce perceived latency through:
+
 1. **Chunked streaming STT** (ADR-011): Decode partial audio while continuing to record
 2. **Parallel TTS warm-up**: Prepare TTS engine while LLM generates response
 3. **Isolate-based compute:** Offload heavy STT/TTS work to background isolates
@@ -37,6 +39,7 @@ Sprint 3 introduces concurrent processing to reduce perceived latency through:
 ## Architecture Principles
 
 ### 1. Isolate-Based Compute Boundaries
+
 All CPU-intensive operations (STT decode, TTS synthesis) run in dedicated isolates:
 
 ```dart
@@ -53,12 +56,14 @@ static String _decodeInIsolate(List<int> audio) {
 ```
 
 **Rules:**
+
 - Never call blocking decode/synthesis methods on main isolate
 - Always wrap heavy compute in `compute()` or spawn dedicated isolate
 - Pass data via immutable copies (no shared state between isolates)
 - Implement timeout handling for isolate communication
 
 ### 2. Stream-Based Chunk Processing
+
 Replace full-buffer processing with streaming chunk pipeline:
 
 ```dart
@@ -81,14 +86,16 @@ final finalTranscript = await sttDatasource.finalize();
 ```
 
 **Benefits:**
+
 - First partial transcript available after 1.5s instead of waiting for full utterance
 - Overlapping chunks preserve context across boundaries
 - Progressive refinement improves perceived responsiveness
 
 ### 3. Pipeline Stage Decoupling
+
 Each pipeline stage operates independently with message passing:
 
-```
+```Markdown
 ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
 │   VAD +     │    │    STT      │    │    LLM      │    │    TTS      │
 │  Chunking   │───▶│  Decoder    │───▶│  Generator  │───▶│  Synthesizer│
@@ -101,21 +108,25 @@ Each pipeline stage operates independently with message passing:
 ```
 
 **Communication Pattern:**
+
 - Stages communicate via `Stream` and `Sink` (no shared mutable state)
 - Backpressure handled via bounded buffers
 - Each stage can fail independently without crashing entire pipeline
 - Error propagation flows downstream with context preservation
 
 ### 4. Progressive Output Strategy
+
 Emit intermediate results to improve perceived responsiveness:
 
 **STT Pipeline:**
+
 1. **Partial transcripts** (every 1.5s chunk): Show unstable draft to user
 2. **Debounce logic** (300ms stability window): Avoid flickering on unstable partials
 3. **Final transcript** (after VAD silence): Replace partial with stable result
 4. **Correction pass** (optional): Post-process full buffer for accuracy
 
 **TTS Pipeline:**
+
 1. **Warm-up** (during LLM generation): Pre-load voices, initialize synthesizer
 2. **Incremental synthesis** (if supported): Start speaking first sentence while LLM generates rest
 3. **Gap filling**: Play ambient sound or "thinking" indicator during synthesis gaps
@@ -261,6 +272,7 @@ class BoundedAudioQueue {
 ## Consequences
 
 ### Positive
+
 - ✅ **Latency reduction:** Perceived latency reduced by 50-60% (partial transcripts appear faster)
 - ✅ **Responsiveness:** UI remains responsive during heavy compute (isolates)
 - ✅ **Scalability:** Pipeline stages can be optimized independently
@@ -268,6 +280,7 @@ class BoundedAudioQueue {
 - ✅ **Testability:** Each pattern can be unit-tested in isolation
 
 ### Negative
+
 - ⚠️ **Complexity increase:** Concurrent programming introduces subtle bugs (race conditions, deadlocks)
 - ⚠️ **Memory overhead:** Multiple chunk buffers and isolate memory usage
 - ⚠️ **Debugging difficulty:** Asynchronous flow harder to trace in debugger
@@ -275,6 +288,7 @@ class BoundedAudioQueue {
 - ⚠️ **Testing overhead:** Need to test timing-dependent behavior (debouncing, timeouts)
 
 ### Risks
+
 - 🔴 **Risk:** Race conditions in chunk buffer management  
   **Mitigation:** Use immutable data structures, avoid shared mutable state
   
@@ -290,6 +304,7 @@ class BoundedAudioQueue {
 ## Testing Strategy
 
 ### Unit Tests
+
 ```dart
 test('ChunkedSttProcessor emits partials every 1.5s', () async {
   final processor = ChunkedSttProcessor(mockEngine);
@@ -315,6 +330,7 @@ test('Backpressure prevents queue overflow', () async {
 ```
 
 ### Integration Tests
+
 ```dart
 test('End-to-end pipeline completes in <2s', () async {
   final stopwatch = Stopwatch()..start();
@@ -335,6 +351,7 @@ test('End-to-end pipeline completes in <2s', () async {
 ```
 
 ### Performance Benchmarks
+
 ```dart
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -361,26 +378,31 @@ class PipelineBenchmarks {
 ## Migration Plan
 
 ### Phase 1: Isolate Extraction (Days 1-2)
+
 - Move `SherpaSttDatasource.decode()` to isolate via `compute()`
 - Add timeout handling for isolate communication
 - Benchmark performance impact (expect minimal overhead)
 
 ### Phase 2: Chunking Infrastructure (Days 3-4)
+
 - Implement `ChunkedSttProcessor` class
 - Add sliding window with 1.5s chunks, 300ms overlap
 - Create stream-based API for partial transcripts
 
 ### Phase 3: Pipeline Integration (Days 5-6)
+
 - Update `SpeakingBloc` to consume chunked STT stream
 - Add debouncing logic for stable partial display
 - Implement progressive state updates (listening → processing → generating → speaking)
 
 ### Phase 4: TTS Parallelization (Days 7-8)
+
 - Add `TtsRepository.warmUp()` method
 - Start TTS warm-up during LLM generation (parallel execution)
 - Implement incremental TTS synthesis if supported
 
 ### Phase 5: Optimization & Testing (Days 9-10)
+
 - Tune chunk size and overlap parameters
 - Add telemetry for pipeline stage timings
 - A/B test with real users
@@ -396,7 +418,7 @@ class PipelineBenchmarks {
 ## Glossary
 
 | Term | Definition |
-|------|------------|
+| ------ | ------------ |
 | **Chunk** | Fixed-duration audio segment (e.g., 1.5s) processed independently |
 | **Overlap** | Audio region shared between consecutive chunks for context preservation |
 | **Partial Transcript** | Intermediate STT result that may change with more context |
@@ -411,7 +433,7 @@ class PipelineBenchmarks {
 ## Appendix: Timing Budget Breakdown
 
 | Stage | Current (Sprint 2) | Target (Sprint 3) | Improvement Method |
-|-------|-------------------|-------------------|-------------------|
+| ------- | ------------------- | ------------------- | ------------------- |
 | VAD detection | 200ms | 200ms | No change |
 | Audio recording | 3000ms (full utterance) | 1500ms (first chunk) | Chunked streaming |
 | STT decode | 2500ms (sequential) | 800ms (overlapped) | Isolate + chunking |

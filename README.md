@@ -16,7 +16,7 @@
 
 Valoqui is a high-performance, real-time AI conversation partner designed for immersive language learning. This MVP focuses on **ultra-low latency** voice interactions, utilizing a hybrid on-device/cloud audio pipeline to provide a seamless, human-like speaking experience.
 
-[**Get Started**](docs/ONBOARDING.md) • [**Screenshots**](docs/Screenshots.md) • [**Architecture**](docs/ARCHITECTURE.md) • [**Setup**](docs/SETUP.md) • [**Testing**](docs/testing/TESTING_HANDOFF.md) • [**Contributing**](CONTRIBUTING.md)
+[**Journey**](JOURNEY.md) • [**Get Started**](docs/ONBOARDING.md) • [**Screenshots**](docs/Screenshots.md) • [**Architecture**](docs/ARCHITECTURE.md) • [**Setup**](docs/SETUP.md) • [**Testing**](docs/testing/TESTING_HANDOFF.md) • [**Contributing**](CONTRIBUTING.md)
 
 </div>
 
@@ -24,8 +24,9 @@ Valoqui is a high-performance, real-time AI conversation partner designed for im
 
 ## 📖 Documentation Map
 
-Welcome to Valoqui! Whether you're here to use the app, understand its design, or contribute, we've got you covered. Start here:
+Welcome to Valoqui! Whether you're evaluating the project, diving into the codebase, or contributing, start here:
 
+0. 🧭 **[Journey](JOURNEY.md)**: How this was built, what I learned, and where the line is between my work and the AI's. **Start here if you're evaluating the project.**
 1. 🚀 **[Zero to Hero (Onboarding)](docs/ONBOARDING.md)**: New to the codebase? Start here for a mental model, codebase tour, and your first steps.
 2. 📱 **[App Screenshots](docs/Screenshots.md)**: Explore the interface and features of the app through high-fidelity design screenshots.
 3. 🛠 **[Developer Setup](docs/SETUP.md)**: A step-by-step guide to setting up your local environment, Firebase, and required models.
@@ -46,13 +47,14 @@ Welcome to Valoqui! Whether you're here to use the app, understand its design, o
 To eliminate latency, Valoqui leverages a highly optimized audio stack:
 
 * **VAD (Voice Activity Detection):** Uses on-device **Silero VAD** for accurate segment-based speech detection.
-* **STT (Speech-to-Text):** Utilizes **Groq Whisper** (via unified pipeline) for highly accurate code-switching transcription.
+* **STT (Speech-to-Text):** Utilizes on-device **Sherpa-ONNX (Moonshine)** for highly accurate, private transcription.
 * **TTS (Text-to-Speech):** Utilizes on-device **VITS/Piper** with a natural Spanish voice (Lucia). Optimized for streaming using a rotating file-cache strategy to prevent stale audio.
+* **TTS Warm-Up:** Pre-initializes the TTS engine during LLM generation to overlap initialization with other processing, eliminating 500-2000ms cold start latency (ADR-013).
 
 ### 2. High-Performance LLM Orchestration
 
 * **Streaming LLM:** Integrates **Groq (LLaMA 3.3 70B)** for near-instantaneous response generation.
-* **Resilient Fallback:** Automatically switches to **Google Gemini 2.5 Flash** if the primary provider fails, ensuring conversation continuity.
+* **Resilient Fallback:** Automatically switches to **Google Gemini 2.0 Flash** if the primary provider fails, ensuring conversation continuity.
 * **Sentence-Boundary TTS:** Intelligently triggers TTS playback on sentence boundaries during LLM streaming for a natural human-like cadence.
 
 ### 3. Secure Architecture (BYOK)
@@ -66,18 +68,12 @@ To eliminate latency, Valoqui leverages a highly optimized audio stack:
 
 * **Framework:** Flutter (Dart)
 * **Architecture:** Feature-First Modular Clean Architecture
-* **State Management:** `flutter_bloc` + `freezed` (Unidirectional Data Flow)
+* **State Management:** `flutter_bloc` + `freezed` (States) & `Equatable` (Events)
 * **Dependency Injection:** `get_it` (Service Locator)
 * **Functional Programming:** `fpdart` (using `Either` for robust error handling)
 * **Networking:** `dio`
 * **Backend:** Firebase (Authentication & Firestore)
-* **AI/ML:** Groq (LLM/STT), Gemini (LLM Fallback), Sherpa-ONNX (VAD/TTS)
-
----
-
-## 👨‍💻 Developer Note
-
-Valoqui was built with a focus on **Software Craftsmanship**. Every design decision—from the use of background isolates for audio processing to the functional error-handling patterns—was made to ensure the system is scalable, testable, and highly performant. 
+* **AI/ML:** Groq (LLM), Gemini (LLM Fallback), Sherpa-ONNX (VAD/STT/TTS)
 
 ---
 

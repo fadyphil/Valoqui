@@ -36,17 +36,20 @@ Target per-exchange token cost: ~1,430 tokens regardless of session length.
 ## Alternatives considered
 
 ### Option A — Full history per request
+
 **Why considered:** Maximum context coherence.
 **Why rejected:** By turn 20, a request sends ~3,000+ tokens of context for
 a ~100-token reply. Latency increases monotonically through the session.
 Quota consumption becomes unpredictable.
 
 ### Option B — Rolling 8-turn window (chosen)
+
 **Why selected:** Every request is the same size regardless of session length.
 Quota math is predictable. 8 turns preserves sufficient context for natural
 conversation flow — enough to remember what was discussed a minute ago.
 
 ### Option C — Summarisation approach
+
 **Why considered:** LLM summarises earlier conversation, summary prepended
 to each request.
 **Why rejected:** Requires an additional API call per N turns. Adds latency
@@ -57,11 +60,13 @@ and complexity disproportionate to the benefit at MVP scale.
 ## Consequences
 
 ### Positive
+
 - Consistent ~1,430 tokens/exchange throughout the entire session.
 - Quota math: 1-hour session = ~257,400 tokens = ~51% of Groq daily limit.
 - Latency is predictable — no per-exchange growth.
 
 ### Negative / tradeoffs
+
 - Lucia may lose memory of something said more than ~4 exchanges ago. For
   typical 20–30 minute sessions this is acceptable.
 - The full transcript is still captured separately for report generation —
@@ -70,5 +75,6 @@ and complexity disproportionate to the benefit at MVP scale.
 ---
 
 ## Links
+
 - PRD v0.3 § ADL-006 (conversation history strategy), § 14 (quota math)
 - Sprint 2 Guide § 9.3 `speaking_bloc.dart` (`_history`, `_fullTranscript`)

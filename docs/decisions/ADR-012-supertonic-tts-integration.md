@@ -37,6 +37,7 @@ However, Supertonic integration approach is not yet fully understood. This ADR d
 ## Research Status
 
 **Current Knowledge (April 2026):**
+
 - ✅ Supertonic TTS app tested on Android device with excellent results
 - ✅ App demonstrates real-time synthesis with low latency
 - ✅ Voice quality significantly exceeds Piper/F5-TTS expectations
@@ -46,6 +47,7 @@ However, Supertonic integration approach is not yet fully understood. This ADR d
 - ❌ Unclear if Supertonic provides official Android SDK or requires reverse engineering
 
 **Research Tasks (Days 1-2 of Sprint 3):**
+
 1. Investigate Supertonic app architecture (APK analysis, manifest permissions)
 2. Check for official Supertonic SDK or developer API
 3. Test if Supertonic exposes local HTTP endpoint (like many TTS apps)
@@ -56,9 +58,11 @@ However, Supertonic integration approach is not yet fully understood. This ADR d
 ## Considered Options
 
 ### Option 1: Official Supertonic SDK Integration
+
 If Supertonic provides an official Android SDK
 
 **Pros:**
+
 - Clean, supported integration path
 - Stable API with version guarantees
 - Documentation and example code available
@@ -66,6 +70,7 @@ If Supertonic provides an official Android SDK
 - Legal clarity on licensing
 
 **Cons:**
+
 - May require paid license for commercial use
 - SDK might not exist (Supertonic may be app-only)
 - Potential vendor lock-in
@@ -74,15 +79,18 @@ If Supertonic provides an official Android SDK
 **Estimated Effort:** 2-3 days (if SDK exists)
 
 ### Option 2: Local HTTP Server Integration
+
 If Supertonic runs a local HTTP server (common pattern for TTS apps)
 
 **Pros:**
+
 - No SDK required — simple HTTP POST requests
 - Language-agnostic (works with any HTTP client)
 - Easy to test and debug
 - Can fall back to Piper if Supertonic unavailable
 
 **Cons:**
+
 - Undocumented API (requires reverse engineering)
 - May break with app updates
 - Potential security concerns (localhost communication)
@@ -92,6 +100,7 @@ If Supertonic runs a local HTTP server (common pattern for TTS apps)
 **Estimated Effort:** 3-4 days (including reverse engineering)
 
 **Implementation Pattern:**
+
 ```dart
 class SupertonicTtsDatasource implements TtsDatasource {
   final http.Client _client = http.Client();
@@ -120,15 +129,18 @@ class SupertonicTtsDatasource implements TtsDatasource {
 ```
 
 ### Option 3: Android TTS System Service Bridge
+
 If Supertonic registers as an Android TTS engine (standard `TextToSpeech.Engine`)
 
 **Pros:**
+
 - Standard Android API (`android.speech.tts.TextToSpeech`)
 - No special integration required — works automatically
 - User can switch TTS engines in system settings
 - Well-documented and stable
 
 **Cons:**
+
 - Requires Supertonic to implement standard TTS engine interface
 - May not expose advanced features (emotion, fine-grained control)
 - Slightly higher latency due to system service overhead
@@ -137,6 +149,7 @@ If Supertonic registers as an Android TTS engine (standard `TextToSpeech.Engine`
 **Estimated Effort:** 1-2 days (if Supertonic supports standard TTS engine)
 
 **Implementation Pattern:**
+
 ```dart
 class AndroidSystemTtsDatasource implements TtsDatasource {
   late TextToSpeech _tts;
@@ -159,15 +172,18 @@ class AndroidSystemTtsDatasource implements TtsDatasource {
 ```
 
 ### Option 4: Hybrid Approach (Supertonic + Piper Fallback)
+
 Support both Supertonic (primary) and Piper (fallback)
 
 **Pros:**
+
 - Graceful degradation if Supertonic unavailable
 - Users without Supertonic can still use app
 - A/B testing capability
 - Migration path for future TTS engines
 
 **Cons:**
+
 - Increased complexity (dual implementation)
 - Larger APK if bundling Piper models
 - Need feature detection logic
@@ -176,15 +192,18 @@ Support both Supertonic (primary) and Piper (fallback)
 **Estimated Effort:** 4-5 days
 
 ### Option 5: Continue with F5-TTS (Original Sprint 3 Plan)
+
 Abandon Supertonic research and proceed with F5-TTS ONNX export
 
 **Pros:**
+
 - Original plan already researched (ADR-003)
 - Fully on-device, no external dependencies
 - Open-source with clear licensing
 - Consistent with offline-first principle
 
 **Cons:**
+
 - F5-TTS ONNX export not yet available (blocking factor)
 - Voice quality likely inferior to Supertonic based on demos
 - Additional research delay waiting for F5-TTS export tools
@@ -195,8 +214,8 @@ Abandon Supertonic research and proceed with F5-TTS ONNX export
 ## Decision Outcome
 
 **Selected Approach: Option 4 (Hybrid: Supertonic Primary + Piper Fallback) with Research Phase**
-
 **Rationale:**
+
 1. **User experience first:** Supertonic's superior voice quality justifies integration effort
 2. **Risk mitigation:** Piper fallback ensures app remains functional if Supertonic integration fails
 3. **Research-driven:** Dedicate Days 1-2 to thorough Supertonic investigation before committing
@@ -206,12 +225,14 @@ Abandon Supertonic research and proceed with F5-TTS ONNX export
 **Implementation Plan:**
 
 ### Phase 0: Supertonic Research (Days 1-2) **[GATE DECISION POINT]**
+
 - Analyze Supertonic APK for integration method
 - Test for local HTTP server or system TTS engine registration
 - Review licensing terms
 - **Go/No-Go Decision:** If Supertonic integration appears feasible → proceed to Phase 1. If blocked → pivot to F5-TTS (Option 5).
 
 ### Phase 1: Supertonic Integration (Days 3-5) *[Conditional on Phase 0 success]*
+
 - Implement chosen integration method (SDK, HTTP, or system TTS)
 - Create `SupertonicTtsDatasource` conforming to `TtsDatasource` interface
 - Add feature detection (is Supertonic installed? is service running?)
@@ -219,6 +240,7 @@ Abandon Supertonic research and proceed with F5-TTS ONNX export
 - Test latency and voice quality on target devices
 
 ### Phase 2: Fallback & Abstraction (Days 6-7)
+
 - Create `TtsEngine` interface abstracting synthesis logic
 - Implement `SupertonicTtsEngine` and `PiperTtsEngine`
 - Update `TtsRepository` to support engine switching
@@ -226,6 +248,7 @@ Abandon Supertonic research and proceed with F5-TTS ONNX export
 - Implement graceful fallback logic
 
 ### Phase 3: Polish & Optimization (Days 8-9)
+
 - Tune Supertonic parameters (voice selection, rate, pitch)
 - Optimize warm-up time (pre-load voices on app start)
 - Add error handling and retry logic
@@ -233,6 +256,7 @@ Abandon Supertonic research and proceed with F5-TTS ONNX export
 - User testing and feedback collection
 
 ### Phase 4: Documentation & Cleanup (Day 10)
+
 - Update SETUP.md with Supertonic installation instructions
 - Document fallback behavior for developers
 - Remove or deprecate F5-TTS research notes if not proceeding
@@ -241,6 +265,7 @@ Abandon Supertonic research and proceed with F5-TTS ONNX export
 ## Consequences
 
 ### Positive
+
 - ✅ Significant voice quality improvement (user satisfaction)
 - ✅ Reduced TTS latency (~50% faster than Piper)
 - ✅ Excellent Arabic and code-switching support
@@ -248,6 +273,7 @@ Abandon Supertonic research and proceed with F5-TTS ONNX export
 - ✅ Architecture supports future TTS engine additions
 
 ### Negative
+
 - ⚠️ Dependency on third-party app (Supertonic must be installed)
 - ⚠️ Increased APK size if bundling Piper fallback models
 - ⚠️ Integration complexity (undocumented API risks)
@@ -255,6 +281,7 @@ Abandon Supertonic research and proceed with F5-TTS ONNX export
 - ⚠️ Platform-specific (Android-only unless iOS equivalent found)
 
 ### Risks
+
 - 🔴 **Risk:** Supertonic does not provide any programmatic access method  
   **Mitigation:** Pivot to F5-TTS or improved Piper on Day 2 go/no-go decision
   
@@ -270,7 +297,7 @@ Abandon Supertonic research and proceed with F5-TTS ONNX export
 ## Metrics for Success
 
 | Metric | Current (Piper) | Target (Supertonic) | Measurement Method |
-|--------|-----------------|---------------------|-------------------|
+| -------- | ----------------- | --------------------- | ------------------- |
 | TTS latency (text to audio start) | 1200ms avg | <500ms avg | Telemetry event `tts_synthesis_time` |
 | Voice quality MOS score | 3.2/5.0 | >4.2/5.0 | User survey (1-5 scale) |
 | Arabic pronunciation accuracy | 78% | >92% | Manual sample testing |
@@ -295,6 +322,7 @@ Abandon Supertonic research and proceed with F5-TTS ONNX export
 ## Appendix: Supertonic Investigation Checklist
 
 ### APK Analysis
+
 - [ ] Extract AndroidManifest.xml — check for exported services, receivers, providers
 - [ ] Look for `TextToSpeech.Engine` service declaration
 - [ ] Check for HTTP server permissions or localhost bindings
@@ -302,6 +330,7 @@ Abandon Supertonic research and proceed with F5-TTS ONNX export
 - [ ] Review declared permissions (INTERNET, RECORD_AUDIO, etc.)
 
 ### Runtime Testing
+
 - [ ] Install Supertonic app on test device
 - [ ] Check if it registers as system TTS engine (Settings → Accessibility → TTS)
 - [ ] Use `adb shell dumpsys` to inspect running services
@@ -309,6 +338,7 @@ Abandon Supertonic research and proceed with F5-TTS ONNX export
 - [ ] Test synthesis latency with stopwatch timing
 
 ### API Discovery
+
 - [ ] Try common local ports (8080, 8888, 5000, 3000)
 - [ ] Send test HTTP POST to `/synthesize`, `/tts`, `/speak` endpoints
 - [ ] Inspect request/response format (JSON? Protobuf? Raw audio?)
@@ -316,6 +346,7 @@ Abandon Supertonic research and proceed with F5-TTS ONNX export
 - [ ] Document successful API calls
 
 ### Legal & Licensing
+
 - [ ] Review Supertonic Play Store description for API mentions
 - [ ] Check Supertonic website for developer documentation
 - [ ] Contact Supertonic team for integration inquiries

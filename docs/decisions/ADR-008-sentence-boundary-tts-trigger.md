@@ -3,12 +3,15 @@
 **Date:** 2026-03
 **Status:** Accepted
 **Sprint:** Sprint 2
-**Decider:** Fady
+**Decider:** Fady  
+
+## Summary
+
+Trigger TTS synthesis and playback as soon as a sentence boundary (`.`, `?`, `!`) is detected in the LLM token stream, rather than waiting for the entire response to complete, reducing perceived latency by 40-60%.
 
 ---
 
 ## Context
-
 Waiting for the full LLM response before starting TTS playback means the
 user waits for the entire reply to generate before hearing anything. At Groq's
 ~280 tokens/second, a 3-sentence reply (~60 tokens) takes ~215ms to complete
@@ -33,16 +36,19 @@ sentence begins before subsequent sentences have been generated.
 ## Consequences
 
 ### Positive
+
 - Perceived latency: STT (~175ms) + LLM first sentence (~100ms) + TTS (~50ms)
   = ~325ms. Within the P50 target of 350ms.
 
 ### Negative / tradeoffs
+
 - If Lucia's reply does not end with punctuation, remaining text in the buffer
   is spoken after `_LlmResponseComplete` fires. Edge case handled in BLoC.
 - TTS may speak a first sentence whose meaning changes with the second
   sentence. Not a problem for 2–3 sentence conversational replies.
 
 ### Known pitfalls
+
 - `maxNumSentences: 1` in sherpa-onnx config truncates at internal
   punctuation. Must be set to 100.
 - TTS output filename must rotate per sentence (sentence_0.wav, sentence_1.wav)
@@ -51,5 +57,6 @@ sentence begins before subsequent sentences have been generated.
 ---
 
 ## Links
+
 - PRD v0.3 § 5 (pipeline), § 14 (pseudocode)
 - Sprint 2 Guide § 9.3 `_onLlmTokenReceived`, `_onLlmResponseComplete`

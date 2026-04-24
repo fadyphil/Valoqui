@@ -4,7 +4,7 @@
 // Takes KeyStorageRepository instead of SecureStorageService.
 // Uses the Either result safely — if the key read fails,
 // the request proceeds without an auth header and Groq/Gemini
-// will return a 401, which the FallbackInterceptor handles (Sprint 2).
+// will return a 401.
 
 import "package:dio/dio.dart";
 import "package:valoqui/core/domain/repositories/key_storage_repository.dart";

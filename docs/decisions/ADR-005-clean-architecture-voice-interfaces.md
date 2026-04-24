@@ -22,7 +22,7 @@ screens, and tests.
 Every voice component is hidden behind a domain interface. The BLoC depends
 only on interfaces, never on concrete implementations.
 
-```
+```Markdown
 SttRepository         ← interface (domain)
     ↑
 AndroidSttRepository  ← Sprint 2 concrete
@@ -50,6 +50,7 @@ one line change in `service_locator.dart`. Zero upstream impact.
 ## Consequences
 
 ### Positive
+
 - STT swap in Sprint 3 (Android → Groq Whisper, per ARCH-101) requires
   writing `GroqSttDatasource` and `GroqSttRepository`. `SpeakingBloc`,
   `SpeakingScreen`, and all tests are completely unchanged.
@@ -57,12 +58,14 @@ one line change in `service_locator.dart`. Zero upstream impact.
 - Every repository is independently mockable in tests via `mocktail`.
 
 ### Negative / tradeoffs
+
 - More files per component (datasource + repository + interface) compared to
   a direct implementation. Acceptable given the known swap schedule.
 
 ---
 
 ## Links
+
 - Sprint 2 Guide § 2.2 (domain interfaces and swap architecture)
 - Sprint 2 Guide § 5 (domain layer interfaces)
 - Sprint 2 Guide § 11 (service locator updates)

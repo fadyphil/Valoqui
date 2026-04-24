@@ -87,7 +87,13 @@ void main() {
     when(
       () => mockStt.transcriptStream,
     ).thenAnswer((_) => const Stream.empty());
+    when(
+      () => mockStt.partialTranscriptStream,
+    ).thenAnswer((_) => const Stream.empty());
     when(() => mockStt.amplitudeStream).thenAnswer((_) => const Stream.empty());
+    when(
+      () => mockStt.bufferFillStream,
+    ).thenAnswer((_) => const Stream.empty());
     when(
       () => mockVad.voiceActivityStream,
     ).thenAnswer((_) => const Stream.empty());
@@ -101,9 +107,10 @@ void main() {
     // ✅ Stub lifecycle methods with explicit Either generics
     when(() => mockStt.dispose()).thenAnswer((_) async {});
     when(() => mockTts.dispose()).thenAnswer((_) async {});
+    when(() => mockTts.warmUp()).thenAnswer((_) async {});
     when(() => mockVad.dispose()).thenAnswer((_) async {});
     when(
-      () => mockVad.startMonitoring(),
+      () => mockVad.startMonitoring(enableVad: any(named: 'enableVad')),
     ).thenAnswer((_) async => const Right<AppFailure, void>(null));
     when(
       () => mockVad.stopMonitoring(),
@@ -117,6 +124,12 @@ void main() {
     when(
       () => mockStt.initialize(),
     ).thenAnswer((_) async => const Right<AppFailure, bool>(true));
+    when(
+      () => mockStt.startListening(),
+    ).thenAnswer((_) async => const Right<AppFailure, void>(null));
+    when(
+      () => mockStt.stopListening(),
+    ).thenAnswer((_) async => const Right<AppFailure, String>(""));
     when(
       () => mockTts.initialize(),
     ).thenAnswer((_) async => const Right<AppFailure, void>(null));
@@ -157,10 +170,6 @@ void main() {
           'SessionStarted reaches active/listening',
         ),
         predicate<SpeakingState>(
-          (s) => s is SpeakingActive && s.phase == ConversationPhase.processing,
-          'greeting triggers processing',
-        ),
-        predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
           'greeting completes, transitions to speaking',
         ),
@@ -195,10 +204,6 @@ void main() {
         predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.listening,
           'SessionStarted reaches active/listening',
-        ),
-        predicate<SpeakingState>(
-          (s) => s is SpeakingActive && s.phase == ConversationPhase.processing,
-          'greeting triggers processing',
         ),
         predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
@@ -241,10 +246,6 @@ void main() {
         predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.listening,
           'SessionStarted reaches active/listening',
-        ),
-        predicate<SpeakingState>(
-          (s) => s is SpeakingActive && s.phase == ConversationPhase.processing,
-          'greeting triggers processing',
         ),
         predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
@@ -291,10 +292,6 @@ void main() {
         predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.listening,
           'SessionStarted reaches active/listening',
-        ),
-        predicate<SpeakingState>(
-          (s) => s is SpeakingActive && s.phase == ConversationPhase.processing,
-          'greeting triggers processing',
         ),
         predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
@@ -357,10 +354,6 @@ void main() {
           'SessionStarted reaches active/listening',
         ),
         predicate<SpeakingState>(
-          (s) => s is SpeakingActive && s.phase == ConversationPhase.processing,
-          'greeting triggers processing',
-        ),
-        predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
           'greeting completes, transitions to speaking',
         ),
@@ -397,10 +390,6 @@ void main() {
           'SessionStarted reaches active/listening',
         ),
         predicate<SpeakingState>(
-          (s) => s is SpeakingActive && s.phase == ConversationPhase.processing,
-          'greeting triggers processing',
-        ),
-        predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
           'greeting completes, transitions to speaking',
         ),
@@ -424,7 +413,7 @@ void main() {
           () => mockVad.initialize(),
         ).thenAnswer((_) async => const Right<AppFailure, void>(null));
         when(
-          () => mockVad.startMonitoring(),
+          () => mockVad.startMonitoring(enableVad: any(named: 'enableVad')),
         ).thenAnswer((_) async => const Right<AppFailure, void>(null));
         return bloc;
       },
@@ -442,10 +431,6 @@ void main() {
           'SessionStarted reaches active/listening',
         ),
         predicate<SpeakingState>(
-          (s) => s is SpeakingActive && s.phase == ConversationPhase.processing,
-          'greeting triggers processing',
-        ),
-        predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
           'greeting completes, transitions to speaking',
         ),
@@ -459,7 +444,9 @@ void main() {
       ],
       verify: (_) {
         // Called once in _onSessionStarted and once in _onTtsFinished
-        verify(() => mockVad.startMonitoring()).called(2);
+        verify(
+          () => mockVad.startMonitoring(enableVad: any(named: 'enableVad')),
+        ).called(2);
       },
     );
 
@@ -490,10 +477,6 @@ void main() {
           'VAD failure starts session in pushToTalk mode',
         ),
         predicate<SpeakingState>(
-          (s) => s is SpeakingActive && s.phase == ConversationPhase.processing,
-          'greeting triggers processing',
-        ),
-        predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
           'greeting completes, transitions to speaking',
         ),
@@ -506,7 +489,9 @@ void main() {
         ),
       ],
       verify: (_) {
-        verifyNever(() => mockVad.startMonitoring());
+        verifyNever(
+          () => mockVad.startMonitoring(enableVad: any(named: 'enableVad')),
+        );
       },
     );
   });
@@ -535,10 +520,6 @@ void main() {
         predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.listening,
           'SessionStarted reaches active/listening',
-        ),
-        predicate<SpeakingState>(
-          (s) => s is SpeakingActive && s.phase == ConversationPhase.processing,
-          'greeting triggers processing',
         ),
         predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
@@ -574,12 +555,12 @@ void main() {
           'SessionStarted reaches active/listening',
         ),
         predicate<SpeakingState>(
-          (s) => s is SpeakingActive && s.phase == ConversationPhase.processing,
-          'greeting triggers processing',
-        ),
-        predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
           'greeting completes, transitions to speaking',
+        ),
+        predicate<SpeakingState>(
+          (s) => s is SpeakingActive && s.isTranscribing == true,
+          'isActive=false sets isTranscribing to true',
         ),
       ],
       verify: (_) {
@@ -613,10 +594,6 @@ void main() {
               s.micMode == MicMode.pushToTalk &&
               s.phase == ConversationPhase.listening,
           'VAD failure starts session in pushToTalk mode',
-        ),
-        predicate<SpeakingState>(
-          (s) => s is SpeakingActive && s.phase == ConversationPhase.processing,
-          'greeting triggers processing',
         ),
         predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,

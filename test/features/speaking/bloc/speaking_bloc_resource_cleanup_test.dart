@@ -87,7 +87,13 @@ void main() {
     when(
       () => mockStt.transcriptStream,
     ).thenAnswer((_) => const Stream.empty());
+    when(
+      () => mockStt.partialTranscriptStream,
+    ).thenAnswer((_) => const Stream.empty());
     when(() => mockStt.amplitudeStream).thenAnswer((_) => const Stream.empty());
+    when(
+      () => mockStt.bufferFillStream,
+    ).thenAnswer((_) => const Stream.empty());
     when(
       () => mockVad.voiceActivityStream,
     ).thenAnswer((_) => const Stream.empty());
@@ -101,9 +107,10 @@ void main() {
     // ✅ Stub lifecycle methods with explicit Either generics
     when(() => mockStt.dispose()).thenAnswer((_) async {});
     when(() => mockTts.dispose()).thenAnswer((_) async {});
+    when(() => mockTts.warmUp()).thenAnswer((_) async {});
     when(() => mockVad.dispose()).thenAnswer((_) async {});
     when(
-      () => mockVad.startMonitoring(),
+      () => mockVad.startMonitoring(enableVad: any(named: 'enableVad')),
     ).thenAnswer((_) async => const Right<AppFailure, void>(null));
     // stop/stopMonitoring return Future<void>, not Either
     when(() => mockVad.stopMonitoring()).thenAnswer((_) async {});
@@ -114,6 +121,12 @@ void main() {
     when(
       () => mockStt.initialize(),
     ).thenAnswer((_) async => const Right<AppFailure, bool>(true));
+    when(
+      () => mockStt.startListening(),
+    ).thenAnswer((_) async => const Right<AppFailure, void>(null));
+    when(
+      () => mockStt.stopListening(),
+    ).thenAnswer((_) async => const Right<AppFailure, String>(""));
     when(
       () => mockTts.initialize(),
     ).thenAnswer((_) async => const Right<AppFailure, void>(null));
@@ -148,11 +161,8 @@ void main() {
         isA<SpeakingInitializing>(),
         predicate<SpeakingState>((s) => s is SpeakingActive), // listening
         predicate<SpeakingState>(
-          (s) => s is SpeakingActive,
-        ), // processing (greeting)
-        predicate<SpeakingState>(
-          (s) => s is SpeakingActive,
-        ), // speaking (greeting)
+          (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
+        ), // greeting speaking
       ],
       verify: (_) {
         // ✅ Verify stop/stopMonitoring called (close() doesn't call dispose())
@@ -176,9 +186,10 @@ void main() {
       wait: const Duration(milliseconds: 100),
       expect: () => [
         isA<SpeakingInitializing>(),
-        predicate<SpeakingState>((s) => s is SpeakingActive),
-        predicate<SpeakingState>((s) => s is SpeakingActive),
-        predicate<SpeakingState>((s) => s is SpeakingActive),
+        predicate<SpeakingState>((s) => s is SpeakingActive), // listening
+        predicate<SpeakingState>(
+          (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
+        ), // greeting speaking
       ],
     );
 
@@ -199,9 +210,10 @@ void main() {
       wait: const Duration(milliseconds: 100),
       expect: () => [
         isA<SpeakingInitializing>(),
-        predicate<SpeakingState>((s) => s is SpeakingActive),
-        predicate<SpeakingState>((s) => s is SpeakingActive),
-        predicate<SpeakingState>((s) => s is SpeakingActive),
+        predicate<SpeakingState>((s) => s is SpeakingActive), // listening
+        predicate<SpeakingState>(
+          (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
+        ), // greeting speaking
       ],
       verify: (_) {
         // stop/stopMonitoring called TWICE: once in test's close() + once in tearDown
@@ -244,11 +256,8 @@ void main() {
         isA<SpeakingInitializing>(),
         predicate<SpeakingState>((s) => s is SpeakingActive), // listening
         predicate<SpeakingState>(
-          (s) => s is SpeakingActive,
-        ), // processing (greeting)
-        predicate<SpeakingState>(
-          (s) => s is SpeakingActive,
-        ), // speaking (greeting)
+          (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
+        ), // greeting speaking
         predicate<SpeakingState>(
           (s) => s is SpeakingActive,
         ), // listening (after TtsFinished)
@@ -263,6 +272,9 @@ void main() {
               s.errorMessage != null,
           'stream exception converted to recoverable error state',
         ),
+        predicate<SpeakingState>(
+          (s) => s is SpeakingActive && s.transcript.length == 3,
+        ), // stale batch update adds empty Lucia message
       ],
     );
 
@@ -287,11 +299,8 @@ void main() {
         isA<SpeakingInitializing>(),
         predicate<SpeakingState>((s) => s is SpeakingActive), // listening
         predicate<SpeakingState>(
-          (s) => s is SpeakingActive,
-        ), // processing (greeting)
-        predicate<SpeakingState>(
-          (s) => s is SpeakingActive,
-        ), // speaking (greeting)
+          (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
+        ), // greeting speaking
       ],
     );
   });
@@ -339,18 +348,14 @@ void main() {
         isA<SpeakingInitializing>(),
         predicate<SpeakingState>((s) => s is SpeakingActive), // listening
         predicate<SpeakingState>(
-          (s) => s is SpeakingActive,
-        ), // processing (greeting)
-        predicate<SpeakingState>(
-          (s) => s is SpeakingActive,
-        ), // speaking (greeting)
+          (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
+        ), // greeting speaking
         predicate<SpeakingState>(
           (s) => s is SpeakingActive,
         ), // listening (after TtsFinished)
         predicate<SpeakingState>(
           (s) => s is SpeakingActive,
         ), // processing (user)
-        predicate<SpeakingState>((s) => s is SpeakingActive), // token1
         isA<SpeakingEnded>(),
       ],
       verify: (_) {
@@ -366,7 +371,7 @@ void main() {
           () => mockVad.initialize(),
         ).thenAnswer((_) async => const Right<AppFailure, void>(null));
         when(
-          () => mockVad.startMonitoring(),
+          () => mockVad.startMonitoring(enableVad: any(named: 'enableVad')),
         ).thenAnswer((_) async => const Right<AppFailure, void>(null));
         when(
           () => mockVad.stopMonitoring(),
@@ -386,11 +391,8 @@ void main() {
         isA<SpeakingInitializing>(),
         predicate<SpeakingState>((s) => s is SpeakingActive), // listening
         predicate<SpeakingState>(
-          (s) => s is SpeakingActive,
-        ), // processing (greeting)
-        predicate<SpeakingState>(
-          (s) => s is SpeakingActive,
-        ), // speaking (greeting)
+          (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
+        ), // greeting speaking
         predicate<SpeakingState>(
           (s) => s is SpeakingActive && s.micMode == MicMode.pushToTalk,
         ),
@@ -402,7 +404,9 @@ void main() {
         ),
       ],
       verify: (_) {
-        verify(() => mockVad.startMonitoring());
+        verify(
+          () => mockVad.startMonitoring(enableVad: any(named: 'enableVad')),
+        );
         verify(() => mockVad.stopMonitoring());
       },
     );
@@ -433,11 +437,8 @@ void main() {
         isA<SpeakingInitializing>(),
         predicate<SpeakingState>((s) => s is SpeakingActive), // listening
         predicate<SpeakingState>(
-          (s) => s is SpeakingActive,
-        ), // processing (greeting)
-        predicate<SpeakingState>(
-          (s) => s is SpeakingActive,
-        ), // speaking (greeting)
+          (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
+        ), // greeting speaking
         isA<SpeakingEnded>(),
       ],
       verify: (_) {

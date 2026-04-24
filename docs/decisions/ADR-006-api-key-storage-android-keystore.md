@@ -32,16 +32,19 @@ access — nothing outside this service calls `flutter_secure_storage` directly.
 ## Alternatives considered
 
 ### Option A — SharedPreferences
+
 **Why considered:** Simple API, zero setup.
 **Why rejected:** Plain text storage. Any app with filesystem access on a
 rooted device can read SharedPreferences values. Unacceptable for API keys.
 
 ### Option B — Hive / SQLite
+
 **Why considered:** Structured local storage.
 **Why rejected:** No OS-level encryption. Same attack surface as
 SharedPreferences for key extraction.
 
 ### Option C — Android Keystore via flutter_secure_storage (chosen)
+
 **Why selected:** Same encrypted storage system used by banking apps. Keys
 are encrypted at the OS level and cannot be extracted without the device's
 lock screen credentials. Keystore-backed keys survive app reinstall.
@@ -51,15 +54,18 @@ lock screen credentials. Keystore-backed keys survive app reinstall.
 ## Consequences
 
 ### Positive
+
 - Keys are protected at the Android OS level — not application-level
   encryption that a sophisticated attacker could reverse.
 
 ### Negative / tradeoffs
+
 - `flutter_secure_storage` requires `minSdkVersion 21` in `build.gradle`.
 - First read after device reboot may require user authentication depending
   on Keystore configuration. Not an issue with `encryptedSharedPreferences`.
 
 ### Constraints introduced
+
 - Keys are NEVER logged, NEVER sent to Firebase, NEVER transmitted anywhere
   except directly to Groq and Gemini endpoints.
 - On sign-out: user is offered the option to clear stored keys via
@@ -70,6 +76,7 @@ lock screen credentials. Keystore-backed keys survive app reinstall.
 ---
 
 ## Links
+
 - PRD v0.3 § ADL-008 (API key storage)
 - Sprint 1 Guide v2.0 § core/services/secure_storage_service.dart
 - Sprint 2 Guide § 6.2 (ApiKeyInterceptor — attaches key per request)

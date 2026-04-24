@@ -17,7 +17,7 @@ ARCH-101:
 1. **7-second PTT ceiling**: Android SpeechRecognizer enforces a hard ~7-second
    OS ceiling on any listening session. This cannot be overridden via the
    `speech_to_text` package. Long user sentences are cut off mid-utterance.
-   
+
 2. **Mic hardware conflict**: `speech_to_text` and the `record` package both
    require exclusive microphone access on Android. Running both simultaneously
    causes crashes or silent blocking. The VAD was disabled from always-on mode
@@ -46,6 +46,7 @@ Sprint 3 replaces the split audio pipeline with a **Unified Audio Pipeline**:
    transcribed string, not partial results.
 
 Implementation impact:
+
 - `speech_to_text` removed from `pubspec.yaml`.
 - `AndroidSttDatasource` deprecated — replaced by `GroqSttDatasource` which
   accepts `Uint8List` audio and returns transcribed `String`.
@@ -60,6 +61,7 @@ Implementation impact:
 ## Alternatives considered
 
 ### Option A — Fix speech_to_text workarounds
+
 **Why considered:** Less code change.
 **Why rejected:** The 7-second ceiling is enforced at the Android OS level.
 No configuration in `speech_to_text` can override it. Workarounds (e.g.,
@@ -67,6 +69,7 @@ restarting the listener) introduce gaps in transcription and audible UX
 interruptions.
 
 ### Option B — Unified pipeline with Groq Whisper (chosen)
+
 **Why selected:** Removes the OS ceiling entirely — audio recording is
 controlled by the application, not by Android's SpeechRecognizer lifecycle.
 Groq Whisper large-v3-turbo provides better code-switching accuracy than
@@ -77,6 +80,7 @@ Android SpeechRecognizer. Single mic holder eliminates the hardware conflict.
 ## Consequences
 
 ### Positive
+
 - PTT sessions can be arbitrarily long — no OS ceiling.
 - Actual Silero VAD drives always-on turn detection — not OS timeout heuristics.
 - Groq Whisper accuracy for code-switching (Arabic + English + Spanish) is
@@ -84,6 +88,7 @@ Android SpeechRecognizer. Single mic holder eliminates the hardware conflict.
 - STT and VAD run from one audio stream — no mic hardware conflict.
 
 ### Negative / tradeoffs
+
 - STT is now a cloud call (Groq Whisper) rather than on-device. Adds ~175ms
   latency per exchange. This was always the PRD target latency and is within
   the 600ms P95 budget.
@@ -96,6 +101,7 @@ Android SpeechRecognizer. Single mic holder eliminates the hardware conflict.
   construction and multipart upload required in `GroqSttDatasource`.
 
 ### Constraints introduced
+
 - `SherpaVadDatasource` must emit `Stream<Uint8List>` (complete utterance
   audio buffers) in addition to `Stream<bool>` (voice activity).
   The `VadRepository` interface may need an additional method or a new
@@ -106,6 +112,7 @@ Android SpeechRecognizer. Single mic holder eliminates the hardware conflict.
 ---
 
 ## Links
+
 - GitHub Issue: ARCH-101 — Resolve Audio Pipeline Deadlock & Native STT Cutoffs
   (full root cause analysis)
 - ADR-001 (Android SpeechRecognizer — superseded by this decision)
