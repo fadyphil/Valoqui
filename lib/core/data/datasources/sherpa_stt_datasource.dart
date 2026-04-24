@@ -501,6 +501,11 @@ class SherpaSttDatasource {
   /// The segment contains pre-normalized Float32 samples ready for decoding.
   /// Passes samples directly to [_decodeFloat32()] — no re-buffering needed.
   void _onSpeechSegment(Float32List samples) {
+    if (_isRecordingUtterance) {
+      // Ignore VAD segments while the user is manually holding the PTT button.
+      // We will decode the full accumulated buffer when they release it.
+      return;
+    }
     debugPrint("[STT] Segment received — ${samples.length} samples, decoding…");
     _decodeFloat32(samples);
   }
