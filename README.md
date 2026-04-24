@@ -16,7 +16,7 @@
 
 Valoqui is a high-performance, real-time AI conversation partner designed for immersive language learning. This MVP focuses on **ultra-low latency** voice interactions, utilizing a hybrid on-device/cloud audio pipeline to provide a seamless, human-like speaking experience.
 
-[**Get Started**](docs/ONBOARDING.md) • [**Screenshots**](docs/Screenshots.md) • [**Architecture**](docs/ARCHITECTURE.md) • [**Setup**](docs/SETUP.md) • [**Testing**](docs/testing/TESTING_HANDOFF.md) • [**Contributing**](CONTRIBUTING.md)
+[**Journey**](JOURNEY.md) • [**Get Started**](docs/ONBOARDING.md) • [**Screenshots**](docs/Screenshots.md) • [**Architecture**](docs/ARCHITECTURE.md) • [**Setup**](docs/SETUP.md) • [**Testing**](docs/testing/TESTING_HANDOFF.md) • [**Contributing**](CONTRIBUTING.md)
 
 </div>
 
@@ -24,8 +24,9 @@ Valoqui is a high-performance, real-time AI conversation partner designed for im
 
 ## 📖 Documentation Map
 
-Welcome to Valoqui! Whether you're here to use the app, understand its design, or contribute, we've got you covered. Start here:
+Welcome to Valoqui! Whether you're evaluating the project, diving into the codebase, or contributing, start here:
 
+0. 🧭 **[Journey](JOURNEY.md)**: How this was built, what I learned, and where the line is between my work and the AI's. **Start here if you're evaluating the project.**
 1. 🚀 **[Zero to Hero (Onboarding)](docs/ONBOARDING.md)**: New to the codebase? Start here for a mental model, codebase tour, and your first steps.
 2. 📱 **[App Screenshots](docs/Screenshots.md)**: Explore the interface and features of the app through high-fidelity design screenshots.
 3. 🛠 **[Developer Setup](docs/SETUP.md)**: A step-by-step guide to setting up your local environment, Firebase, and required models.
@@ -73,12 +74,6 @@ To eliminate latency, Valoqui leverages a highly optimized audio stack:
 * **Networking:** `dio`
 * **Backend:** Firebase (Authentication & Firestore)
 * **AI/ML:** Groq (LLM), Gemini (LLM Fallback), Sherpa-ONNX (VAD/STT/TTS)
-
----
-
-## 👨‍💻 Developer Note
-
-Valoqui was built with a focus on **Software Craftsmanship**. Every design decision—from the use of background isolates for audio processing to the functional error-handling patterns—was made to ensure the system is scalable, testable, and highly performant. 
 
 ---
 
