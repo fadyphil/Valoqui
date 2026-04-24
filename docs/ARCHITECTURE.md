@@ -97,6 +97,7 @@ The most complex part of the app is the [**`SpeakingBloc`**](../lib/features/spe
 <!-- PULSE:ADR_INLINE:ADR-015 -->- **Isolate Backpressure & Buffer Safety (ADR-015):** Implement isolate queue bounding and load shedding to prevent memory leaks and OOM crashes during heavy STT decoding.<!-- /PULSE:ADR_INLINE:ADR-015 -->
 <!-- PULSE:ADR_INLINE:ADR-013 -->- **TTS Warm-Up Optimization (ADR-013):** Pre-initialize the TTS engine (silent synthesis pass) as soon as the LLM begins streaming tokens to eliminate the 500-2000ms "cold start" delay during the first spoken sentence.<!-- /PULSE:ADR_INLINE:ADR-013 -->
 <!-- PULSE:ADR_INLINE:ADR-008 -->- **Sentence-Boundary TTS Trigger (ADR-008):** Trigger TTS synthesis and playback as soon as a sentence boundary (`.`, `?`, `!`) is detected in the LLM token stream, rather than waiting for the entire response to complete, reducing perceived latency by 40-60%.<!-- /PULSE:ADR_INLINE:ADR-008 -->
+<!-- PULSE:ADR_INLINE:ADR-018 -->- **Strict Turn-Taking and Audio Pipeline Resilience (ADR-018):** No summary provided.<!-- /PULSE:ADR_INLINE:ADR-018 -->
 
 ### Performance Analysis & Benchmarks
 

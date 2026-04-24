@@ -266,14 +266,3 @@ The chunking strategy was implemented using an **Accumulating Buffer** approach 
 2. **Throttled Partial Decodes:** The `SherpaSttDatasource` triggers a decode of the growing audio buffer every **1.5 seconds**, provided the background isolate is idle (`_activeDecodes == 0`).
 Visual transparency:** Users see their words appearing live on screen via `partialTranscriptStream`, reducing perceived latency by >60%.
 
-## Addendum: Pipeline Stability & UX Refinement (Late April 2026)
-
-Following a series of real-device testing in Release mode, several stability and UX issues were identified and resolved:
-
-1. **PTT Chunking Fix:** Removed the VAD silent-segment listener from PTT mode. Previously, VAD would "chop" the PTT recording into multiple pieces during pauses, causing fragmented transcripts. PTT now behaves as one continuous utterance, decoded exactly once upon button release.
-2. **Mode Toggle Protection:** Switching from PTT to "Always On" while Lucia is speaking now waits for TTS to finish before opening the microphone. This prevents the microphone stream from stealing audio focus and cutting off Lucia's voice mid-sentence.
-3. **Ghost Update Suppression:** Added mandatory cancellation of the UI batching timer during state transitions. This prevents stale LLM tokens from previous utterances from being incorrectly appended to the transcript after a new user turn or an error occurs.
-4. **Unsafe Type Cast Fix:** Resolved a crash in the `SpeakingScreen` where a `BlocSelector` would attempt to cast the `SpeakingEnded` state to `SpeakingActive` during session termination.
-5. **User-Side Transcription Feedback:** Introduced `isTranscribing` state and a right-aligned typing indicator for the user. This provides immediate feedback upon releasing the PTT button while the background isolate decodes, and prevents "hung" states by keeping the conversation phase in `listening` until the transcript is ready.
-6. **Strict Turn-Taking Enforcement:** Updated the UI and BLoC to explicitly disable mic interactions and stop physical microphone monitoring during the `processing` and `speaking` phases. This prevents overlapping audio input from hijacking the conversation flow while Lucia is thinking or talking.
-

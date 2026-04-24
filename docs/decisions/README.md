@@ -33,6 +33,7 @@ components were chosen prevents accidentally undoing deliberate tradeoffs.
 | [ADR-015](ADR-015-stt-backpressure-protection.md) | Isolate Backpressure & Buffer Safety | Accepted |
 | [ADR-016](ADR-016-tts-background-isolate-pipeline.md) | TTS Background Isolate and Pipelining | Accepted |
 | [ADR-017](ADR-017-hardware-acceleration-stt-throttling.md) | Hardware-Accelerated Audio Pipeline and Dynamic STT Throttling | Accepted |
+| [ADR-018](ADR-018-strict-turn-taking-and-audio-resilience.md) | Strict Turn-Taking and Audio Pipeline Resilience | Accepted |
 <!-- /PULSE:ADR_INDEX -->
 ---
 

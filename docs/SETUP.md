@@ -320,6 +320,7 @@ docs/decisions/
   ADR-015  Isolate Backpressure & Buffer Safety
   ADR-016  TTS Background Isolate and Pipelining
   ADR-017  Hardware-Accelerated Audio Pipeline and Dynamic STT Throttling
+  ADR-018  Strict Turn-Taking and Audio Pipeline Resilience
 <!-- /PULSE:ADR_LIST -->
 ```
 
