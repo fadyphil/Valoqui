@@ -93,7 +93,7 @@ void _sherpaTtsIsolateEntry(List<dynamic> args) {
       final wavPath = msg[2] as String;
 
       try {
-        final audio = tts.generate(text: text, sid: 0, speed: 1.0);
+        final audio = tts.generate(text: text, sid: 1, speed: 1.0);
         if (audio.samples.isNotEmpty) {
           sherpa.writeWave(
             filename: wavPath,
