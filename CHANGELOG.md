@@ -25,6 +25,12 @@ All notable changes to this project will be documented in this file.
 
 ### Documentation & Research
 
+- **Documentation Final Sweep & Integrity Verification:**
+  - Performed comprehensive sweep of `ARCHITECTURE.md`, `SETUP.md`, `ONBOARDING.md`, and `TESTING_HANDOFF.md`.
+  - Added primary implementation file links to `ARCHITECTURE.md` for better developer navigability.
+  - Verified all "Golden Logic" claims (VAD segment mode, Moonshine background isolate, TTS rotation) against the latest codebase.
+  - Formally marked Sprint 3 as **Complete** in the project documentation.
+  - Confirmed 100% doc integrity using `pulse_audit.py` (Macros, Assets, DI, Boundaries).
 - **Documentation Overhaul & Synchronization:**
   - Reconciled all documentation (README, ONBOARDING, SETUP, PRD) with the current codebase architecture.
   - Updated tech stack references to accurately reflect the use of **Sherpa-ONNX (Moonshine)** for STT and **Gemini 2.0 Flash** for LLM fallback.

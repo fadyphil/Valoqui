@@ -13,7 +13,7 @@ Valoqui strictly adheres to a Domain-Driven, Feature-First Clean Architecture. T
 1. **Domain Layer (The Rules):**
    - Pure Dart. No Flutter dependencies. No external packages (except pure Dart ones like `fpdart`).
    - Contains **Entities**, **Repository Interfaces**, and **Use Cases**.
-   - Example Interface (`lib/core/domain/repositories/llm_repository.dart`):
+   - Example Interface ([`lib/core/domain/repositories/llm_repository.dart`](../lib/core/domain/repositories/llm_repository.dart)):
 
      ```dart
      abstract interface class LlmRepository {
@@ -32,10 +32,16 @@ Valoqui strictly adheres to a Domain-Driven, Feature-First Clean Architecture. T
 2. **Data Layer (The Implementation):**
    - Implements the Domain interfaces.
    - Contains **Datasources** (APIs, local databases, ONNX model integrations) and **Repositories** (which coordinate datasources and handle errors).
+   - Primary Implementations:
+     - [**`SherpaSttDatasource`**](../lib/core/data/datasources/sherpa_stt_datasource.dart) (Speech-to-Text)
+     - [**`SherpaTtsDatasource`**](../lib/core/data/datasources/sherpa_tts_datasource.dart) (Text-to-Speech)
+     - [**`SherpaVadDatasource`**](../lib/core/data/datasources/sherpa_vad_datasource.dart) (Voice Activity Detection)
+     - [**`GroqLlmRepository`**](../lib/core/data/repositories/groq_llm_repository.dart) (LLM with Gemini fallback)
 
 3. **Presentation Layer (The UI & State):**
    - Contains Flutter **Widgets** and **BLoCs**.
    - Reacts to state changes and dispatches events.
+   - Core Orchestrator: [**`SpeakingBloc`**](../lib/features/speaking/bloc/speaking_bloc.dart)
 
 ### Why this approach? (See ADR-005)
 
@@ -77,7 +83,7 @@ We register dependencies in a strict order so that interfaces are resolved seaml
 
 ## 4. The Voice Pipeline Orchestration
 
-The most complex part of the app is the `SpeakingBloc`. It manages a 4-stage pipeline:
+The most complex part of the app is the [**`SpeakingBloc`**](../lib/features/speaking/bloc/speaking_bloc.dart). It manages a 4-stage pipeline:
 
 1. **Listening (`active(listening)`):** VAD is monitoring the mic.
 2. **Processing (`active(processing)`):** Audio is sent to STT. Transcript is sent to LLM.
