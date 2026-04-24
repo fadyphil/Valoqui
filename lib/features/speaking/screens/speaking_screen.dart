@@ -206,7 +206,8 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
             // This ensures that as each tiny token arrives (high frequency),
             // ONLY this single text bubble rebuilds, not the whole ListView.
             return BlocSelector<SpeakingBloc, SpeakingState, String>(
-              selector: (state) => (state as SpeakingActive).currentLuciaBuffer,
+              selector: (state) =>
+                  state is SpeakingActive ? state.currentLuciaBuffer : "",
               builder: (context, buffer) {
                 return TranscriptBubble(
                   message: assistantMessage(buffer),

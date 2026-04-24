@@ -87,6 +87,9 @@ void main() {
     when(
       () => mockStt.transcriptStream,
     ).thenAnswer((_) => const Stream.empty());
+    when(
+      () => mockStt.partialTranscriptStream,
+    ).thenAnswer((_) => const Stream.empty());
     when(() => mockStt.amplitudeStream).thenAnswer((_) => const Stream.empty());
     when(
       () => mockStt.bufferFillStream,
@@ -121,6 +124,12 @@ void main() {
     when(
       () => mockStt.initialize(),
     ).thenAnswer((_) async => const Right<AppFailure, bool>(true));
+    when(
+      () => mockStt.startListening(),
+    ).thenAnswer((_) async => const Right<AppFailure, void>(null));
+    when(
+      () => mockStt.stopListening(),
+    ).thenAnswer((_) async => const Right<AppFailure, String>(""));
     when(
       () => mockTts.initialize(),
     ).thenAnswer((_) async => const Right<AppFailure, void>(null));

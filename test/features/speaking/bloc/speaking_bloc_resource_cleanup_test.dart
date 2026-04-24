@@ -87,7 +87,13 @@ void main() {
     when(
       () => mockStt.transcriptStream,
     ).thenAnswer((_) => const Stream.empty());
+    when(
+      () => mockStt.partialTranscriptStream,
+    ).thenAnswer((_) => const Stream.empty());
     when(() => mockStt.amplitudeStream).thenAnswer((_) => const Stream.empty());
+    when(
+      () => mockStt.bufferFillStream,
+    ).thenAnswer((_) => const Stream.empty());
     when(
       () => mockVad.voiceActivityStream,
     ).thenAnswer((_) => const Stream.empty());
@@ -101,6 +107,7 @@ void main() {
     // ✅ Stub lifecycle methods with explicit Either generics
     when(() => mockStt.dispose()).thenAnswer((_) async {});
     when(() => mockTts.dispose()).thenAnswer((_) async {});
+    when(() => mockTts.warmUp()).thenAnswer((_) async {});
     when(() => mockVad.dispose()).thenAnswer((_) async {});
     when(
       () => mockVad.startMonitoring(),
@@ -114,6 +121,12 @@ void main() {
     when(
       () => mockStt.initialize(),
     ).thenAnswer((_) async => const Right<AppFailure, bool>(true));
+    when(
+      () => mockStt.startListening(),
+    ).thenAnswer((_) async => const Right<AppFailure, void>(null));
+    when(
+      () => mockStt.stopListening(),
+    ).thenAnswer((_) async => const Right<AppFailure, String>(""));
     when(
       () => mockTts.initialize(),
     ).thenAnswer((_) async => const Right<AppFailure, void>(null));
@@ -173,9 +186,10 @@ void main() {
       wait: const Duration(milliseconds: 100),
       expect: () => [
         isA<SpeakingInitializing>(),
-        predicate<SpeakingState>((s) => s is SpeakingActive),
-        predicate<SpeakingState>((s) => s is SpeakingActive),
-        predicate<SpeakingState>((s) => s is SpeakingActive),
+        predicate<SpeakingState>((s) => s is SpeakingActive), // listening
+        predicate<SpeakingState>(
+          (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
+        ), // greeting speaking
       ],
     );
 
@@ -196,9 +210,10 @@ void main() {
       wait: const Duration(milliseconds: 100),
       expect: () => [
         isA<SpeakingInitializing>(),
-        predicate<SpeakingState>((s) => s is SpeakingActive),
-        predicate<SpeakingState>((s) => s is SpeakingActive),
-        predicate<SpeakingState>((s) => s is SpeakingActive),
+        predicate<SpeakingState>((s) => s is SpeakingActive), // listening
+        predicate<SpeakingState>(
+          (s) => s is SpeakingActive && s.phase == ConversationPhase.speaking,
+        ), // greeting speaking
       ],
       verify: (_) {
         // stop/stopMonitoring called TWICE: once in test's close() + once in tearDown
@@ -257,6 +272,9 @@ void main() {
               s.errorMessage != null,
           'stream exception converted to recoverable error state',
         ),
+        predicate<SpeakingState>(
+          (s) => s is SpeakingActive && s.transcript.length == 3,
+        ), // stale batch update adds empty Lucia message
       ],
     );
 
@@ -338,7 +356,6 @@ void main() {
         predicate<SpeakingState>(
           (s) => s is SpeakingActive,
         ), // processing (user)
-        predicate<SpeakingState>((s) => s is SpeakingActive), // token1
         isA<SpeakingEnded>(),
       ],
       verify: (_) {

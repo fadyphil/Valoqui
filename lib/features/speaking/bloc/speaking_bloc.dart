@@ -92,6 +92,7 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
   final Stopwatch _pipelineStopwatch = Stopwatch();
 
   StreamSubscription<String>? _transcriptSub;
+  StreamSubscription<String>? _partialTranscriptSub;
   StreamSubscription<bool>? _vadSub;
   StreamSubscription<bool>? _ttsSub;
   StreamSubscription<double>? _amplitudeSub;
@@ -287,7 +288,7 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
       },
     );
 
-    _stt.partialTranscriptStream.listen(
+    _partialTranscriptSub = _stt.partialTranscriptStream.listen(
       (text) => add(PartialTranscriptReceived(text)),
     );
 
@@ -374,7 +375,7 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
     // In PTT mode the VAD model never loaded, so this never fires anyway,
     // but the guard makes the intent explicit.
     final current = state;
-    if (current is SpeakingActive && current.micMode == MicMode.pushToTalk) {
+    if (current is! SpeakingActive || current.micMode == MicMode.pushToTalk) {
       return;
     }
 
@@ -470,6 +471,7 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
   /// * Transcript is non-empty
   /// * Not in `speaking` or `processing` phase
   void _processUserUtterance(String text, Emitter<SpeakingState> emit) {
+    _tokenBatchTimer?.cancel();
     final current = state;
     if (current is! SpeakingActive) return;
 
@@ -603,11 +605,20 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
     final current = state;
     if (current is! SpeakingActive) return;
 
+    // Ignore empty buffer updates if we're not currently tracking an assistant message
+    if (event.buffer.isEmpty &&
+        (current.transcript.isEmpty || !current.transcript.last.isAssistant)) {
+      return;
+    }
+
     emit(
       current.copyWith(
         transcript: event.transcript,
         currentLuciaBuffer: event.buffer,
-        phase: ConversationPhase.processing,
+        // Preserve phase if already speaking; otherwise stay processing
+        phase: current.phase == ConversationPhase.speaking
+            ? ConversationPhase.speaking
+            : ConversationPhase.processing,
       ),
     );
   }
@@ -662,6 +673,9 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
           phase: ConversationPhase.listening,
         ),
       );
+      if (current.micMode == MicMode.alwaysOn) {
+        unawaited(_vad.startMonitoring());
+      }
     } else {
       emit(
         current.copyWith(
@@ -685,6 +699,7 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
   ///
   /// Resets [_ttsSpokenLength] to avoid partial TTS on retry.
   void _onLlmError(LlmError event, Emitter<SpeakingState> emit) {
+    _tokenBatchTimer?.cancel();
     final current = state;
     if (current is! SpeakingActive) return;
 
@@ -871,7 +886,9 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
     emit(current.copyWith(micMode: newMode));
 
     if (newMode == MicMode.alwaysOn) {
-      await _vad.startMonitoring();
+      if (current.phase == ConversationPhase.listening) {
+        await _vad.startMonitoring();
+      }
     } else {
       await _vad.stopMonitoring();
     }
@@ -982,6 +999,7 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
     await _amplitudeSub?.cancel();
     await _bufferFillSub?.cancel();
     await _transcriptSub?.cancel();
+    await _partialTranscriptSub?.cancel();
     await _vadSub?.cancel();
     await _ttsSub?.cancel();
     await _llmSub?.cancel();

@@ -66,6 +66,15 @@ All notable changes to this project will be documented in this file.
   - Cached Gemini API key to reduce secure storage lookups.
   - Enforced strict `_llmSub` lifecycle management in `SpeakingBloc` to prevent memory leaks.
 
+### Fixed
+
+- Fixed audio pipeline stability and mid-session UX:
+  - Resolved **PTT Chunking** where silence would incorrectly chop manual recordings into multiple fragments.
+  - Implemented **Mode Toggle Protection**: switching to Always On while Lucia is speaking now waits for TTS to finish before opening the mic, preventing audio focus theft and voice cutoffs.
+  - Fixed **UI Type Cast Crash** in `SpeakingScreen` when transitioning from active session to report generation.
+  - Patched **Memory Leak & State Pollution** in `SpeakingBloc` by ensuring all stream subscriptions are tracked and cancelled, and clearing batch UI timers during phase transitions.
+  - Corrected **"Ghost" Lucia Messages** caused by race conditions between the 100ms batching timer and new user utterances.
+
 ## [Sprint 3] - 2026-04-21
 
 ### Added

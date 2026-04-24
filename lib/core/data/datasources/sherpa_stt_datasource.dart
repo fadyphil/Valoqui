@@ -349,7 +349,6 @@ class SherpaSttDatasource {
   /// Emits while recording in PTT mode to inform the UI of buffer limits.
   Stream<double> get bufferFillStream => _bufferFillController.stream;
 
-  StreamSubscription<bool>? _vadSub;
   StreamSubscription<List<int>>? _audioSub;
   StreamSubscription<Float32List>? _segmentSub;
 
@@ -358,7 +357,7 @@ class SherpaSttDatasource {
 
   /// Tracks the last time a partial decode was triggered to avoid
   /// overwhelming the CPU.
-  DateTime _lastPartialDecodeAt = DateTime.fromMillisecondsSinceEpoch(0);
+  // DateTime _lastPartialDecodeAt = DateTime.fromMillisecondsSinceEpoch(0);
 
   /// Returns `true` if currently recording a PTT utterance.
   ///
@@ -440,7 +439,6 @@ class SherpaSttDatasource {
       }
 
       _segmentSub = _vadRepository.speechSegmentStream.listen(_onSpeechSegment);
-      _vadSub = _vadRepository.voiceActivityStream.listen(_onVadEvent);
       _audioSub = _vadRepository.audioStream.listen(_onAudioBytesReceived);
 
       return right(null);
@@ -509,28 +507,6 @@ class SherpaSttDatasource {
 
   // ── PTT / VAD buffer path ─────────────────────────────────────────────────
 
-  /// Handles VAD activity events for PTT mode.
-  ///
-  /// * `isSpeaking == true`: Clear buffer and start recording new utterance
-  /// * `isSpeaking == false`: Stop recording and trigger decode of buffered audio
-  ///
-  /// This is the fallback path when always-on segment streaming is unavailable
-  /// or when the user explicitly uses push-to-talk.
-  void _onVadEvent(bool isSpeaking) {
-    if (isSpeaking) {
-      _audioBuffer.clear();
-      _isRecordingUtterance = true;
-    } else if (_isRecordingUtterance) {
-      _isRecordingUtterance = false;
-      _decodeUtterance(_audioBuffer.takeBytes());
-    }
-  }
-
-  /// Handles raw PCM16 bytes from the microphone stream.
-  ///
-  /// If currently recording (PTT mode), accumulates bytes into [_audioBuffer]
-  /// up to [_maxBufferBytes] cap. Always calculates and emits amplitude for
-  /// VU meter feedback, regardless of buffer cap state (engineering_lessons #3).
   void _onAudioBytesReceived(List<int> chunk) {
     if (_isRecordingUtterance) {
       // NEW: condition to bound previously unbounded PTT buffer size
@@ -540,29 +516,6 @@ class SherpaSttDatasource {
         // Emit buffer fill percentage for UI feedback
         final percent = (_audioBuffer.length / _maxBufferBytes).clamp(0.0, 1.0);
         _bufferFillController.add(percent);
-
-        // ── Progressive Partial Decode Throttling ────────
-        // To reduce perceived latency, we decode the buffer *while* it grows.
-        // On slow devices, repeatedly decoding a growing buffer for an offline
-        // model causes compounding latency (O(N^2) complexity).
-        //
-        // We implement progressive throttling: the minimum interval grows
-        // linearly with the buffer size. This ensures the isolate is less
-        // likely to be busy when the user finally stops speaking.
-        final now = DateTime.now();
-
-        // Base interval 1.0s + 200ms per second of audio buffered.
-        // 16000 samples/sec * 2 bytes/sample = 32000 bytes/sec.
-        final dynamicInterval = Duration(
-          milliseconds: 1000 + (_audioBuffer.length ~/ 32000) * 200,
-        );
-
-        if (_decodeIsolate.isReady &&
-            _decodeIsolate._activeDecodes == 0 &&
-            now.difference(_lastPartialDecodeAt) > dynamicInterval) {
-          _lastPartialDecodeAt = now;
-          _decodeUtterance(_audioBuffer.toBytes(), isPartial: true);
-        }
       }
     }
     // Calculate and emit amplitude continuously whenever audio flows
@@ -768,7 +721,6 @@ class SherpaSttDatasource {
   /// creates a resource is responsible for destroying it (engineering_lessons #2).
   Future<void> dispose() async {
     await _segmentSub?.cancel();
-    await _vadSub?.cancel();
     await _audioSub?.cancel();
     _decodeIsolate.dispose();
     _fallbackRecognizer?.free();

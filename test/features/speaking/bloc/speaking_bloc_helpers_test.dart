@@ -99,6 +99,15 @@ void main() {
     // Stub speak
     when(() => mockTts.speak(any())).thenAnswer((_) async => const Right(null));
 
+    // Stub STT lifecycle
+    when(() => mockStt.initialize()).thenAnswer((_) async => const Right(true));
+    when(
+      () => mockStt.startListening(),
+    ).thenAnswer((_) async => const Right(null));
+    when(
+      () => mockStt.stopListening(),
+    ).thenAnswer((_) async => const Right("final transcript"));
+
     speakingBloc = SpeakingBloc(
       stt: mockStt,
       tts: mockTts,

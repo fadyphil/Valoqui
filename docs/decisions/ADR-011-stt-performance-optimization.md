@@ -264,4 +264,14 @@ The chunking strategy was implemented using an **Accumulating Buffer** approach 
 
 1. **Hardware Acceleration:** STT decode threads increased from 2 to **4**. VAD threads increased from 1 to **2**.
 2. **Throttled Partial Decodes:** The `SherpaSttDatasource` triggers a decode of the growing audio buffer every **1.5 seconds**, provided the background isolate is idle (`_activeDecodes == 0`).
-3. **Visual Transparency:** Users see their words appearing live on screen via `partialTranscriptStream`, reducing perceived latency by >60%.
+Visual transparency:** Users see their words appearing live on screen via `partialTranscriptStream`, reducing perceived latency by >60%.
+
+## Addendum: Pipeline Stability & UX Refinement (Late April 2026)
+
+Following a series of real-device testing in Release mode, several stability and UX issues were identified and resolved:
+
+1. **PTT Chunking Fix:** Removed the VAD silent-segment listener from PTT mode. Previously, VAD would "chop" the PTT recording into multiple pieces during pauses, causing fragmented transcripts. PTT now behaves as one continuous utterance, decoded exactly once upon button release.
+2. **Mode Toggle Protection:** Switching from PTT to "Always On" while Lucia is speaking now waits for TTS to finish before opening the microphone. This prevents the microphone stream from stealing audio focus and cutting off Lucia's voice mid-sentence.
+3. **Ghost Update Suppression:** Added mandatory cancellation of the UI batching timer during state transitions. This prevents stale LLM tokens from previous utterances from being incorrectly appended to the transcript after a new user turn or an error occurs.
+4. **Unsafe Type Cast Fix:** Resolved a crash in the `SpeakingScreen` where a `BlocSelector` would attempt to cast the `SpeakingEnded` state to `SpeakingActive` during session termination.
+
