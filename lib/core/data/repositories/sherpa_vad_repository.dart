@@ -17,8 +17,8 @@ class SherpaVadRepository implements VadRepository {
   Future<Either<AppFailure, void>> initialize() => _datasource.initialize();
 
   @override
-  Future<Either<AppFailure, void>> startMonitoring() =>
-      _datasource.startMonitoring();
+  Future<Either<AppFailure, void>> startMonitoring({bool enableVad = true}) =>
+      _datasource.startMonitoring(enableVad: enableVad);
 
   @override
   Future<void> stopMonitoring() => _datasource.stopMonitoring();

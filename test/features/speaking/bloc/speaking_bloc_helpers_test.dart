@@ -93,7 +93,7 @@ void main() {
 
     // Stub startMonitoring
     when(
-      () => mockVad.startMonitoring(),
+      () => mockVad.startMonitoring(enableVad: any(named: 'enableVad')),
     ).thenAnswer((_) async => const Right(null));
 
     // Stub speak

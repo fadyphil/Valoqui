@@ -105,7 +105,7 @@ void main() {
     when(() => mockTts.warmUp()).thenAnswer((_) async {});
     when(() => mockVad.dispose()).thenAnswer((_) async {});
     when(
-      () => mockVad.startMonitoring(),
+      () => mockVad.startMonitoring(enableVad: any(named: 'enableVad')),
     ).thenAnswer((_) async => const Right<AppFailure, void>(null));
     // stop/stopMonitoring return Future<void>, not Either
     when(() => mockVad.stopMonitoring()).thenAnswer((_) async {});
@@ -223,7 +223,9 @@ void main() {
           // VAD monitoring is SKIPPED during MicModeToggled because the
           // phase is 'speaking' (greeting flow). It will be started
           // automatically by _onTtsFinished once Lucia stops talking.
-          verifyNever(() => mockVad.startMonitoring());
+          verifyNever(
+            () => mockVad.startMonitoring(enableVad: any(named: 'enableVad')),
+          );
         },
       );
 
@@ -245,7 +247,9 @@ void main() {
         expect: () => <dynamic>[], // No state changes expected
         verify: (_) {
           // No startMonitoring in test (fresh bloc never started VAD)
-          verifyNever(() => mockVad.startMonitoring());
+          verifyNever(
+            () => mockVad.startMonitoring(enableVad: any(named: 'enableVad')),
+          );
           // But tearDown close() will call stopMonitoring because VAD was put in alwaysOn mode during test
           verify(() => mockVad.stopMonitoring()).called(1);
         },

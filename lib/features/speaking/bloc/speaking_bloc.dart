@@ -826,7 +826,7 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
     // here is unexpected (e.g. another app grabbed the mic mid-session).
     // We log it rather than crashing — the user will simply get no
     // transcription for this press, which is preferable to an error screen.
-    final result = await _vad.startMonitoring();
+    final result = await _vad.startMonitoring(enableVad: false);
     result.fold(
       (failure) => debugPrint("[PTT] Mic open failed: ${failure.message}"),
       (_) {},

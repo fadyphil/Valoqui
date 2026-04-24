@@ -110,7 +110,7 @@ void main() {
     when(() => mockTts.warmUp()).thenAnswer((_) async {});
     when(() => mockVad.dispose()).thenAnswer((_) async {});
     when(
-      () => mockVad.startMonitoring(),
+      () => mockVad.startMonitoring(enableVad: any(named: 'enableVad')),
     ).thenAnswer((_) async => const Right<AppFailure, void>(null));
     // stop/stopMonitoring return Future<void>, not Either
     when(() => mockVad.stopMonitoring()).thenAnswer((_) async {});
@@ -371,7 +371,7 @@ void main() {
           () => mockVad.initialize(),
         ).thenAnswer((_) async => const Right<AppFailure, void>(null));
         when(
-          () => mockVad.startMonitoring(),
+          () => mockVad.startMonitoring(enableVad: any(named: 'enableVad')),
         ).thenAnswer((_) async => const Right<AppFailure, void>(null));
         when(
           () => mockVad.stopMonitoring(),
@@ -404,7 +404,9 @@ void main() {
         ),
       ],
       verify: (_) {
-        verify(() => mockVad.startMonitoring());
+        verify(
+          () => mockVad.startMonitoring(enableVad: any(named: 'enableVad')),
+        );
         verify(() => mockVad.stopMonitoring());
       },
     );

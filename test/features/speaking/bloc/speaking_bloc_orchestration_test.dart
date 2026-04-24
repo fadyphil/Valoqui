@@ -110,7 +110,7 @@ void main() {
     when(() => mockTts.warmUp()).thenAnswer((_) async {});
     when(() => mockVad.dispose()).thenAnswer((_) async {});
     when(
-      () => mockVad.startMonitoring(),
+      () => mockVad.startMonitoring(enableVad: any(named: 'enableVad')),
     ).thenAnswer((_) async => const Right<AppFailure, void>(null));
     when(
       () => mockVad.stopMonitoring(),
@@ -413,7 +413,7 @@ void main() {
           () => mockVad.initialize(),
         ).thenAnswer((_) async => const Right<AppFailure, void>(null));
         when(
-          () => mockVad.startMonitoring(),
+          () => mockVad.startMonitoring(enableVad: any(named: 'enableVad')),
         ).thenAnswer((_) async => const Right<AppFailure, void>(null));
         return bloc;
       },
@@ -444,7 +444,9 @@ void main() {
       ],
       verify: (_) {
         // Called once in _onSessionStarted and once in _onTtsFinished
-        verify(() => mockVad.startMonitoring()).called(2);
+        verify(
+          () => mockVad.startMonitoring(enableVad: any(named: 'enableVad')),
+        ).called(2);
       },
     );
 
@@ -487,7 +489,9 @@ void main() {
         ),
       ],
       verify: (_) {
-        verifyNever(() => mockVad.startMonitoring());
+        verifyNever(
+          () => mockVad.startMonitoring(enableVad: any(named: 'enableVad')),
+        );
       },
     );
   });
