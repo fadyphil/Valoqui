@@ -387,6 +387,9 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
       _pipelineStopwatch.start();
       _accumulateSpeakingTime();
       _stt.stopListening();
+      unawaited(
+        _vad.stopMonitoring(),
+      ); // Stop listening while transcribing/processing
       emit(current.copyWith(isTranscribing: true));
     }
   }
@@ -429,6 +432,9 @@ class SpeakingBloc extends Bloc<SpeakingEvent, SpeakingState> {
     final text = event.text.trim();
     if (text.isEmpty) {
       emit(newState);
+      if (current.micMode == MicMode.alwaysOn) {
+        unawaited(_vad.startMonitoring());
+      }
       return;
     }
 

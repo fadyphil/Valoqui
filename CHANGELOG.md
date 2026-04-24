@@ -73,6 +73,7 @@ All notable changes to this project will be documented in this file.
   - Implemented **Mode Toggle Protection**: switching to Always On while Lucia is speaking now waits for TTS to finish before opening the mic, preventing audio focus theft and voice cutoffs.
   - Resolved **PTT "Hung" State**: fixed a bug where manual transcriptions were dropped if the UI transitioned to "processing" too early.
   - Improved **PTT UI Feedback**: added a dedicated `isTranscribing` state and right-aligned user typing indicator (dots) to provide immediate feedback on your side of the screen.
+  - Implemented **Strict Turn-Taking**: the mic button is now visually disabled and interactions are blocked while Lucia is speaking or the LLM is processing. In Always-On mode, the physical microphone stream is now explicitly shut off during these phases to prevent audio overlap.
   - Fixed **UI Type Cast Crash** in `SpeakingScreen` when transitioning from active session to report generation.
   - Patched **Memory Leak & State Pollution** in `SpeakingBloc` by ensuring all stream subscriptions are tracked and cancelled, and clearing batch UI timers during phase transitions.
   - Corrected **"Ghost" Lucia Messages** caused by race conditions between the 100ms batching timer and new user utterances.

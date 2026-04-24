@@ -65,7 +65,8 @@ class _MicButtonState extends State<MicButton> {
   Widget build(BuildContext context) {
     final isListening = widget.phase == ConversationPhase.listening;
     final isSpeaking = widget.phase == ConversationPhase.speaking;
-    final isDisabled = widget.isTranscribing;
+    final isDisabled =
+        widget.isTranscribing || widget.phase != ConversationPhase.listening;
 
     return GestureDetector(
       onTapDown: isDisabled ? null : (_) => _handleDown(),
